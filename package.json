@@ -5,7 +5,7 @@
   "main": "src/flv.js",
   "scripts": {
     "test": "mocha --require mochahook",
-    "server": "http-server -p 8000 .",
+    "serve": "http-server -p 8000 .",
     "prepublish": "grunt dist",
     "debug": "iron-mocha --require mochahook",
     "coverage": "istanbul cover node_modules/mocha/bin/_mocha --require mochahook -- test/"

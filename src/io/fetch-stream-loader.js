@@ -1,39 +1,40 @@
 import {assert} from 'assert';
-import {LoaderStatus} from './loader.js';
+import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
 
-class FetchStreamLoader {
+let context = global || window;
+
+class FetchStreamLoader extends BaseLoader {
 
     static isSupported() {
-        return (window.fetch && window.ReadableByteStream);
+        return (context.fetch && context.ReadableByteStream);
     }
 
-    constructor(iocontroller, url) {
-        this._iocontroller = iocontroller;
-        this._url = url;
-        this._status = LoaderStatus.kIdle;
+    constructor() {
+        super('fetch-stream');
         this._requestAbort = false;
         this._receivedLength = 0;
-        this._onDataArrival = null;
     }
 
     destroy() {
-
+        super.destroy();
     }
 
-    get onDataArrival() {
-        return this._onDataArrival;
-    }
+    open(url, range) {
+        this._url = url;
+        this._range = range;
 
-    set onDataArrival(callback) {
-        if (typeof callback !== 'function') {
-            throw 'onDataArrival must be a callback function!';
+        let headers = new context.Headers();
+
+        if (range.from !== 0 || range.to !== -1) {
+            let param;
+            if (range.to !== -1) {
+                param = 'bytes=' + range.from.toString() + '-' + range.to.toString();
+            } else {
+                param = 'bytes=' + range.from.toString() + '-';
+            }
+            headers.append('Range', param);
         }
 
-        this._onDataArrival = callback;
-    }
-
-    open() {
-        let headers = new window.Headers();
         let params = {
             method: 'GET',
             headers: headers,
@@ -41,34 +42,58 @@ class FetchStreamLoader {
             cache: 'default'
         };
 
-        let _this = this;
-
-        window.fetch(this._url, params).then(function (res) {
+        this._status = LoaderStatus.kConnecting;
+        context.fetch(this._url, params).then(function (res) {
+            if (this._requestAbort) {
+                this._requestAbort = false;
+                this._status = LoaderStatus.kIdle;
+                return;
+            }
             if (res.ok && (res.status === 200 || res.status === 206)) {
                 console.log('Content-Length: ' + res.headers.get('Content-Length'));
-                return _this._pump.bind(_this, res.body.getReader()).call();
+                return this._pump.bind(this, res.body.getReader()).call();
             } else {
-                // TODO: trigger IO error event
-                throw 'Network error, ' + res.statusText;
+                this._status = LoaderStatus.kError;
+                if (this._onError) {
+                    this._onError(LoaderError.kHttpStatusCodeInvalid, {code: res.status, msg: res.statusText});
+                } else {
+                    throw 'Http code invalid, ' + res.statusText;
+                }
             }
-        }).catch(function (e) {
-            console.log('caught exception in fetch, ' + e.message);
-        });
+        }.bind(this)).catch(function (e) {
+            this._status = LoaderStatus.kError;
+            if (this._onError) {
+                this._onError(LoaderError.kException, {code: -1, msg: e.message});
+            } else {
+                throw e;
+            }
+        }.bind(this));
     }
 
-    requestAbort() {
+    abort() {
         this._requestAbort = true;
     }
 
     _pump(reader) {  // ReadableStreamReader
         return reader.read().then(function (result) {
             if (result.done) {
+                // TODO: check Content-Length, if mismatch, set status to kEarlyEof
                 console.log('fetch: done');
-                this._status = LoaderStatus.kEof;
-                // TODO: trigger complete event
+                this._status = LoaderStatus.kComplete;
+                if (this._onComplete) {
+                    this._onComplete(this._range.from, this._range.from + this._receivedLength);
+                }
             } else {
+                if (this._requestAbort === true) {
+                    this._requestAbort = false;
+                    this._status = LoaderStatus.kComplete;
+                    return reader.cancel();
+                }
+
+                this._status = LoaderStatus.kBuffering;
+
                 let chunk = result.value;
-                let byteStart = this._receivedLength;
+                let byteStart = this._range.from + this._receivedLength;
                 this._receivedLength += chunk.byteLength;
                 console.log('fetch: received chunk, size = ' + chunk.byteLength + ', total_received = ' + this._receivedLength);
 
@@ -76,12 +101,7 @@ class FetchStreamLoader {
                     this._onDataArrival(chunk, byteStart, this._receivedLength);
                 }
 
-                if (this._requestAbort) {
-                    this._requestAbort = false;
-                    return reader.cancel();
-                } else {
-                    return this._pump(reader);
-                }
+                return this._pump(reader);
             }
         }.bind(this));
     }

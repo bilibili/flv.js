@@ -15,6 +15,11 @@ export const LoaderError = {
     kEarlyEof: 4
 };
 
+/* Loader has callbacks which have following prototypes:
+ *     function onDataArrival(chunk: ArrayBuffer, byteStart: number, receivedLength: number): void
+ *     function onError(errorType: number, errorInfo: {code: number, msg: string}): void
+ *     function onComplete(rangeFrom: number, rangeTo: number): void
+ */
 export class BaseLoader {
 
     constructor(typeName) {
@@ -31,6 +36,10 @@ export class BaseLoader {
         this._onDataArrival = null;
         this._onError = null;
         this._onComplete = null;
+    }
+
+    isWorking() {
+        return this._status === LoaderStatus.kConnecting || this._status === LoaderStatus.kBuffering;
     }
 
     get type() {

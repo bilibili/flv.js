@@ -12,10 +12,14 @@ class FetchStreamLoader extends BaseLoader {
     constructor() {
         super('fetch-stream');
         this._requestAbort = false;
+        this._contentLength = null;
         this._receivedLength = 0;
     }
 
     destroy() {
+        if (this.isWorking()) {
+            this.abort();
+        }
         super.destroy();
     }
 
@@ -50,7 +54,8 @@ class FetchStreamLoader extends BaseLoader {
                 return;
             }
             if (res.ok && (res.status === 200 || res.status === 206)) {
-                console.log('Content-Length: ' + res.headers.get('Content-Length'));
+                console.log('Content-Length: ' + res.headers.get('Content-Length'));  // FIXME
+                this._contentLength = res.headers.get('Content-Length');
                 return this._pump.bind(this, res.body.getReader()).call();
             } else {
                 this._status = LoaderStatus.kError;
@@ -77,11 +82,19 @@ class FetchStreamLoader extends BaseLoader {
     _pump(reader) {  // ReadableStreamReader
         return reader.read().then(function (result) {
             if (result.done) {
-                // TODO: check Content-Length, if mismatch, set status to kEarlyEof
-                console.log('fetch: done');
+                if (this._contentLength !== null) {
+                    if (this._receivedLength < this._contentLength) {
+                        this._status = LoaderStatus.kError;
+                        if (this._onError) {
+                            this._onError(LoaderError.kEarlyEof, {code: -1, msg: 'fetch stream meet Early-EOF'});
+                        }
+                        return;
+                    }
+                }
+                console.log('fetch: done');  // FIXME
                 this._status = LoaderStatus.kComplete;
                 if (this._onComplete) {
-                    this._onComplete(this._range.from, this._range.from + this._receivedLength);
+                    this._onComplete(this._range.from, this._range.from + this._receivedLength - 1);
                 }
             } else {
                 if (this._requestAbort === true) {

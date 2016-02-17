@@ -1,4 +1,3 @@
-import {assert} from 'assert';
 import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
 
 let context = global || window;
@@ -62,7 +61,7 @@ class FetchStreamLoader extends BaseLoader {
                 if (this._onError) {
                     this._onError(LoaderError.kHttpStatusCodeInvalid, {code: res.status, msg: res.statusText});
                 } else {
-                    throw 'Http code invalid, ' + res.statusText;
+                    throw 'FetchStreamLoader: Http code invalid, ' + res.status + ' ' + res.statusText;
                 }
             }
         }.bind(this)).catch(function (e) {
@@ -91,7 +90,6 @@ class FetchStreamLoader extends BaseLoader {
                         return;
                     }
                 }
-                console.log('fetch: done');  // FIXME
                 this._status = LoaderStatus.kComplete;
                 if (this._onComplete) {
                     this._onComplete(this._range.from, this._range.from + this._receivedLength - 1);

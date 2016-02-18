@@ -18,6 +18,7 @@ class MozChunkedLoader extends BaseLoader {
     constructor() {
         super('xhr-moz-chunked');
         this._xhr = null;
+        this._requestAbort = false;
         this._totalLength = null;
         this._receivedLength = 0;
     }
@@ -59,6 +60,7 @@ class MozChunkedLoader extends BaseLoader {
     }
 
     abort() {
+        this._requestAbort = true;
         if (this._xhr) {
             this._xhr.abort();
         }
@@ -103,6 +105,10 @@ class MozChunkedLoader extends BaseLoader {
     }
 
     _onLoadEnd(e) {
+        if (this._requestAbort === true) {
+            this._requestAbort = false;
+            return;
+        }
         this._status = LoaderStatus.kComplete;
         if (this._onComplete) {
             this._onComplete(this._range.from, this._range.from + this._receivedLength - 1);

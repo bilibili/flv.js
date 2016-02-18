@@ -5,7 +5,11 @@ let context = global || window;
 class FetchStreamLoader extends BaseLoader {
 
     static isSupported() {
-        return (context.fetch && context.ReadableByteStream);
+        try {
+            return (context.fetch && context.ReadableByteStream);
+        } catch (e) {
+            return false;
+        }
     }
 
     constructor() {

@@ -178,7 +178,7 @@ class IOController {
 
         if (!this._enableStash) {
             if (this._stashUsed === 0) {
-                // send chunk directly to consumer;
+                // dispatch chunk directly to consumer;
                 // check ret value (consumed bytes) and stash unconsumed to stashBuffer
                 let consumed = this._dispatchChunks(chunk, byteStart);
                 if (consumed < chunk.byteLength) {  // unconsumed data remain.
@@ -192,7 +192,7 @@ class IOController {
                     this._stashByteStart = byteStart + consumed;
                 }
             } else {
-                // else: Merge chunk into stashBuffer, and send stashBuffer to consumer.
+                // else: Merge chunk into stashBuffer, and dispatch stashBuffer to consumer.
                 if (this._stashUsed + chunk.byteLength > this._stashSize) {
                     this._expandBuffer(this._stashUsed + chunk.byteLength);
                 }
@@ -203,9 +203,9 @@ class IOController {
                 if (consumed < this._stashUsed && consumed > 0) {  // unconsumed data remain
                     let remainArray = new Uint8Array(this._stashBuffer, consumed);
                     stashArray.set(remainArray, 0);
-                    this._stashUsed = remainArray.byteLength;
-                    this._stashByteStart = byteStart + consumed;
                 }
+                this._stashUsed -= consumed;
+                this._stashByteStart += consumed;
             }
         } else {  // enable stash
             if (this._stashUsed === 0 && this._stashByteStart === 0) {  // seeked? or init chunk?

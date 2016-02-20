@@ -9,10 +9,12 @@ class IOController {
 
     constructor(url) {
         // TODO: determine stash buffer size according to network speed dynamically
-        this._stashBuffer = new ArrayBuffer(1024 * 1024 * 2);  // initial size: 2MB
         this._stashUsed = 0;
-        this._stashSize = 1024 * 1024 * 2;
+        this._stashSize = 1024 * 1024 * 2;  // initial size: 2MB
+        this._bufferSize = 1024 * 1024 * 3;  // initial size: 3MB
+        this._stashBuffer = new ArrayBuffer(this._bufferSize);
         this._stashByteStart = 0;
+
         this._enableStash = false;
         this._loader = null;
         this._loaderClass = null;
@@ -31,8 +33,9 @@ class IOController {
         this._loader.destroy();
         this._loader = null;
         this._loaderClass = null;
+        this._url = null;
         this._stashBuffer = null;
-        this._stashUsed = this._stashSize = this._stashByteStart = 0;
+        this._stashUsed = this._stashSize = this._bufferSize = this._stashByteStart = 0;
         this._enableStash = false;
         this._currentSegment = null;
         this._progressSegments = null;
@@ -143,26 +146,27 @@ class IOController {
     }
 
     _expandBuffer(expectedBytes) {
-        let stashNewSize = this._stashSize;
-        while (stashNewSize < expectedBytes) {
-            stashNewSize *= 2;
+        let bufferNewSize = this._stashSize;
+        while (bufferNewSize + 1024 * 1024 * 1 < expectedBytes) {
+            bufferNewSize *= 2;
         }
 
-        if (stashNewSize === this._stashSize) {
+        bufferNewSize += 1024 * 1024 * 1;  // bufferSize = stashSize + 1MB
+        if (bufferNewSize === this._bufferSize) {
             return;
         }
 
-        let stashNewBuffer = new ArrayBuffer(stashNewSize);
+        let newBuffer = new ArrayBuffer(bufferNewSize);
 
         if (this._stashUsed > 0) {  // copy existing data into new buffer
             let stashOldArray = new Uint8Array(this._stashBuffer, 0, this._stashUsed);
-            let stashNewArray = new Uint8Array(stashNewBuffer, 0, stashNewSize);
+            let stashNewArray = new Uint8Array(newBuffer, 0, bufferNewSize);
             stashNewArray.set(stashOldArray, 0);
         }
 
-        this._stashBuffer = stashNewBuffer;
-        this._stashSize = stashNewSize;
-        console.log('expandBuffer: targetSize = ' + this._stashSize);
+        this._stashBuffer = newBuffer;
+        this._bufferSize = bufferNewSize;
+        console.log('expandBuffer: targetBufferSize = ' + this._bufferSize);
     }
 
     _dispatchChunks(chunks, byteStart) {
@@ -176,28 +180,28 @@ class IOController {
             throw 'IOController: No existing consumer (onDataArrival) callback!';
         }
 
-        if (!this._enableStash) {
+        if (!this._enableStash) {  // disable stash
             if (this._stashUsed === 0) {
                 // dispatch chunk directly to consumer;
                 // check ret value (consumed bytes) and stash unconsumed to stashBuffer
                 let consumed = this._dispatchChunks(chunk, byteStart);
                 if (consumed < chunk.byteLength) {  // unconsumed data remain.
                     let remain = chunk.byteLength - consumed;
-                    if (remain > this._stashSize) {
+                    if (remain > this._bufferSize) {
                         this._expandBuffer(remain);
                     }
-                    let stashArray = new Uint8Array(this._stashBuffer, 0, this._stashSize);
+                    let stashArray = new Uint8Array(this._stashBuffer, 0, this._bufferSize);
                     stashArray.set(new Uint8Array(chunk, consumed), 0);
                     this._stashUsed += remain;
                     this._stashByteStart = byteStart + consumed;
                 }
             } else {
                 // else: Merge chunk into stashBuffer, and dispatch stashBuffer to consumer.
-                if (this._stashUsed + chunk.byteLength > this._stashSize) {
+                if (this._stashUsed + chunk.byteLength > this._bufferSize) {
                     this._expandBuffer(this._stashUsed + chunk.byteLength);
                 }
-                let stashArray = new Uint8Array(this._stashBuffer, 0, this._stashSize);
-                stashArray.set(chunk, this._stashUsed);
+                let stashArray = new Uint8Array(this._stashBuffer, 0, this._bufferSize);
+                stashArray.set(new Uint8Array(chunk), this._stashUsed);
                 this._stashUsed += chunk.byteLength;
                 let consumed = this._dispatchChunks(this._stashBuffer.slice(0, this._stashUsed), this._stashByteStart);
                 if (consumed < this._stashUsed && consumed > 0) {  // unconsumed data remain
@@ -213,10 +217,10 @@ class IOController {
                 this._stashByteStart = byteStart;
             }
             let stashArray = new Uint8Array(this._stashBuffer, 0, this._stashSize);
-            if (this._stashUsed + chunk.byteLength <= this._stashSize) {
-                stashArray.set(chunk, this._stashUsed);
+            if (this._stashUsed + chunk.byteLength <= this._stashSize) {  // just stash.
+                stashArray.set(new Uint8Array(chunk), this._stashUsed);
                 this._stashUsed += chunk.byteLength;
-            } else {  // stashUsed + chunkSize > stashSize
+            } else {  // stashUsed + chunkSize > stashSize, size limit excceed
                 if (this._stashUsed > 0) {
                     let buffer = this._stashBuffer.slice(0, this._stashUsed);
                     let consumed = this._dispatchChunks(buffer, this._stashByteStart);
@@ -232,19 +236,21 @@ class IOController {
                         this._stashByteStart += consumed;
                     }
                     if (this._stashUsed + chunk.byteLength > this._stashSize) {
-                        this._expandBuffer(this._stashUsed + chunk.byteLength);
-                        stashArray = new Uint8Array(this._stashBuffer, 0, this._stashSize);
+                        if (this._stashUsed + chunk.byteLength > this._bufferSize) {
+                            this._expandBuffer(this._stashUsed + chunk.byteLength);
+                        }
+                        stashArray = new Uint8Array(this._stashBuffer, 0, this._bufferSize);
                     }
-                    stashArray.set(chunk, this._stashUsed);
+                    stashArray.set(new Uint8Array(chunk), this._stashUsed);
                     this._stashUsed += chunk.byteLength;
                 } else {  // stash buffer empty, but chunkSize > stashSize (oh, holy shit)
                     // dispatch directly and stash remain data
                     let consumed = this._dispatchChunks(chunk, byteStart);
                     if (consumed < chunk.byteLength) {
                         let remain = chunk.byteLength - consumed;
-                        if (remain > this._stashSize) {
+                        if (remain > this._bufferSize) {
                             this._expandBuffer(remain);
-                            stashArray = new Uint8Array(this._stashBuffer, 0, this._stashSize);
+                            stashArray = new Uint8Array(this._stashBuffer, 0, this._bufferSize);
                         }
                         stashArray.set(new Uint8Array(chunk, consumed), 0);
                         this._stashUsed += remain;

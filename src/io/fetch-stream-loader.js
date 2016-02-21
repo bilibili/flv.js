@@ -1,12 +1,10 @@
 import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
 
-let context = global || window;
-
 class FetchStreamLoader extends BaseLoader {
 
     static isSupported() {
         try {
-            return (context.fetch && context.ReadableByteStream);
+            return (self.fetch && self.ReadableByteStream);
         } catch (e) {
             return false;
         }
@@ -30,7 +28,7 @@ class FetchStreamLoader extends BaseLoader {
         this._url = url;
         this._range = range;
 
-        let headers = new context.Headers();
+        let headers = new self.Headers();
 
         if (range.from !== 0 || range.to !== -1) {
             let param;
@@ -50,7 +48,7 @@ class FetchStreamLoader extends BaseLoader {
         };
 
         this._status = LoaderStatus.kConnecting;
-        context.fetch(this._url, params).then(function (res) {
+        self.fetch(this._url, params).then(function (res) {
             if (this._requestAbort) {
                 this._requestAbort = false;
                 this._status = LoaderStatus.kIdle;

@@ -13,6 +13,7 @@
     "browser": true,
     "loopfunc" : true,
     "predef" : [
+        "self",
         "MediaPlayer",
         "WebKitMediaSource",
         "MediaSource",

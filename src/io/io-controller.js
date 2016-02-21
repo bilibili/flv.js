@@ -1,4 +1,5 @@
 import {LoaderStatus} from './loader.js';
+import SpeedCalculator from './speed-calculator.js';
 import FetchStreamLoader from './fetch-stream-loader.js';
 import MozChunkedLoader from './xhr-moz-chunked-loader.js';
 
@@ -8,19 +9,21 @@ class IOController {
     // TODO: events. callbacks or EventEmitter?
 
     constructor(url) {
-        // TODO: determine stash buffer size according to network speed dynamically
         this._stashUsed = 0;
-        this._stashSize = 1024 * 1024 * 2;  // initial size: 2MB
+        this._stashSize = 1024 * 256;  // initial size: 256KB
         this._bufferSize = 1024 * 1024 * 3;  // initial size: 3MB
         this._stashBuffer = new ArrayBuffer(this._bufferSize);
         this._stashByteStart = 0;
-
         this._enableStash = false;
+
         this._loader = null;
         this._loaderClass = null;
         this._url = url;
         this._currentSegment = null;
         this._progressSegments = [];
+        this._speed = 0;
+        this._speedCalc = new SpeedCalculator();
+        this._speedNormalizeList = [64, 128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096];
 
         this._selectLoader();
         this._createLoader();
@@ -39,6 +42,7 @@ class IOController {
         this._enableStash = false;
         this._currentSegment = null;
         this._progressSegments = null;
+        this._speedCalc = null;
 
         this._onDataArrival = null;
     }
@@ -90,6 +94,7 @@ class IOController {
         this._currentSegment = {from: 0, to: -1};
         this._progressSegments = [];
         this._progressSegments.push(this._currentSegment);
+        this._speedCalc.reset();
         this._loader.open(this._url, {from: 0, to: -1});
     }
 
@@ -169,6 +174,53 @@ class IOController {
         console.log('expandBuffer: targetBufferSize = ' + this._bufferSize);
     }
 
+    _normalizeSpeed(input) {
+        let list = this._speedNormalizeList;
+        let last = list.length - 1;
+        let mid = 0;
+        let lbound = 0;
+        let ubound = last;
+
+        if (input < list[0]) {
+            return list[0];
+        }
+
+        // binary search
+        while (lbound <= ubound) {
+            mid = lbound + Math.floor((ubound - lbound) / 2);
+            if (mid === last || (input >= list[mid] && input < list[mid + 1])) {
+                return list[mid];
+            } else if (list[mid] < input) {
+                lbound = mid + 1;
+            } else {
+                ubound = mid - 1;
+            }
+        }
+    }
+
+    _adjustStashSize(normalized) {
+        let stashSizeKB = 0;
+
+        if (normalized < 512) {
+            stashSizeKB = normalized;
+        } else if (normalized >= 512 && normalized <= 1024) {
+            stashSizeKB = Math.floor(normalized * 1.5);
+        } else {
+            stashSizeKB = normalized * 2;
+        }
+
+        if (stashSizeKB > 8192) {
+            stashSizeKB = 8192;
+        }
+
+        let bufferSize = stashSizeKB * 1024 + 1024 * 1024 * 1;  // stashSize + 1MB
+        if (this._bufferSize < bufferSize) {
+            this._expandBuffer(bufferSize);
+        }
+        this._stashSize = stashSizeKB * 1024;
+        console.log('adjustStashSize: targetStashSize = ' + stashSizeKB + ' KB');
+    }
+
     _dispatchChunks(chunks, byteStart) {
         console.log('_dispatchChunks: chunkSize = ' + chunks.byteLength + ', byteStart = ' + byteStart);
         this._currentSegment.to = byteStart + chunks.byteLength - 1;
@@ -179,6 +231,20 @@ class IOController {
         if (!this._onDataArrival) {
             throw 'IOController: No existing consumer (onDataArrival) callback!';
         }
+
+        this._speedCalc.addBytes(chunk.byteLength);
+
+        // adjust stash buffer size according to network speed dynamically
+        let KBps = this._speedCalc.lastSecondKBps;
+        if (KBps !== 0) {
+            let normalized = this._normalizeSpeed(KBps);
+            if (this._speed !== normalized) {
+                this._speed = normalized;
+                this._adjustStashSize(normalized);
+            }
+        }
+
+        // TODO: Too many newed Uint8Arrays... may cause gc pressure?
 
         if (!this._enableStash) {  // disable stash
             if (this._stashUsed === 0) {
@@ -216,12 +282,16 @@ class IOController {
                 // This is the first chunk after seek action
                 this._stashByteStart = byteStart;
             }
-            let stashArray = new Uint8Array(this._stashBuffer, 0, this._stashSize);
-            if (this._stashUsed + chunk.byteLength <= this._stashSize) {  // just stash.
+            if (this._stashUsed + chunk.byteLength <= this._stashSize) {
+                // just stash
+                let stashArray = new Uint8Array(this._stashBuffer, 0, this._stashSize);
                 stashArray.set(new Uint8Array(chunk), this._stashUsed);
                 this._stashUsed += chunk.byteLength;
             } else {  // stashUsed + chunkSize > stashSize, size limit excceed
-                if (this._stashUsed > 0) {
+                let stashArray = new Uint8Array(this._stashBuffer, 0, this._bufferSize);
+                if (this._stashUsed > 0) {  // There're stash datas in buffer
+                    // dispatch the whole stashBuffer, and stash remain data
+                    // then append chunk to stashBuffer (stash)
                     let buffer = this._stashBuffer.slice(0, this._stashUsed);
                     let consumed = this._dispatchChunks(buffer, this._stashByteStart);
                     if (consumed < buffer.byteLength) {
@@ -235,16 +305,14 @@ class IOController {
                         this._stashUsed = 0;
                         this._stashByteStart += consumed;
                     }
-                    if (this._stashUsed + chunk.byteLength > this._stashSize) {
-                        if (this._stashUsed + chunk.byteLength > this._bufferSize) {
-                            this._expandBuffer(this._stashUsed + chunk.byteLength);
-                        }
+                    if (this._stashUsed + chunk.byteLength > this._bufferSize) {
+                        this._expandBuffer(this._stashUsed + chunk.byteLength);
                         stashArray = new Uint8Array(this._stashBuffer, 0, this._bufferSize);
                     }
                     stashArray.set(new Uint8Array(chunk), this._stashUsed);
                     this._stashUsed += chunk.byteLength;
                 } else {  // stash buffer empty, but chunkSize > stashSize (oh, holy shit)
-                    // dispatch directly and stash remain data
+                    // dispatch chunk directly and stash remain data
                     let consumed = this._dispatchChunks(chunk, byteStart);
                     if (consumed < chunk.byteLength) {
                         let remain = chunk.byteLength - consumed;
@@ -259,8 +327,6 @@ class IOController {
                 }
             }
         }
-
-        // TODO: network average speed statistics, stash buffer size adjustments
     }
 
     _onLoaderComplete(from, to) {

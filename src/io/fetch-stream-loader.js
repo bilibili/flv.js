@@ -57,7 +57,7 @@ class FetchStreamLoader extends BaseLoader {
             if (res.ok && (res.status === 200 || res.status === 206)) {
                 console.log('Content-Length: ' + res.headers.get('Content-Length'));  // FIXME
                 this._contentLength = res.headers.get('Content-Length');
-                return this._pump.bind(this, res.body.getReader()).call();
+                return this._pump.call(this, res.body.getReader());
             } else {
                 this._status = LoaderStatus.kError;
                 if (this._onError) {

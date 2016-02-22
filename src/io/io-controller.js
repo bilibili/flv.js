@@ -19,6 +19,8 @@ class IOController {
         this._loader = null;
         this._loaderClass = null;
         this._url = url;
+        this._totalLength = null;
+        this._fullRequestFlag = false;
         this._currentSegment = null;
         this._progressSegments = [];
         this._speed = 0;
@@ -84,6 +86,7 @@ class IOController {
 
     _createLoader() {
         this._loader = new this._loaderClass();
+        this._loader.onTotalLengthKnown = this._onTotalLengthKnown.bind(this);
         this._loader.onDataArrival = this._onLoaderChunkArrival.bind(this);
         this._loader.onComplete = this._onLoaderComplete.bind(this);
         this._loader.onError = this._onLoaderError.bind(this);
@@ -95,6 +98,7 @@ class IOController {
         this._progressSegments = [];
         this._progressSegments.push(this._currentSegment);
         this._speedCalc.reset();
+        this._fullRequestFlag = true;
         this._loader.open(this._url, {from: 0, to: -1});
     }
 
@@ -141,7 +145,7 @@ class IOController {
             throw 'IOController: Seek target position has been buffered!';
         }
 
-        this._currentSegment = {from: range.from, to: range.to};
+        this._currentSegment = {from: range.from, to: -1};
         segments.splice(insertIndex, 0, this._currentSegment);
 
         console.log('segments after seek: ' + JSON.stringify(this._progressSegments));
@@ -225,6 +229,14 @@ class IOController {
         console.log('_dispatchChunks: chunkSize = ' + chunks.byteLength + ', byteStart = ' + byteStart);
         this._currentSegment.to = byteStart + chunks.byteLength - 1;
         return this._onDataArrival(chunks, byteStart);
+    }
+
+    _onTotalLengthKnown(total) {
+        if (total && this._fullRequestFlag) {
+            this._totalLength = total;
+            this._fullRequestFlag = false;
+            console.log('Content-Length: ' + total);
+        }
     }
 
     _onLoaderChunkArrival(chunk, byteStart, receivedLength) {
@@ -330,25 +342,6 @@ class IOController {
     }
 
     _onLoaderComplete(from, to) {
-        console.log('IOController: loader complete, from = ' + from + ', to = ' + to);
-        console.log(JSON.stringify(this._progressSegments));
-
-        let segments = this._progressSegments;
-        for (let i = 0; i < segments.length; i++) {
-            if (segments[i].from === from && segments[i].to <= to) {
-                segments[i].to = to;
-                if (i === segments.length - 1) {
-                    break;
-                } else if (segments[i + 1].from === to + 1) {
-                    // Merge connected segments
-                    segments[i].to = segments[i + 1].to;
-                    segments.splice(i + 1, 1);
-                }
-                break;
-            }
-        }
-        console.log('Adjusted segments: ' + JSON.stringify(this._progressSegments));
-
         // Force-flush stash buffer
         if (this._stashUsed > 0) {
             let buffer = this._stashBuffer.slice(0, this._stashUsed);
@@ -361,7 +354,63 @@ class IOController {
             this._stashByteStart += buffer.byteLength;
         }
 
-        // TODO: +1s
+        console.log('IOController: loader complete, from = ' + from + ', to = ' + to);
+        console.log(JSON.stringify(this._progressSegments));
+
+        let segments = this._progressSegments;
+        let length = segments.length;
+        let next = {from: -1, to: -1};
+
+        // left endpoint merge
+        for (let i = 0; i < length; i++) {
+            if (segments[i].from === from && segments[i].to <= to) {
+                segments[i].to = to;
+                if (i > 0 && segments[i - 1].to + 1 === segments[i].from) {
+                    from = segments[i - 1].from;
+                    segments[i - 1].to = segments[i].to;
+                    segments.splice(i, 1);
+                    length--;
+                }
+                break;
+            }
+        }
+
+        // right endpoint merge
+        for (let i = 0; i < length; i++) {
+            if (segments[i].from === from && segments[i].to === to) {
+                if (i === length - 1) {  // latest segment
+                    // +1s
+                    if (this._totalLength && segments[i].to + 1 < this._totalLength) {
+                        next.from = segments[i].to + 1;
+                        next.to = -1;
+                    }
+                } else if (to + 1 === segments[i + 1].from) {
+                    // Merge connected segments
+                    segments[i].to = segments[i + 1].to;
+                    segments.splice(i + 1, i);
+                    length--;
+                    if (i === length - 1) {  // latest segment
+                        if (this._totalLength && segments[i].to + 1 < this._totalLength) {
+                            next.from = segments[i].to + 1;
+                            next.to = -1;
+                        }
+                    } else {
+                        if (segments[i].to < segments[i + 1].from - 1) {
+                            next.from = segments[i].to + 1;
+                            next.to = segments[i + 1].from - 1;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+
+        console.log('Adjusted segments: ' + JSON.stringify(this._progressSegments));
+
+        // continue loading from appropriate position
+        if (next.from !== -1) {
+            this.seek(next.from);
+        }
     }
 
     _onLoaderError(type, data) {

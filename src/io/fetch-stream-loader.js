@@ -55,8 +55,13 @@ class FetchStreamLoader extends BaseLoader {
                 return;
             }
             if (res.ok && (res.status === 200 || res.status === 206)) {
-                console.log('Content-Length: ' + res.headers.get('Content-Length'));  // FIXME
-                this._contentLength = res.headers.get('Content-Length');
+                this._contentLength = parseInt(res.headers.get('Content-Length'));
+                if (this._contentLength !== null) {
+                    if (this._onTotalLengthKnown) {
+                        this._onTotalLengthKnown(this._contentLength);
+                    }
+                }
+
                 return this._pump.call(this, res.body.getReader());
             } else {
                 this._status = LoaderStatus.kError;

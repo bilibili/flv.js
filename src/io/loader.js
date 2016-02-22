@@ -16,6 +16,7 @@ export const LoaderError = {
 };
 
 /* Loader has callbacks which have following prototypes:
+ *     function onTotalLengthKnown(totalLength: number): void
  *     function onDataArrival(chunk: ArrayBuffer, byteStart: number, receivedLength: number): void
  *     function onError(errorType: number, errorInfo: {code: number, msg: string}): void
  *     function onComplete(rangeFrom: number, rangeTo: number): void
@@ -26,6 +27,7 @@ export class BaseLoader {
         this._type = typeName || 'undefined';
         this._status = LoaderStatus.kIdle;
         // callbacks
+        this._onTotalLengthKnown = null;
         this._onDataArrival = null;
         this._onError = null;
         this._onComplete = null;
@@ -33,6 +35,7 @@ export class BaseLoader {
 
     destroy() {
         this._status = LoaderStatus.kIdle;
+        this._onTotalLengthKnown = null;
         this._onDataArrival = null;
         this._onError = null;
         this._onComplete = null;
@@ -48,6 +51,18 @@ export class BaseLoader {
 
     get status() {
         return this._status;
+    }
+
+    get onTotalLengthKnown() {
+        return this._onTotalLengthKnown;
+    }
+
+    set onTotalLengthKnown(callback) {
+        if (typeof callback !== 'function') {
+            throw 'onTotalLengthKnown must be a callback function!';
+        }
+
+        this._onTotalLengthKnown = callback;
     }
 
     get onDataArrival() {

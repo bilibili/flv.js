@@ -87,15 +87,6 @@ class FetchStreamLoader extends BaseLoader {
     _pump(reader) {  // ReadableStreamReader
         return reader.read().then(function (result) {
             if (result.done) {
-                if (this._contentLength !== null) {
-                    if (this._receivedLength < this._contentLength) {
-                        this._status = LoaderStatus.kError;
-                        if (this._onError) {
-                            this._onError(LoaderError.kEarlyEof, {code: -1, msg: 'fetch stream meet Early-EOF'});
-                        }
-                        return;
-                    }
-                }
                 this._status = LoaderStatus.kComplete;
                 if (this._onComplete) {
                     this._onComplete(this._range.from, this._range.from + this._receivedLength - 1);
@@ -119,6 +110,22 @@ class FetchStreamLoader extends BaseLoader {
                 }
 
                 return this._pump(reader);
+            }
+        }.bind(this)).catch(function (e) {
+            this._status = LoaderStatus.kError;
+            let type = 0;
+            let info = null;
+
+            if (this._contentLength !== null && this._receivedLength < this._contentLength) {
+                type = LoaderError.kEarlyEof;
+                info = {code: e.code, msg: 'fetch stream meet Early-EOF'};
+            } else {
+                type = LoaderError.kException;
+                info = {code: e.code, msg: e.message};
+            }
+
+            if (this._onError) {
+                this._onError(type, info);
             }
         }.bind(this));
     }

@@ -19,7 +19,7 @@ class MozChunkedLoader extends BaseLoader {
         super('xhr-moz-chunked');
         this._xhr = null;
         this._requestAbort = false;
-        this._totalLength = null;
+        this._contentLength = null;
         this._receivedLength = 0;
     }
 
@@ -38,6 +38,7 @@ class MozChunkedLoader extends BaseLoader {
         let xhr = this._xhr = new XMLHttpRequest();
 
         xhr.open('GET', url, true);
+        xhr.timeout = 5000;
         xhr.responseType = 'moz-chunked-arraybuffer';
         xhr.onreadystatechange = this._onReadyStateChange.bind(this);
         xhr.onprogress = this._onProgress.bind(this);
@@ -85,11 +86,11 @@ class MozChunkedLoader extends BaseLoader {
     }
 
     _onProgress(e) {
-        if (this._totalLength === null) {
+        if (this._contentLength === null) {
             if (e.total !== null && e.total !== 0) {
-                this._totalLength = e.total;
-                if (this._onTotalLengthKnown) {
-                    this._onTotalLengthKnown(this._totalLength);
+                this._contentLength = e.total;
+                if (this._onContentLengthKnown) {
+                    this._onContentLengthKnown(this._contentLength);
                 }
             }
         }

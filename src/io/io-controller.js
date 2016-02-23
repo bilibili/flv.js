@@ -86,7 +86,7 @@ class IOController {
 
     _createLoader() {
         this._loader = new this._loaderClass();
-        this._loader.onTotalLengthKnown = this._onTotalLengthKnown.bind(this);
+        this._loader.onContentLengthKnown = this._onContentLengthKnown.bind(this);
         this._loader.onDataArrival = this._onLoaderChunkArrival.bind(this);
         this._loader.onComplete = this._onLoaderComplete.bind(this);
         this._loader.onError = this._onLoaderError.bind(this);
@@ -231,7 +231,7 @@ class IOController {
         return this._onDataArrival(chunks, byteStart);
     }
 
-    _onTotalLengthKnown(total) {
+    _onContentLengthKnown(total) {
         if (total && this._fullRequestFlag) {
             this._totalLength = total;
             this._fullRequestFlag = false;

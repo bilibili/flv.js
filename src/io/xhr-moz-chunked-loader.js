@@ -27,7 +27,14 @@ class MozChunkedLoader extends BaseLoader {
         if (this.isWorking()) {
             this.abort();
         }
-        this._xhr = null;
+        if (this._xhr) {
+            this._xhr.onreadystatechange = null;
+            this._xhr.onprogress = null;
+            this._xhr.onloadend = null;
+            this._xhr.ontimeout = null;
+            this._xhr.onerror = null;
+            this._xhr = null;
+        }
         super.destroy();
     }
 
@@ -38,13 +45,13 @@ class MozChunkedLoader extends BaseLoader {
         let xhr = this._xhr = new XMLHttpRequest();
 
         xhr.open('GET', url, true);
-        xhr.timeout = 5000;
+        xhr.timeout = 10000;
         xhr.responseType = 'moz-chunked-arraybuffer';
         xhr.onreadystatechange = this._onReadyStateChange.bind(this);
         xhr.onprogress = this._onProgress.bind(this);
         xhr.onloadend = this._onLoadEnd.bind(this);
         xhr.ontimeout = this._onTimeout.bind(this);
-        xhr.onerror = this._onError.bind(this);
+        xhr.onerror = this._onXhrError.bind(this);
 
         if (range.from !== 0 || range.to !== -1) {
             let param;
@@ -72,7 +79,7 @@ class MozChunkedLoader extends BaseLoader {
         let xhr = e.target;
 
         if (xhr.readyState === 2) {  // HEADERS_RECEIVED
-            if (xhr.status !== 200 && xhr.status !== 206) {
+            if (xhr.status !== 0 && xhr.status !== 200 && xhr.status !== 206) {
                 this._status = LoaderStatus.kError;
                 if (this._onError) {
                     this._onError(LoaderError.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
@@ -110,7 +117,10 @@ class MozChunkedLoader extends BaseLoader {
         if (this._requestAbort === true) {
             this._requestAbort = false;
             return;
+        } else if (this._status === LoaderStatus.kError) {
+            return;
         }
+
         this._status = LoaderStatus.kComplete;
         if (this._onComplete) {
             this._onComplete(this._range.from, this._range.from + this._receivedLength - 1);
@@ -126,12 +136,23 @@ class MozChunkedLoader extends BaseLoader {
         }
     }
 
-    _onError(e) {
+    _onXhrError(e) {
         this._status = LoaderStatus.kError;
-        if (this._onError) {
-            this._onError(LoaderError.kException, {code: e.target.status, msg: e.error});
+        let type = 0;
+        let info = null;
+
+        if (this._contentLength && e.loaded < this._contentLength) {
+            type = LoaderError.kEarlyEof;
+            info = {code: -1, msg: 'Moz-Chunked stream meet Early-Eof'};
         } else {
-            throw e.error;
+            type = LoaderError.kException;
+            info = {code: -1, msg: e.constructor.name + ' ' + e.type};
+        }
+
+        if (this._onError) {
+            this._onError(type, info);
+        } else {
+            throw info.msg;
         }
     }
 

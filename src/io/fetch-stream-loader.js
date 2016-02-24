@@ -116,16 +116,13 @@ class FetchStreamLoader extends BaseLoader {
             let type = 0;
             let info = null;
 
-            if (this._contentLength !== null && this._receivedLength < this._contentLength) {
-                type = LoaderError.kEarlyEof;
-                info = {code: e.code, msg: 'fetch stream meet Early-EOF'};
-            } else {
-                type = LoaderError.kException;
-                info = {code: e.code, msg: e.message};
-            }
+            type = LoaderError.kEarlyEof;
+            info = {code: e.code, msg: 'Fetch stream meet Early-EOF'};
 
             if (this._onError) {
                 this._onError(type, info);
+            } else {
+                throw info.msg;
             }
         }.bind(this));
     }

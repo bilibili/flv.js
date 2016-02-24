@@ -1,4 +1,4 @@
-import {LoaderStatus} from './loader.js';
+import {LoaderStatus, LoaderError} from './loader.js';
 import SpeedCalculator from './speed-calculator.js';
 import FetchStreamLoader from './fetch-stream-loader.js';
 import MozChunkedLoader from './xhr-moz-chunked-loader.js';
@@ -27,6 +27,9 @@ class IOController {
         this._speedCalc = new SpeedCalculator();
         this._speedNormalizeList = [64, 128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096];
 
+        this._onDataArrival = null;
+        this._onError = null;
+
         this._selectLoader();
         this._createLoader();
     }
@@ -47,6 +50,7 @@ class IOController {
         this._speedCalc = null;
 
         this._onDataArrival = null;
+        this._onError = null;
     }
 
     get status() {
@@ -64,6 +68,19 @@ class IOController {
         }
 
         this._onDataArrival = callback;
+    }
+
+    // prototype: function onError(type: number, info: {code: number, msg: string}): void
+    get onError() {
+        return this._onError;
+    }
+
+    set onError(callback) {
+        if (typeof callback !== 'function') {
+            throw 'onError must be a callback function!';
+        }
+
+        this._onError = callback;
     }
 
     get stashBufferEnabled() {
@@ -154,6 +171,16 @@ class IOController {
         this._loader.open(this._url, range);
     }
 
+    updateUrl(url) {
+        if (!url || typeof url !== 'string' || url.length === 0) {
+            throw 'Url must be a non-empty string!';
+        }
+
+        this._url = url;
+
+        // TODO: reconnect with new url
+    }
+
     _expandBuffer(expectedBytes) {
         let bufferNewSize = this._stashSize;
         while (bufferNewSize + 1024 * 1024 * 1 < expectedBytes) {
@@ -231,11 +258,11 @@ class IOController {
         return this._onDataArrival(chunks, byteStart);
     }
 
-    _onContentLengthKnown(total) {
-        if (total && this._fullRequestFlag) {
-            this._totalLength = total;
+    _onContentLengthKnown(contentLength) {
+        if (contentLength && this._fullRequestFlag) {
+            this._totalLength = contentLength;
             this._fullRequestFlag = false;
-            console.log('Content-Length: ' + total);
+            console.log('Content-Length: ' + contentLength);
         }
     }
 
@@ -341,22 +368,20 @@ class IOController {
         }
     }
 
-    _onLoaderComplete(from, to) {
-        // Force-flush stash buffer
+    _flushStashBuffer() {
         if (this._stashUsed > 0) {
             let buffer = this._stashBuffer.slice(0, this._stashUsed);
             let consumed = this._dispatchChunks(buffer, this._stashByteStart);
             if (consumed < buffer.byteLength) {
                 let remain = buffer.byteLength - consumed;
-                console.warn('IOController: ' + remain + ' bytes unconsumed data remain when loader completed');
+                console.warn('IOController: ' + remain + ' bytes unconsumed data remain when flush buffer');
             }
             this._stashUsed = 0;
             this._stashByteStart += buffer.byteLength;
         }
+    }
 
-        console.log('IOController: loader complete, from = ' + from + ', to = ' + to);
-        console.log(JSON.stringify(this._progressSegments));
-
+    _mergeSegmentsAndGetNext(from, to) {
         let segments = this._progressSegments;
         let length = segments.length;
         let next = {from: -1, to: -1};
@@ -405,6 +430,18 @@ class IOController {
             }
         }
 
+        return next;
+    }
+
+    _onLoaderComplete(from, to) {
+        // Force-flush stash buffer
+        this._flushStashBuffer();
+
+        console.log('IOController: loader complete, from = ' + from + ', to = ' + to);
+        console.log(JSON.stringify(this._progressSegments));
+
+        let next = this._mergeSegmentsAndGetNext(from, to);
+
         console.log('Adjusted segments: ' + JSON.stringify(this._progressSegments));
 
         // continue loading from appropriate position
@@ -414,9 +451,31 @@ class IOController {
     }
 
     _onLoaderError(type, data) {
-        // TODO: http reconnect or throw out error.
-        // Allow user to re-assign segment url for retrying (callback -> Flv)
-        console.log('IOController: loader error, code = ' + data.code + ', msg = ' + data.msg);
+        console.error('IOController: loader error, code = ' + data.code + ', msg = ' + data.msg);
+
+        this._flushStashBuffer();
+
+        switch (type) {
+            case LoaderError.kEarlyEof:
+                // http reconnect
+                console.warn('Connection lost, trying reconnect...');
+                let current = this._currentSegment;
+                let next = this._mergeSegmentsAndGetNext(current.from, current.to);
+                if (next.from !== -1) {
+                    this.seek(next.from);
+                }
+                return;
+            case LoaderError.kConnectingTimeout:
+            case LoaderError.kHttpStatusCodeInvalid:
+            case LoaderError.kException:
+                break;
+        }
+
+        if (this._onError) {
+            this._onError(type, data);
+        } else {
+            throw 'IOException: ' + data.msg;
+        }
     }
 
 }

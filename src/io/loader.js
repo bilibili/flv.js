@@ -3,8 +3,7 @@ export const LoaderStatus = {
     kConnecting: 1,
     kBuffering: 2,
     kError: 3,
-    kEarlyEof: 4,
-    kComplete: 5
+    kComplete: 4
 };
 
 export const LoaderError = {

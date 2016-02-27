@@ -1,17 +1,5 @@
 import decodeUTF8 from '../utils/utf8-conv.js';
 
-function Swap16(src) {
-    return (((src >>> 8) & 0xFF) |
-            ((src & 0xFF) << 8));
-}
-
-function Swap32(src) {
-    return (((src & 0xFF000000) >>> 24) |
-            ((src & 0x00FF0000) >>> 8)  |
-            ((src & 0x0000FF00) << 8)   |
-            ((src & 0x000000FF) << 24));
-}
-
 let le = (function () {
     let buf = new ArrayBuffer(2);
     (new DataView(buf)).setInt16(0, 256, true);  // little-endian write
@@ -60,7 +48,7 @@ class AMF {
             throw 'AMF: data not enough when parse String';
         }
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
-        let length = Swap16(v.getUint16(0, le));
+        let length = v.getUint16(0, !le);
 
         return {
             data: decodeUTF8(new Uint8Array(arrayBuffer, dataOffset + 2, length)),
@@ -73,7 +61,7 @@ class AMF {
             throw 'AMF: data not enough when parse LongString';
         }
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
-        let length = Swap32(v.getUint32(0, le));
+        let length = v.getUint32(0, !le);
 
         return {
             data: decodeUTF8(new Uint8Array(arrayBuffer, dataOffset + 4, length)),
@@ -87,7 +75,7 @@ class AMF {
         }
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
         let timestamp = v.getFloat64(0, !le);
-        //let localTimeOffset = Swap16(v.getInt16(8, le));
+        //let localTimeOffset = v.getInt16(8, !le);
 
         return {
             data: new Date(timestamp),
@@ -124,7 +112,7 @@ class AMF {
             case 3: { // Object(s) type
                 value = {};
                 let terminal = 0;  // workaround for malformed Objects which has missing ScriptDataObjectEnd
-                if ((Swap32(v.getUint32(dataSize - 4, le)) & 0x00FFFFFF) === 9) {
+                if ((v.getUint32(dataSize - 4, !le) & 0x00FFFFFF) === 9) {
                     terminal = 3;
                 }
                 while (offset < dataSize - 4) {  // 4 === type(UI8) + ScriptDataObjectEnd(UI24)
@@ -133,7 +121,7 @@ class AMF {
                     offset += amfobj.size;
                 }
                 if (offset <= dataSize - 3) {
-                    let marker = Swap32(v.getUint32(offset - 1, le)) & 0x00FFFFFF;
+                    let marker = v.getUint32(offset - 1, !le) & 0x00FFFFFF;
                     if (marker === 9) {
                         offset += 3;
                     }
@@ -144,7 +132,7 @@ class AMF {
                 value = {};
                 offset += 4;  // ECMAArrayLength(UI32)
                 let terminal = 0;  // workaround for malformed MixedArrays which has missing ScriptDataObjectEnd
-                if ((Swap32(v.getUint32(dataSize - 4, le)) & 0x00FFFFFF) === 9) {
+                if ((v.getUint32(dataSize - 4, !le) & 0x00FFFFFF) === 9) {
                     terminal = 3;
                 }
                 while (offset < dataSize - 8) {  // 8 === type(UI8) + ECMAArrayLength(UI32) + ScriptDataVariableEnd(UI24)
@@ -153,7 +141,7 @@ class AMF {
                     offset += amfvar.size;
                 }
                 if (offset <= dataSize - 3) {
-                    let marker = Swap32(v.getUint32(offset - 1, le)) & 0x00FFFFFF;
+                    let marker = v.getUint32(offset - 1, !le) & 0x00FFFFFF;
                     if (marker === 9) {
                         offset += 3;
                     }
@@ -163,7 +151,7 @@ class AMF {
             case 10:  // Strict array type
                 // ScriptDataValue[n]. NOTE: according to video_file_format_spec_v10_1.pdf
                 value = [];
-                let strictArrayLength = Swap32(v.getUint32(1, le));
+                let strictArrayLength = v.getUint32(1, !le);
                 offset += 4;
                 for (let i = 0; i < strictArrayLength; i++) {
                     let val = AMF.parseValue(arrayBuffer, dataOffset + offset, dataSize - offset);

@@ -1,3 +1,4 @@
+import Log from '../utils/logger.js';
 import {LoaderStatus, LoaderError} from './loader.js';
 import SpeedCalculator from './speed-calculator.js';
 import FetchStreamLoader from './fetch-stream-loader.js';
@@ -9,6 +10,8 @@ class IOController {
     // TODO: events. callbacks or EventEmitter?
 
     constructor(url) {
+        this.TAG = this.constructor.name;
+
         this._stashUsed = 0;
         this._stashSize = 1024 * 256;  // initial size: 256KB
         this._bufferSize = 1024 * 1024 * 3;  // initial size: 3MB
@@ -51,6 +54,10 @@ class IOController {
 
         this._onDataArrival = null;
         this._onError = null;
+    }
+
+    isWorking() {
+        return this._loader && this._loader.isWorking();
     }
 
     get status() {
@@ -107,7 +114,7 @@ class IOController {
         this._loader.onDataArrival = this._onLoaderChunkArrival.bind(this);
         this._loader.onComplete = this._onLoaderComplete.bind(this);
         this._loader.onError = this._onLoaderError.bind(this);
-        console.log('Created loader: ' + this._loader.type);  // FIXME
+        Log.v(this.TAG, 'Created loader: ' + this._loader.type);  // FIXME
     }
 
     open() {
@@ -124,16 +131,21 @@ class IOController {
     }
 
     seek(bytes) {
+        this._internalSeek(bytes, true);
+    }
+
+    // When seeking request is from media seeking, unconsumed stash data should be dropped
+    // However, stash data shouldn't be dropped if seeking requested from http reconnection
+    _internalSeek(bytes, dropUnconsumed) {
         if (this._loader.isWorking()) {
             this._loader.abort();
         }
-        this._stashUsed = 0;
-        this._stashByteStart = 0;
+        this._flushStashBuffer(dropUnconsumed);
 
         this._loader.destroy();
         this._loader = null;
 
-        console.log('segments before seek: ' + JSON.stringify(this._progressSegments));
+        Log.v(this.TAG, 'segments before seek: ' + JSON.stringify(this._progressSegments));
 
         let segments = this._progressSegments;
         let range = {from: bytes, to: -1};
@@ -165,7 +177,7 @@ class IOController {
         this._currentSegment = {from: range.from, to: -1};
         segments.splice(insertIndex, 0, this._currentSegment);
 
-        console.log('segments after seek: ' + JSON.stringify(this._progressSegments));
+        Log.v(this.TAG, 'segments after seek: ' + JSON.stringify(this._progressSegments));
 
         this._createLoader();
         this._loader.open(this._url, range);
@@ -202,7 +214,7 @@ class IOController {
 
         this._stashBuffer = newBuffer;
         this._bufferSize = bufferNewSize;
-        console.log('expandBuffer: targetBufferSize = ' + this._bufferSize);
+        Log.v(this.TAG, `expandBuffer: targetBufferSize = ${this._bufferSize}`);
     }
 
     _normalizeSpeed(input) {
@@ -249,11 +261,11 @@ class IOController {
             this._expandBuffer(bufferSize);
         }
         this._stashSize = stashSizeKB * 1024;
-        console.log('adjustStashSize: targetStashSize = ' + stashSizeKB + ' KB');
+        Log.v(this.TAG, `adjustStashSize: targetStashSize = ${stashSizeKB} KB`);
     }
 
     _dispatchChunks(chunks, byteStart) {
-        console.log('_dispatchChunks: chunkSize = ' + chunks.byteLength + ', byteStart = ' + byteStart);
+        Log.v(this.TAG, `_dispatchChunks: chunkSize = ${chunks.byteLength}, byteStart = ${byteStart}`);
         this._currentSegment.to = byteStart + chunks.byteLength - 1;
         return this._onDataArrival(chunks, byteStart);
     }
@@ -262,7 +274,7 @@ class IOController {
         if (contentLength && this._fullRequestFlag) {
             this._totalLength = contentLength;
             this._fullRequestFlag = false;
-            console.log('Content-Length: ' + contentLength);
+            Log.v(this.TAG, `Content-Length: ${contentLength}`);
         }
     }
 
@@ -368,16 +380,27 @@ class IOController {
         }
     }
 
-    _flushStashBuffer() {
+    _flushStashBuffer(dropUnconsumed) {
         if (this._stashUsed > 0) {
             let buffer = this._stashBuffer.slice(0, this._stashUsed);
             let consumed = this._dispatchChunks(buffer, this._stashByteStart);
             if (consumed < buffer.byteLength) {
-                let remain = buffer.byteLength - consumed;
-                console.warn('IOController: ' + remain + ' bytes unconsumed data remain when flush buffer');
+                if (dropUnconsumed) {
+                    let remain = buffer.byteLength - consumed;
+                    Log.w(this.TAG, `${remain} bytes unconsumed data remain when flush buffer, dropped`);
+                } else {
+                    if (consumed > 0) {
+                        let stashArray = new Uint8Array(this._stashBuffer, 0, this._bufferSize);
+                        let remainArray = new Uint8Array(buffer, consumed);
+                        stashArray.set(remainArray, 0);
+                        this._stashUsed = remainArray.byteLength;
+                        this._stashByteStart += consumed;
+                    }
+                    return;
+                }
             }
             this._stashUsed = 0;
-            this._stashByteStart += buffer.byteLength;
+            this._stashByteStart = 0;
         }
     }
 
@@ -435,14 +458,14 @@ class IOController {
 
     _onLoaderComplete(from, to) {
         // Force-flush stash buffer
-        this._flushStashBuffer();
+        this._flushStashBuffer(true);
 
-        console.log('IOController: loader complete, from = ' + from + ', to = ' + to);
-        console.log(JSON.stringify(this._progressSegments));
+        Log.v(this.TAG, `Loader complete, from = ${from}, to = ${to}`);
+        Log.v(this.TAG, JSON.stringify(this._progressSegments));
 
         let next = this._mergeSegmentsAndGetNext(from, to);
 
-        console.log('Adjusted segments: ' + JSON.stringify(this._progressSegments));
+        Log.v(this.TAG, 'Adjusted segments: ' + JSON.stringify(this._progressSegments));
 
         // continue loading from appropriate position
         if (next.from !== -1) {
@@ -451,18 +474,18 @@ class IOController {
     }
 
     _onLoaderError(type, data) {
-        console.error('IOController: loader error, code = ' + data.code + ', msg = ' + data.msg);
+        Log.e(this.TAG, `Loader error, code = ${data.code}, msg = ${data.msg}`);
 
-        this._flushStashBuffer();
+        this._flushStashBuffer(false);
 
         switch (type) {
             case LoaderError.kEarlyEof:
                 // http reconnect
-                console.warn('Connection lost, trying reconnect...');
+                Log.w(this.TAG, 'Connection lost, trying reconnect...');
                 let current = this._currentSegment;
                 let next = this._mergeSegmentsAndGetNext(current.from, current.to);
                 if (next.from !== -1) {
-                    this.seek(next.from);
+                    this._internalSeek(next.from, false);
                 }
                 return;
             case LoaderError.kConnectingTimeout:

@@ -1,3 +1,4 @@
+import Log from '../utils/logger.js';
 import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
 
 class FetchStreamLoader extends BaseLoader {
@@ -12,6 +13,7 @@ class FetchStreamLoader extends BaseLoader {
 
     constructor() {
         super('fetch-stream');
+        this.TAG = this.constructor.name;
         this._requestAbort = false;
         this._contentLength = null;
         this._receivedLength = 0;
@@ -103,7 +105,7 @@ class FetchStreamLoader extends BaseLoader {
                 let chunk = result.value;
                 let byteStart = this._range.from + this._receivedLength;
                 this._receivedLength += chunk.byteLength;
-                console.log('fetch: received chunk, size = ' + chunk.byteLength + ', total_received = ' + this._receivedLength);
+                Log.v(this.TAG, 'Received chunk, size = ' + chunk.byteLength + ', total_received = ' + this._receivedLength);
 
                 if (this._onDataArrival) {
                     this._onDataArrival(chunk, byteStart, this._receivedLength);

@@ -1,3 +1,4 @@
+import Log from '../utils/logger.js';
 import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
 
 // For FireFox browser which supports `xhr.responseType = 'moz-chunked-arraybuffer'`
@@ -17,6 +18,7 @@ class MozChunkedLoader extends BaseLoader {
 
     constructor() {
         super('xhr-moz-chunked');
+        this.TAG = this.constructor.name;
         this._xhr = null;
         this._requestAbort = false;
         this._contentLength = null;
@@ -106,7 +108,7 @@ class MozChunkedLoader extends BaseLoader {
         let byteStart = this._range.from + this._receivedLength;
         this._receivedLength += chunk.byteLength;
 
-        console.log('MozChunkedLoader: received chunk, size = ' + chunk.byteLength + ', total_received = ' + this._receivedLength);
+        Log.v(this.TAG, 'Received chunk, size = ' + chunk.byteLength + ', total_received = ' + this._receivedLength);
 
         if (this._onDataArrival) {
             this._onDataArrival(chunk, byteStart, this._receivedLength);

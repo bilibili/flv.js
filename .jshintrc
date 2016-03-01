@@ -1,7 +1,7 @@
 {
     "esnext": true,
     "noarg": true,
-    "noempty": true,
+    //"noempty": true,
     "latedef": true,
     "undef": true,
     //"unused": true,

@@ -1,11 +1,19 @@
+import Log from '../utils/logger.js';
+
 class MP4Remuxer {
 
     constructor() {
+        this.TAG = this.constructor.name;
+
         this._onFragGenerated = null;
     }
 
+    destroy() {
+
+    }
+
     bindDataSource(producer) {
-        producer.onDataAvailable = this.Remux.bind(this);
+        producer.onDataAvailable = this.remux.bind(this);
         return this;
     }
 
@@ -21,8 +29,15 @@ class MP4Remuxer {
         this._onFragGenerated = callback;
     }
 
-    Remux(data) {
+    remux(audioTrack, videoTrack) {
+        Log.v(this.TAG, `Received data, audioSize = ${audioTrack.length}, videoSize = ${videoTrack.length}, nbNalu = ${videoTrack.nbNalu}`);
 
+        audioTrack.samples = [];
+        audioTrack.length = 0;
+
+        videoTrack.samples = [];
+        videoTrack.length = 0;
+        videoTrack.nbNalu = 0;
     }
 
 }

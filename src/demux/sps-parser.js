@@ -2,27 +2,37 @@ import ExpGolomb from './exp-golomb.js';
 
 class SPSParser {
 
-    // TODO: extract more info (such as chroma_format(420, 422, 444), avc_profile, fps, ...)
     static parseSPS(uint8array) {
         let gb = new ExpGolomb(uint8array);
 
         gb.readByte();
         let profile_idc = gb.readByte();  // profile_idc
         gb.readByte();  // constraint_set_flags[5] + reserved_zero[3]
-        let level_idc = gb.readByte();  // level_idc
+        gb.readByte();  // level_idc
         gb.readUEG();  // seq_parameter_set_id
 
+        let profile_string = 'Baseline';
         let chroma_format_idc = 0;
+        let chroma_format = 420;
+        let chroma_format_table = [0, 420, 422, 444];
+        let bit_depth = 8;
+
         if (profile_idc === 100 || profile_idc === 110 || profile_idc === 122 ||
             profile_idc === 244 || profile_idc === 44 || profile_idc === 83 ||
             profile_idc === 86 || profile_idc === 118 || profile_idc === 128 ||
             profile_idc === 138 || profile_idc === 144) {
 
+            profile_string = SPSParser.getProfileString(profile_idc);
+
             chroma_format_idc = gb.readUEG();
             if (chroma_format_idc === 3) {
                 this.readBits(1);  // separate_colour_plane_flag
             }
-            gb.readUEG();  // bit_depth_luma_minus8
+            if (chroma_format_idc <= 3) {
+                chroma_format = chroma_format_table[chroma_format_idc];
+            }
+
+            bit_depth = gb.readUEG() + 8;  // bit_depth_luma_minus8
             gb.readUEG();  // bit_depth_chroma_minus8
             gb.readBits(1);  // qpprime_y_zero_transform_bypass_flag
             if (gb.readBool()) {  // seq_scaling_matrix_present_flag
@@ -77,6 +87,8 @@ class SPSParser {
         }
 
         let sar_width = 1, sar_height = 1;
+        let fps = 0, fps_fixed = true, fps_num = 0, fps_den = 0;
+
         let vui_parameters_present_flag = gb.readBool();
         if (vui_parameters_present_flag) {
             if (gb.readBool()) {  // aspect_ratio_info_present_flag
@@ -90,6 +102,29 @@ class SPSParser {
                 } else if (aspect_ratio_idc === 255) {
                     sar_width = gb.readByte() << 8 | gb.readByte();
                     sar_height = gb.readByte() << 8 | gb.readByte();
+                }
+
+                if (gb.readBool()) {  // overscan_info_present_flag
+                    gb.readBool();  // overscan_appropriate_flag
+                }
+                if (gb.readBool()) {  // video_signal_type_present_flag
+                    gb.readBits(4);  // video_format & video_full_range_flag
+                    if (gb.readBool()) {  // colour_description_present_flag
+                        gb.readBits(24);  // colour_primaries & transfer_characteristics & matrix_coefficients
+                    }
+                }
+                if (gb.readBool()) {  // chroma_loc_info_present_flag
+                    gb.readUEG();  // chroma_sample_loc_type_top_field
+                    gb.readUEG();  // chroma_sample_loc_type_bottom_field
+                }
+                if (gb.readBool()) {  // timing_info_present_flag
+                    let num_units_in_tick = gb.readBits(32);
+                    let time_scale = gb.readBits(32);
+                    fps_fixed = gb.readBool();  // fixed_frame_rate_flag
+
+                    fps_num = time_scale;
+                    fps_den = num_units_in_tick * 2;
+                    fps = fps_num / fps_den;
                 }
             }
         }
@@ -122,15 +157,28 @@ class SPSParser {
         gb = null;
 
         return {
-            sarRatio: {
+            profile_string: profile_string,  // baseline, high, high10, ...
+            bit_depth: bit_depth,  // 8bit, 10bit, ...
+            chroma_format: chroma_format,  // 4:2:0, 4:2:2, ...
+
+            frame_rate: {
+                fixed: fps_fixed,
+                fps: fps,
+                fps_den: fps_den,
+                fps_num: fps_num
+            },
+
+            sar_ratio: {
                 width: sar_width,
                 height: sar_height
             },
-            codecSize: {
+
+            codec_size: {
                 width: codec_width,
                 height: codec_height
             },
-            presentSize: {
+
+            present_size: {
                 width: present_width,
                 height: codec_height
             }
@@ -146,6 +194,21 @@ class SPSParser {
                 next_scale = (last_scale + delta_scale + 256) % 256;
             }
             last_scale = (next_scale === 0) ? last_scale : next_scale;
+        }
+    }
+
+    static getProfileString(profile_idc) {
+        switch (profile_idc) {
+            case 100:
+                return 'High';
+            case 110:
+                return 'High10';
+            case 122:
+                return 'High422';
+            case 244:
+                return 'High444';
+            default:
+                return 'Unknown';
         }
     }
 

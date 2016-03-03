@@ -1,6 +1,7 @@
 import Log from '../utils/logger.js';
 import AMF from './amf-parser.js';
 import SPSParser from './sps-parser.js';
+import {DemuxerError} from './demuxer.js';
 
 function Swap16(src) {
     return (((src >>> 8) & 0xFF) |
@@ -29,6 +30,7 @@ class FlvDemuxer {
     constructor(probeData) {
         this.TAG = this.constructor.name;
 
+        this._onError = null;
         this._onDataAvailable = null;
 
         this._hasAudioTrack = probeData.hasAudioTrack;
@@ -56,7 +58,8 @@ class FlvDemuxer {
     }
 
     destroy() {
-
+        this._onError = null;
+        this._onDataAvailable = null;
     }
 
     static probe(buffer) {
@@ -98,8 +101,18 @@ class FlvDemuxer {
         return this;
     }
 
-    // TODO: onError callback (need asynchronize?)
     // TODO: onMetaData callback (pass metadatas)
+
+    // prototype: function(type: number, info: string): void
+    get onError() {
+        return this._onError;
+    }
+
+    set onError(callback) {
+        if (typeof callback !== 'function')
+            throw 'onError must be a callback function';
+        this._onError = callback;
+    }
 
     // prototype: function(videoTrack, audioTrack)
     get onDataAvailable() {
@@ -107,10 +120,8 @@ class FlvDemuxer {
     }
 
     set onDataAvailable(callback) {
-        if (typeof callback !== 'function') {
+        if (typeof callback !== 'function')
             throw 'onDataAvailable must be a callback function!';
-        }
-
         this._onDataAvailable = callback;
     }
 
@@ -126,19 +137,23 @@ class FlvDemuxer {
     parseChunks(chunk, byteStart) {
         Log.v(this.TAG, 'FlvDemuxer: received chunk start = ' + byteStart + ', size = ' + chunk.byteLength);
 
+        if (!this._onError) {
+            throw 'Flv: onError callback must be specified';
+        }
+
         let offset = 0;
         let le = this._littleEndian;
 
         if (this._firstParse) {  // handle PreviousTagSize0 before Tag1
             this._firstParse = false;
             if (byteStart !== this._dataOffset) {
-                throw 'Flv: First time parsing but chunk byteStart invalid!';
+                Log.w(this.TAG, 'First time parsing but chunk byteStart invalid!');
             }
 
             let v = new DataView(chunk);
             let prevTagSize0 = v.getUint32(0, !le);
             if (prevTagSize0 !== 0) {
-                throw 'Flv: PrevTagSize0 !== 0 !!!';
+                Log.w(this.TAG, 'PrevTagSize0 !== 0 !!!');
             }
             offset += 4;
         }
@@ -152,7 +167,6 @@ class FlvDemuxer {
             }
 
             let tagType = v.getUint8(0);
-
             let dataSize = v.getUint32(0, !le) & 0x00FFFFFF;
 
             if (offset + 11 + dataSize + 4 > chunk.byteLength) {
@@ -161,7 +175,7 @@ class FlvDemuxer {
             }
 
             if (tagType !== 8 && tagType !== 9 && tagType !== 18) {
-                Log.w(this.TAG, 'Flv: Unsupported tag type ' + tagType);
+                Log.w(this.TAG, `Unsupported tag type ${tagType}, skipped`);
                 // consume the whole tag (skip it)
                 offset += 11 + dataSize + 4;
                 continue;
@@ -176,8 +190,7 @@ class FlvDemuxer {
 
             let streamId = v.getUint32(7, !le) & 0x00FFFFFF;
             if (streamId !== 0) {
-                // TODO: ignore and print logcat?
-                throw 'Flv: Meet tag which has StreamID != 0!';
+                Log.w(this.TAG, 'Meet tag which has StreamID != 0!');
             }
 
             let dataOffset = offset + 11;
@@ -197,7 +210,7 @@ class FlvDemuxer {
 
             let prevTagSize = v.getUint32(11 + dataSize, !le);
             if (prevTagSize !== 11 + dataSize) {
-                throw 'Flv: Invalid PrevTagSize ' + prevTagSize;
+                Log.w(this.TAG, `Invalid PrevTagSize ${prevTagSize}`);
             }
 
             offset += 11 + dataSize + 4;  // tagBody + dataSize + prevTagSize
@@ -225,7 +238,8 @@ class FlvDemuxer {
             let soundFormat = soundSpec >>> 4;
             if (soundFormat !== 10) {  // AAC
                 // TODO: support MP3 audio codec
-                throw 'Flv: Unsupported audio codec!';
+                this._onError(DemuxerError.kCodecUnsupported, 'Flv: Unsupported audio codec idx: ' + soundFormat);
+                return;
             }
 
             let soundRate = 0;
@@ -247,7 +261,8 @@ class FlvDemuxer {
                     soundRate = 48000;
                     break;
                 default:
-                    throw 'Flv: Unsupported audio sample rate!';
+                    this._onError(DemuxerError.kCodecUnsupported, 'Flv: Unsupported audio sample rate idx: ' + soundRateIndex);
+                    return;
             }
 
             let soundSize = (soundSpec & 2) >>> 1;  // unused
@@ -262,8 +277,8 @@ class FlvDemuxer {
 
         if (aacData.packetType === 0) {  // AAC sequence header (AudioSpecificConfig)
             if (track.config) {
-                Log.v(this.TAG, 'Found another AACSequenceHeader!');
-                // TODO: throw or ignore?
+                Log.w(this.TAG, 'Found another AACSequenceHeader!');
+                // TODO: ignore or reset demuxer?
             } else {
                 let misc = aacData.data;
                 track.audioSampleRate = misc.samplingRate;
@@ -280,8 +295,7 @@ class FlvDemuxer {
             track.samples.push(aacSample);
             track.length += aacData.data.length;
         } else {
-            // TODO
-            throw 'Flv: Unsupported AAC data type!';
+            Log.e(this.TAG, `Flv: Unsupported AAC data type ${aacData.packetType}`);
         }
     }
 
@@ -329,7 +343,8 @@ class FlvDemuxer {
         // 4 bits
         samplingIndex = ((array[0] & 0x07) << 1) | (array[1] >>> 7);
         if (samplingIndex < 0 || samplingIndex >= mpegSamplingRates.length) {
-            throw 'Flv: AAC invalid sampling frequency index!';
+            this._onError(DemuxerError.kFormatError, 'Flv: AAC invalid sampling frequency index!');
+            return;
         }
 
         let samplingFrequence = mpegSamplingRates[samplingIndex];
@@ -337,7 +352,8 @@ class FlvDemuxer {
         // 4 bits
         let channelConfig = (array[1] & 0x78) >>> 3;
         if (channelConfig < 0 || channelConfig >= 8) {
-            throw 'Flv: AAC invalid channel configuration';
+            this._onError(DemuxerError.kFormatError, 'Flv: AAC invalid channel configuration');
+            return;
         }
 
         if (audioObjectType === 5) {  // HE-AAC?
@@ -409,7 +425,8 @@ class FlvDemuxer {
         let codecId = spec & 15;
 
         if (codecId !== 7) {
-            throw 'Flv: Detect unsupported codec in video frame!';
+            this._onError(DemuxerError.kCodecUnsupported, `Flv: Unsupported codec in video frame: ${codecId}`);
+            return;
         }
 
         this._parseAVCVideoPacket(arrayBuffer, dataOffset + 1, dataSize - 1, tagTimestamp);
@@ -417,7 +434,7 @@ class FlvDemuxer {
 
     _parseAVCVideoPacket(arrayBuffer, dataOffset, dataSize, tagTimestamp) {
         if (dataSize < 4) {
-            Log.w(this.TAG, 'Invalid AVC packet, missing AVCPacketType or/and CompositionTime');
+            Log.w(this.TAG, 'Flv: Invalid AVC packet, missing AVCPacketType or/and CompositionTime');
             return;
         }
 
@@ -435,7 +452,8 @@ class FlvDemuxer {
         } else if (packetType === 2) {
             // empty, AVC end of sequence
         } else {
-            throw 'Flv: Detect invalid video packet type!';
+            this._onError(DemuxerError.kFormatError, `Flv: Invalid video packet type ${packetType}`);
+            return;
         }
     }
 
@@ -444,44 +462,46 @@ class FlvDemuxer {
         let track = this._videoTrack;
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
 
-        let version = v.getUint8(0);
-        let avcProfile = v.getUint8(1);
-        let profileCompatibility = v.getUint8(2);
-        let avcLevel = v.getUint8(3);
+        let version = v.getUint8(0);  // configurationVersion
+        let avcProfile = v.getUint8(1);  // avcProfileIndication
+        let profileCompatibility = v.getUint8(2);  // profile_compatibility
+        let avcLevel = v.getUint8(3);  // AVCLevelIndication
 
         if (version !== 1 || avcProfile === 0) {
-            throw 'Flv: Invalid AVCDecoderConfigurationRecord';
+            this._onError(DemuxerError.kFormatError, 'Flv: Invalid AVCDecoderConfigurationRecord');
+            return;
         }
 
         this._naluLengthSize = (v.getUint8(4) & 3) + 1;  // lengthSizeMinusOne
         if (this._naluLengthSize !== 3 && this._naluLengthSize !== 4) {  // holy shit!!!
-            throw `Flv: Strange NaluLengthSizeMinusOne: ${this._naluLengthSize - 1}`;
+            this._onError(DemuxerError.kFormatError, `Flv: Strange NaluLengthSizeMinusOne: ${this._naluLengthSize - 1}`);
+            return;
         }
 
-        let spsCount = v.getUint8(5) & 31;
+        let spsCount = v.getUint8(5) & 31;  // numOfSequenceParameterSets
         Log.v(this.TAG, 'SPS count = ' + spsCount);
-        if (spsCount === 0) {
-            throw 'Flv: No H264 SPS!';
-        } else if (spsCount > 1) {
-            Log.w(this.TAG, 'AVCDecoderConfigurationRecord: Detect more than one SPS!');
+        if (spsCount === 0 || spsCount > 1) {
+            this._onError(DemuxerError.kFormatError, `Flv: Invalid H264 SPS count: ${spsCount}`);
+            return;
         }
 
         let offset = 6;
 
         for (let i = 0; i < spsCount; i++) {
-            let len = v.getUint16(offset, !le);
+            let len = v.getUint16(offset, !le);  // sequenceParameterSetLength
             offset += 2;
 
             if (len === 0) {
                 continue;
             }
 
+            // Notice: Nalu without header (00 00 00 01)
             let sps = new Uint8Array(arrayBuffer, dataOffset + offset, len);
             offset += len;
 
             let config = SPSParser.parseSPS(sps);
-            track.width = config.codecSize.width;
-            track.height = config.codecSize.height;
+            track.width = config.codec_size.width;
+            track.height = config.codec_size.height;
             track.sps = [sps];
 
             let codecArray = sps.subarray(1, 4);
@@ -496,24 +516,24 @@ class FlvDemuxer {
             track.codec = codecString;
         }
 
-        let ppsCount = v.getUint8(offset);
+        let ppsCount = v.getUint8(offset);  // numOfPictureParameterSets
         Log.v(this.TAG, 'PPS count = ' + ppsCount);
-        if (ppsCount === 0) {
-            throw 'Flv: No H264 PPS!';
-        } else if (ppsCount > 1) {
-            Log.w(this.TAG, 'AVCDecoderConfigurationRecord: Detect more than one PPS!');
+        if (ppsCount === 0 || ppsCount > 1) {
+            this._onError(DemuxerError.kFormatError, `Flv: Invalid H264 PPS count: ${ppsCount}`);
+            return;
         }
 
         offset++;
 
         for (let i = 0; i < ppsCount; i++) {
-            let len = v.getUint16(offset, !le);
+            let len = v.getUint16(offset, !le);  // pictureParameterSetLength
             offset += 2;
 
             if (len === 0) {
                 continue;
             }
 
+            // Notice: Nalu without header (00 00 00 01)
             let pps = new Uint8Array(arrayBuffer, dataOffset + offset, len);
             offset += len;
 
@@ -521,6 +541,8 @@ class FlvDemuxer {
                 track.pps = [pps];
             }
         }
+
+        track.avcc = new Uint8Array(arrayBuffer, dataOffset, dataSize);
         Log.v(this.TAG, 'Parsed AVCDecoderConfigurationRecord');
     }
 

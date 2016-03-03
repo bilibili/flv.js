@@ -56,7 +56,7 @@ class FetchStreamLoader extends BaseLoader {
                 this._status = LoaderStatus.kIdle;
                 return;
             }
-            if (res.ok && (res.status === 200 || res.status === 206)) {
+            if (res.ok && (res.status >= 200 && res.status <= 299)) {
                 this._contentLength = parseInt(res.headers.get('Content-Length'));
                 if (this._contentLength !== null) {
                     if (this._onContentLengthKnown) {

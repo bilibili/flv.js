@@ -19,8 +19,6 @@
     "requireSpaceBeforeObjectValues": true,
     "requireSemicolons": true,
     "validateParameterSeparator": ", ",
-    "disallowMultipleVarDecl": {
-        "allExcept": ["undefined"]
-    },
+    "disallowMultipleVarDecl": false,
     "fix": true
 }

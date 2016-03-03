@@ -140,7 +140,10 @@ class IOController {
         if (this._loader.isWorking()) {
             this._loader.abort();
         }
-        this._flushStashBuffer(dropUnconsumed);
+        let remain = this._flushStashBuffer(dropUnconsumed);
+        if (remain) {
+            this._currentSegment.to -= remain;
+        }
 
         this._loader.destroy();
         this._loader = null;
@@ -384,9 +387,10 @@ class IOController {
         if (this._stashUsed > 0) {
             let buffer = this._stashBuffer.slice(0, this._stashUsed);
             let consumed = this._dispatchChunks(buffer, this._stashByteStart);
+            let remain = buffer.byteLength - consumed;
+
             if (consumed < buffer.byteLength) {
                 if (dropUnconsumed) {
-                    let remain = buffer.byteLength - consumed;
                     Log.w(this.TAG, `${remain} bytes unconsumed data remain when flush buffer, dropped`);
                 } else {
                     if (consumed > 0) {
@@ -396,12 +400,14 @@ class IOController {
                         this._stashUsed = remainArray.byteLength;
                         this._stashByteStart += consumed;
                     }
-                    return;
+                    return 0;
                 }
             }
             this._stashUsed = 0;
             this._stashByteStart = 0;
+            return remain;
         }
+        return 0;
     }
 
     _mergeSegmentsAndGetNext(from, to) {
@@ -457,7 +463,7 @@ class IOController {
     }
 
     _onLoaderComplete(from, to) {
-        // Force-flush stash buffer
+        // Force-flush stash buffer, and drop unconsumed data
         this._flushStashBuffer(true);
 
         Log.v(this.TAG, `Loader complete, from = ${from}, to = ${to}`);
@@ -469,7 +475,7 @@ class IOController {
 
         // continue loading from appropriate position
         if (next.from !== -1) {
-            this.seek(next.from);
+            this._internalSeek(next.from, true);
         }
     }
 

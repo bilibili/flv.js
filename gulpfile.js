@@ -4,6 +4,7 @@ var del = require('del');
 var gulp = require('gulp');
 var rename = require('gulp-rename');
 var uglify = require('gulp-uglify');
+var eslint = require('gulp-eslint');
 var sourcemaps = require('gulp-sourcemaps');
 var babelify = require('babelify');
 var browserify = require('browserify');
@@ -11,15 +12,22 @@ var watchify = require('watchify');
 var buffer = require('vinyl-buffer');
 var source = require('vinyl-source-stream');
 
-gulp.task('default', ['clean', 'build', 'minimize']);
+gulp.task('default', ['clean', 'lint', 'build', 'minimize']);
 
-gulp.task('clean', function() {
+gulp.task('clean', function () {
     return del([
-        'dist/*.*'
+        'dist/*'
     ]);
 });
 
-gulp.task('build', ['clean'], function() {
+gulp.task('lint', function () {
+    return gulp.src(['gulpfile.js', 'src/*.js', 'src/**/*.js'])
+        .pipe(eslint())
+        .pipe(eslint.format())
+        .pipe(eslint.failAfterError());
+});
+
+gulp.task('build', ['clean', 'lint'], function () {
     var b = browserify({
         entries: 'src/flv.js',
         debug: true,
@@ -35,7 +43,7 @@ gulp.task('build', ['clean'], function() {
         .pipe(gulp.dest('./dist/'));
 });
 
-gulp.task('minimize', ['build'], function() {
+gulp.task('minimize', ['build'], function () {
     var options = {
         sourceMap: true,
         sourceMapIncludeSources: true,
@@ -58,5 +66,5 @@ gulp.task('minimize', ['build'], function() {
             .pipe(uglify(options))
             .on('error', console.error.bind(console))
         .pipe(sourcemaps.write('./'))
-        .pipe(gulp.dest('./dist/'))
+        .pipe(gulp.dest('./dist/'));
 });

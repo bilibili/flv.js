@@ -12,7 +12,36 @@ var watchify = require('watchify');
 var buffer = require('vinyl-buffer');
 var source = require('vinyl-source-stream');
 
-gulp.task('default', ['clean', 'lint', 'build', 'minimize']);
+
+function doWatchify() {
+    var customOpts = {
+        entries: 'src/flv.js',
+        debug: true,
+        transform: [babelify]
+    };
+
+    var opts = Object.assign({}, watchify.args, customOpts);
+    var b = watchify(browserify(opts));
+
+    b.on('update', doBundle.bind(global, b));
+    b.on('log', console.log.bind(console));
+
+    return b;
+}
+
+function doBundle(b) {
+    return b.bundle()
+        .on('error', console.error.bind(console))
+        .pipe(source('flv.js'))
+        .pipe(buffer())
+        .pipe(sourcemaps.init({loadMaps: true}))
+        .pipe(sourcemaps.write('./'))
+        .pipe(gulp.dest('./dist/'));
+}
+
+gulp.task('watchify', doBundle.bind(global, doWatchify()));
+gulp.task('default', ['clean', 'build']);
+gulp.task('release', ['clean', 'lint', 'build', 'minimize']);
 
 gulp.task('clean', function () {
     return del([
@@ -21,29 +50,23 @@ gulp.task('clean', function () {
 });
 
 gulp.task('lint', function () {
-    return gulp.src(['gulpfile.js', 'src/*.js', 'src/**/*.js'])
+    return gulp.src(['gulpfile.js', 'src/**/*.js'])
         .pipe(eslint())
         .pipe(eslint.format())
         .pipe(eslint.failAfterError());
 });
 
-gulp.task('build', ['clean', 'lint'], function () {
+gulp.task('build', ['clean'], function () {
     var b = browserify({
         entries: 'src/flv.js',
         debug: true,
         transform: [babelify]
     });
 
-    return b.bundle()
-        .on('error', console.error.bind(console))
-        .pipe(source('flv.js'))
-        .pipe(buffer())
-        .pipe(sourcemaps.init({loadMaps: true}))
-        .pipe(sourcemaps.write('./'))
-        .pipe(gulp.dest('./dist/'));
+    return doBundle(b);
 });
 
-gulp.task('minimize', ['build'], function () {
+gulp.task('minimize', ['lint', 'build'], function () {
     var options = {
         sourceMap: true,
         sourceMapIncludeSources: true,

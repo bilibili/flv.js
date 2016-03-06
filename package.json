@@ -4,7 +4,8 @@
   "description": "MSE-based FLV implementation",
   "main": "src/flv.js",
   "scripts": {
-    "build": "gulp default",
+    "dev": "gulp watchify",
+    "build": "gulp release",
     "serve": "http-server -p 8000 ."
   },
   "dependencies": {

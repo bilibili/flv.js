@@ -39,9 +39,27 @@ function doBundle(b) {
         .pipe(gulp.dest('./dist/'));
 }
 
-gulp.task('watchify', doBundle.bind(global, doWatchify()));
-gulp.task('default', ['clean', 'build']);
+function doLint(paths, exit) {
+    return gulp.src(paths)
+        .pipe(eslint())
+        .pipe(eslint.format())
+        .pipe(exit ? eslint.failAfterError() : eslint.result(function () {}));
+}
+
+gulp.task('default', ['clean', 'lint', 'build']);
 gulp.task('release', ['clean', 'lint', 'build', 'minimize']);
+
+gulp.task('watch', ['clean'], function () {
+    var gulpWatcher = gulp.watch('src/**/*.js');
+
+    gulpWatcher.on('change', function (e) {
+        if (e.type === 'changed' || e.type === 'added') {
+            return doLint(e.path, false);
+        }
+    });
+
+    return doBundle(doWatchify());
+});
 
 gulp.task('clean', function () {
     return del([
@@ -50,13 +68,10 @@ gulp.task('clean', function () {
 });
 
 gulp.task('lint', function () {
-    return gulp.src(['gulpfile.js', 'src/**/*.js'])
-        .pipe(eslint())
-        .pipe(eslint.format())
-        .pipe(eslint.failAfterError());
+    return doLint(['gulpfile.js', 'src/**/*.js'], true);
 });
 
-gulp.task('build', ['clean'], function () {
+gulp.task('build', ['clean', 'lint'], function () {
     var b = browserify({
         entries: 'src/flv.js',
         debug: true,

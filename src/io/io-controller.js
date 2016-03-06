@@ -485,7 +485,7 @@ class IOController {
         this._flushStashBuffer(false);
 
         switch (type) {
-            case LoaderError.kEarlyEof:
+            case LoaderError.kEarlyEof: {
                 // http reconnect
                 Log.w(this.TAG, 'Connection lost, trying reconnect...');
                 let current = this._currentSegment;
@@ -494,6 +494,7 @@ class IOController {
                     this._internalSeek(next.from, false);
                 }
                 return;
+            }
             case LoaderError.kConnectingTimeout:
             case LoaderError.kHttpStatusCodeInvalid:
             case LoaderError.kException:

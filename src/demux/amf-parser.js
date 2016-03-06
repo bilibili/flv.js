@@ -100,16 +100,18 @@ class AMF {
                 value = v.getFloat64(1, !le);
                 offset += 8;
                 break;
-            case 1:  // Boolean type
+            case 1: {  // Boolean type
                 let b = v.getUint8(1);
                 value = b ? true : false;
                 offset += 1;
                 break;
-            case 2:  // String type
+            }
+            case 2: {  // String type
                 let amfstr = AMF.parseString(arrayBuffer, dataOffset + 1, dataSize - 1);
                 value = amfstr.data;
                 offset += amfstr.size;
                 break;
+            }
             case 3: { // Object(s) type
                 value = {};
                 let terminal = 0;  // workaround for malformed Objects which has missing ScriptDataObjectEnd
@@ -149,7 +151,7 @@ class AMF {
                 }
                 break;
             }
-            case 10:  // Strict array type
+            case 10: {  // Strict array type
                 // ScriptDataValue[n]. NOTE: according to video_file_format_spec_v10_1.pdf
                 value = [];
                 let strictArrayLength = v.getUint32(1, !le);
@@ -160,16 +162,19 @@ class AMF {
                     offset += val.size;
                 }
                 break;
-            case 11:  // Date type
+            }
+            case 11: {  // Date type
                 let date = AMF.parseDate(arrayBuffer, dataOffset + 1, dataSize - 1);
                 value = date.data;
                 offset += date.size;
                 break;
-            case 12:  // Long string type
+            }
+            case 12: {  // Long string type
                 let amfLongStr = AMF.parseString(arrayBuffer, dataOffset + 1, dataSize - 1);
                 value = amfLongStr.data;
                 offset += amfLongStr.size;
                 break;
+            }
             default:
                 // ignore and skip
                 offset = dataSize;

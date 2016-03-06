@@ -8,11 +8,12 @@
 
 <body>
     
-    <script src="../dist/flv.debug.js"></script>
+    <script src="../dist/flv.js"></script>
     
     <script>
         console.log('isSupported: ' + Flv.isSupported());
-        var flv = new Flv('http://127.0.0.1:8000/flv/railgun.flv');
+        var url = 'http://127.0.0.1/flv/railgun.flv';
+        var flv = new Flv(url);
         flv.openStream();
     </script>
     

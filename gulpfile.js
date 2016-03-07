@@ -50,7 +50,7 @@ gulp.task('default', ['clean', 'lint', 'build']);
 gulp.task('release', ['clean', 'lint', 'build', 'minimize']);
 
 gulp.task('watch', ['clean'], function () {
-    var gulpWatcher = gulp.watch('src/**/*.js');
+    var gulpWatcher = gulp.watch(['gulpfile.js', 'src/**/*.js']);
 
     gulpWatcher.on('change', function (e) {
         if (e.type === 'changed' || e.type === 'added') {

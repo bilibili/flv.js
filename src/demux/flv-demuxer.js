@@ -25,30 +25,27 @@ function ReadBig32(array, index) {
 
 class FlvDemuxer {
 
-    // TODO: throw should be error callback
-
     constructor(probeData) {
-        this.TAG = this.constructor.name;
+        this.TAG = 'FlvDemuxer';
 
         this._onError = null;
+        this._onMetadata = null;
         this._onDataAvailable = null;
 
-        this._hasAudioTrack = probeData.hasAudioTrack;
-        this._hasVideoTrack = probeData.hasVideoTrack;
         this._dataOffset = probeData.dataOffset;
         this._firstParse = true;
+        this._dispatch = false;
 
         this._metadata = null;
+        this._audioMetadata = null;
+        this._videoMetadata = null;
         this._naluLengthSize = 4;
         this._timestampBase = 0;
+        this._duration = 0;  // int32, in milliseconds
+        this._durationOverrided = false;
 
-        if (this._hasAudioTrack) {
-            this._audioTrack = {type: 'audio', samples: [], length: 0};
-        }
-
-        if (this._hasVideoTrack) {
-            this._videoTrack = {type: 'video', samples: [], length: 0, nbNalu: 0};
-        }
+        this._videoTrack = {type: 'video', id: 1, sequenceNumber: 0, samples: [], length: 0, nbNalu: 0};
+        this._audioTrack = {type: 'audio', id: 2, sequenceNumber: 0, samples: [], length: 0};
 
         this._littleEndian = (function () {
             let buf = new ArrayBuffer(2);
@@ -59,6 +56,7 @@ class FlvDemuxer {
 
     destroy() {
         this._onError = null;
+        this._onMetadata = null;
         this._onDataAvailable = null;
     }
 
@@ -101,7 +99,16 @@ class FlvDemuxer {
         return this;
     }
 
-    // TODO: onMetaData callback (pass metadatas)
+    // prototype: function(type: string, metadata: any): void
+    get onMetadata() {
+        return this._onMetadata;
+    }
+
+    set onMetadata(callback) {
+        if (typeof callback !== 'function')
+            throw 'onMetadata must be a callback function!';
+        this._onMetadata = callback;
+    }
 
     // prototype: function(type: number, info: string): void
     get onError() {
@@ -114,7 +121,7 @@ class FlvDemuxer {
         this._onError = callback;
     }
 
-    // prototype: function(videoTrack, audioTrack)
+    // prototype: function(videoTrack: any, audioTrack: any): void
     get onDataAvailable() {
         return this._onDataAvailable;
     }
@@ -133,12 +140,22 @@ class FlvDemuxer {
         this._timestampBase = base;
     }
 
+    get overridedDuration() {
+        return this._duration;
+    }
+
+    // Force-override media duration. Must be in milliseconds, int32
+    set overridedDuration(duration) {
+        this._durationOverrided = true;
+        this._duration = duration;
+    }
+
     // function parseChunks(chunk: ArrayBuffer, byteStart: number): number;
     parseChunks(chunk, byteStart) {
         Log.v(this.TAG, 'FlvDemuxer: received chunk start = ' + byteStart + ', size = ' + chunk.byteLength);
 
-        if (!this._onError) {
-            throw 'Flv: onError callback must be specified';
+        if (!this._onError || !this._onMetadata) {
+            throw 'Flv: onError & onMetadata callback must be specified';
         }
 
         let offset = 0;
@@ -159,6 +176,8 @@ class FlvDemuxer {
         }
 
         while (offset < chunk.byteLength) {
+            this._dispatch = true;
+
             let v = new DataView(chunk, offset);
 
             if (offset + 11 + 4 > chunk.byteLength) {
@@ -203,8 +222,7 @@ class FlvDemuxer {
                     this._parseVideoData(chunk, dataOffset, dataSize, timestamp);
                     break;
                 case 18:  // ScriptDataObject
-                    Log.v(this.TAG, 'Flv: Found onMetadata');
-                    this._metadata = AMF.parseScriptData(chunk, dataOffset, dataSize);
+                    this._parseFlvMetadata(chunk, dataOffset, dataSize);
                     break;
             }
 
@@ -217,7 +235,9 @@ class FlvDemuxer {
         }
 
         if (this._onDataAvailable) {
-            this._onDataAvailable(this._audioTrack, this._videoTrack);
+            if (this._dispatch) {
+                this._onDataAvailable(this._audioTrack, this._videoTrack);
+            }
         } else {
             throw 'Flv: No existing consumer (onDataAvailable) callback!';
         }
@@ -225,11 +245,31 @@ class FlvDemuxer {
         return offset;  // consumed bytes, just equals latest offset index
     }
 
+    _parseFlvMetadata(arrayBuffer, dataOffset, dataSize) {
+        Log.v(this.TAG, 'Found onMetadata');
+        if (this._metadata) {
+            Log.w(this.TAG, 'Detected multiple onMetadata tag');
+        }
+        this._metadata = AMF.parseScriptData(arrayBuffer, dataOffset, dataSize);
+        if (!this._durationOverrided) {
+            this._duration = Math.floor(this._metadata.onMetaData.duration * 1000);
+        }
+        this._dispatch = false;
+        this._onMetadata('info', this._metadata);
+    }
+
     _parseAudioData(arrayBuffer, dataOffset, dataSize, tagTimestamp) {
+        let meta = this._audioMetadata;
         let track = this._audioTrack;
 
-        if (!track.codec) {
+        if (!meta || !meta.codec) {
             // initial metadata
+            meta = this._audioMetadata = {};
+            meta.type = 'audio';
+            meta.id = track.id;
+            meta.timescale = 1000;
+            meta.duration = this._duration;
+
             let le = this._littleEndian;
             let v = new DataView(arrayBuffer, dataOffset, dataSize);
 
@@ -268,29 +308,29 @@ class FlvDemuxer {
             let soundSize = (soundSpec & 2) >>> 1;  // unused
             let soundType = (soundSpec & 1);
 
-            track.audioSampleRate = soundRate;
-            track.channelCount = (soundType === 0 ? 1 : 2);
-            track.codec = 'mp4a.40.5';  // TODO: browser manifest codec consideration
+            meta.audioSampleRate = soundRate;
+            meta.channelCount = (soundType === 0 ? 1 : 2);
+            meta.codec = 'mp4a.40.5';  // TODO: browser manifest codec consideration
         }
 
         let aacData = this._parseAACAudioData(arrayBuffer, dataOffset + 1, dataSize - 1);
 
         if (aacData.packetType === 0) {  // AAC sequence header (AudioSpecificConfig)
-            if (track.config) {
+            if (meta.config) {
                 Log.w(this.TAG, 'Found another AACSequenceHeader!');
-                // TODO: ignore or reset demuxer?
-            } else {
-                let misc = aacData.data;
-                track.audioSampleRate = misc.samplingRate;
-                track.channelCount = misc.channelCount;
-                track.codec = misc.codec;
-                track.config = misc.config;
-                Log.v(this.TAG, 'Parsed AACSequenceHeader (AudioSpecificConfig)');
             }
+            let misc = aacData.data;
+            meta.audioSampleRate = misc.samplingRate;
+            meta.channelCount = misc.channelCount;
+            meta.codec = misc.codec;
+            meta.config = misc.config;
+            Log.v(this.TAG, 'Parsed AACSequenceHeader (AudioSpecificConfig)');
+            this._dispatch = false;
+            this._onMetadata('audio', meta);
             return;
         } else if (aacData.packetType === 1) {  // AAC raw frame data
             Log.v(this.TAG, 'AAC Raw data packet');
-            let dts = tagTimestamp * 90;
+            let dts = tagTimestamp;
             let aacSample = {unit: aacData.data, dts: dts, pts: dts};
             track.samples.push(aacSample);
             track.length += aacData.data.length;
@@ -370,30 +410,30 @@ class FlvDemuxer {
             // firefox: use SBR (HE-AAC) if freq less than 24kHz
             if (samplingIndex >= 6) {
                 audioObjectType = 5;
-                config = new Uint8Array(4);
+                config = new Array(4);
                 extensionSamplingIndex = samplingIndex - 3;
             } else {  // use LC-AAC
                 audioObjectType = 2;
-                config = new Uint8Array(2);
+                config = new Array(2);
                 extensionSamplingIndex = samplingIndex;
             }
         } else if (userAgent.indexOf('android') !== -1) {
             // android: always use LC-AAC
             audioObjectType = 2;
-            config = new Uint8Array(2);
+            config = new Array(2);
             extensionSamplingIndex = samplingIndex;
         } else {
             // for other browsers, e.g. chrome...
             // Always use HE-AAC to make it easier to switch aac codec profile
             audioObjectType = 5;
-            config = new Uint8Array(4);
+            config = new Array(4);
 
             // TODO: browser manifest codec consideration
             if (samplingIndex >= 6) {
                 extensionSamplingIndex = samplingIndex - 3;
             } else if (channelConfig === 1) {  // Mono channel
                 audioObjectType = 2;
-                config = new Uint8Array(2);
+                config = new Array(2);
                 extensionSamplingIndex = samplingIndex;
             }
         }
@@ -458,9 +498,18 @@ class FlvDemuxer {
     }
 
     _parseAVCDecoderConfigurationRecord(arrayBuffer, dataOffset, dataSize) {
-        let le = this._littleEndian;
+        let meta = this._videoMetadata;
         let track = this._videoTrack;
+        let le = this._littleEndian;
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
+
+        if (!meta) {
+            meta = this._videoMetadata = {};
+            meta.type = 'video';
+            meta.id = track.id;
+            meta.timescale = 1000;
+            meta.duration = this._duration;
+        }
 
         let version = v.getUint8(0);  // configurationVersion
         let avcProfile = v.getUint8(1);  // avcProfileIndication
@@ -500,9 +549,14 @@ class FlvDemuxer {
             offset += len;
 
             let config = SPSParser.parseSPS(sps);
-            track.width = config.codec_size.width;
-            track.height = config.codec_size.height;
-            track.sps = [sps];
+            meta.width = config.codec_size.width;
+            meta.height = config.codec_size.height;
+
+            meta.profile = config.profile_string;
+            meta.bitDepth = config.bit_depth;
+            meta.chromaFormat = config.chroma_format;
+            meta.frameRate = config.frame_rate;
+            meta.sarRatio = config.sar_ratio;
 
             let codecArray = sps.subarray(1, 4);
             let codecString = 'avc1.';
@@ -513,7 +567,7 @@ class FlvDemuxer {
                 }
                 codecString += h;
             }
-            track.codec = codecString;
+            meta.codec = codecString;
         }
 
         let ppsCount = v.getUint8(offset);  // numOfPictureParameterSets
@@ -537,13 +591,15 @@ class FlvDemuxer {
             let pps = new Uint8Array(arrayBuffer, dataOffset + offset, len);
             offset += len;
 
-            if (!track.pps) {
-                track.pps = [pps];
+            if (!meta.pps) {
+                meta.pps = [pps];
             }
         }
 
-        track.avcc = new Uint8Array(arrayBuffer, dataOffset, dataSize);
+        meta.avcc = new Uint8Array(arrayBuffer, dataOffset, dataSize);
         Log.v(this.TAG, 'Parsed AVCDecoderConfigurationRecord');
+        this._dispatch = false;
+        this._onMetadata('video', meta);
     }
 
     _parseAVCVideoData(arrayBuffer, dataOffset, dataSize, dts, cts) {
@@ -603,7 +659,7 @@ class FlvDemuxer {
 
         if (units.length) {
             let track = this._videoTrack;
-            let avcSample = {units: units, length: length, dts: dts * 90, pts: (dts + cts) * 90};
+            let avcSample = {units: units, length: length, dts: dts, pts: (dts + cts)};
             track.samples.push(avcSample);
             track.length += length;
             track.nbNalu += units.length;

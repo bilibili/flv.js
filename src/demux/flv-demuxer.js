@@ -235,7 +235,7 @@ class FlvDemuxer {
         }
 
         if (this._onDataAvailable) {
-            if (this._dispatch) {
+            if (this._dispatch && (this._audioTrack.length || this._videoTrack.length)) {
                 this._onDataAvailable(this._audioTrack, this._videoTrack);
             }
         } else {
@@ -325,6 +325,12 @@ class FlvDemuxer {
             meta.codec = misc.codec;
             meta.config = misc.config;
             Log.v(this.TAG, 'Parsed AACSequenceHeader (AudioSpecificConfig)');
+
+            // force dispatch (or flush) parsed frames to remuxer
+            if (this._dispatch && (this._audioTrack.length || this._videoTrack.length)) {
+                this._onDataAvailable(this._audioTrack, this._videoTrack);
+            }
+            // then notify new metadata
             this._dispatch = false;
             this._onMetadata('audio', meta);
             return;
@@ -598,6 +604,11 @@ class FlvDemuxer {
 
         meta.avcc = new Uint8Array(arrayBuffer, dataOffset, dataSize);
         Log.v(this.TAG, 'Parsed AVCDecoderConfigurationRecord');
+        // flush parsed frames
+        if (this._dispatch && (this._audioTrack.length || this._videoTrack.length)) {
+            this._onDataAvailable(this._audioTrack, this._videoTrack);
+        }
+        // notify new metadata
         this._dispatch = false;
         this._onMetadata('video', meta);
     }

@@ -222,7 +222,7 @@ class FlvDemuxer {
                     this._parseVideoData(chunk, dataOffset, dataSize, timestamp);
                     break;
                 case 18:  // ScriptDataObject
-                    this._parseFlvMetadata(chunk, dataOffset, dataSize);
+                    this._parseFlvOnMetaData(chunk, dataOffset, dataSize);
                     break;
             }
 
@@ -245,10 +245,10 @@ class FlvDemuxer {
         return offset;  // consumed bytes, just equals latest offset index
     }
 
-    _parseFlvMetadata(arrayBuffer, dataOffset, dataSize) {
-        Log.v(this.TAG, 'Found onMetadata');
+    _parseFlvOnMetaData(arrayBuffer, dataOffset, dataSize) {
+        Log.v(this.TAG, 'Found onMetaData');
         if (this._metadata) {
-            Log.w(this.TAG, 'Detected multiple onMetadata tag');
+            Log.w(this.TAG, 'Detected multiple onMetaData tag');
         }
         this._metadata = AMF.parseScriptData(arrayBuffer, dataOffset, dataSize);
         if (!this._durationOverrided) {
@@ -610,6 +610,7 @@ class FlvDemuxer {
 
         let offset = 0;
         const lengthSize = this._naluLengthSize;
+        let keyframe = false;
 
         while (offset < dataSize) {
             let naluSize = v.getUint32(offset, !le);  // Big-Endian read
@@ -625,22 +626,23 @@ class FlvDemuxer {
             let debugString;
 
             switch (unitType) {
-                case 1:
+                case 1:  // NDR
                     debugString = 'NDR';
                     break;
-                case 5:
+                case 5:  // IDR
+                    keyframe = true;
                     debugString = 'IDR';
                     break;
-                case 6:
+                case 6:  // SEI
                     debugString = 'SEI';
                     break;
-                case 7:
+                case 7:  // SPS
                     debugString = 'SPS';
                     break;
-                case 8:
+                case 8:  // PPS
                     debugString = 'PPS';
                     break;
-                case 9:
+                case 9:  // AUD
                     debugString = 'AUD';
                     break;
                 default:
@@ -659,7 +661,14 @@ class FlvDemuxer {
 
         if (units.length) {
             let track = this._videoTrack;
-            let avcSample = {units: units, length: length, dts: dts, pts: (dts + cts)};
+            let avcSample = {
+                units: units,
+                length: length,
+                isKeyframe: keyframe,
+                dts: dts,
+                cts: cts,
+                pts: (dts + cts)
+            };
             track.samples.push(avcSample);
             track.length += length;
             track.nbNalu += units.length;

@@ -335,7 +335,6 @@ class FlvDemuxer {
             this._onMetadata('audio', meta);
             return;
         } else if (aacData.packetType === 1) {  // AAC raw frame data
-            Log.v(this.TAG, 'AAC Raw data packet');
             let dts = tagTimestamp;
             let aacSample = {unit: aacData.data, dts: dts, pts: dts};
             track.samples.push(aacSample);
@@ -634,33 +633,10 @@ class FlvDemuxer {
             }
 
             let unitType = v.getUint8(offset + lengthSize) & 0x1F;
-            let debugString;
 
-            switch (unitType) {
-                case 1:  // NDR
-                    debugString = 'NDR';
-                    break;
-                case 5:  // IDR
-                    keyframe = true;
-                    debugString = 'IDR';
-                    break;
-                case 6:  // SEI
-                    debugString = 'SEI';
-                    break;
-                case 7:  // SPS
-                    debugString = 'SPS';
-                    break;
-                case 8:  // PPS
-                    debugString = 'PPS';
-                    break;
-                case 9:  // AUD
-                    debugString = 'AUD';
-                    break;
-                default:
-                    debugString = 'Unknown';
-                    break;
+            if (unitType === 5) {  // IDR
+                keyframe = true;
             }
-            Log.v(this.TAG, `${debugString}, dts = ${dts}`);
 
             let data = new Uint8Array(arrayBuffer, dataOffset + offset, lengthSize + naluSize);
             let unit = {type: unitType, data: data};

@@ -265,7 +265,7 @@ class MP4 {
         return MP4.box(MP4.types.hdlr, data);
     }
 
-    // Video media infomation box
+    // Media infomation box
     static minf(meta) {
         let xmhd = null;
         if (meta.type === 'audio') {
@@ -411,8 +411,8 @@ class MP4 {
     }
 
     // Movie fragment box
-    static moof(track, dtsBase) {
-        return MP4.box(MP4.types.moof, MP4.mfhd(track.sequenceNumber), MP4.traf(track, dtsBase));
+    static moof(track, baseMediaDecodeTime) {
+        return MP4.box(MP4.types.moof, MP4.mfhd(track.sequenceNumber), MP4.traf(track, baseMediaDecodeTime));
     }
 
     static mfhd(sequenceNumber) {
@@ -427,7 +427,7 @@ class MP4 {
     }
 
     // Track fragment box
-    static traf(track, dtsBase) {
+    static traf(track, baseMediaDecodeTime) {
         let trackId = track.id;
 
         // Track fragment header box
@@ -441,10 +441,10 @@ class MP4 {
         // Track Fragment Decode Time
         let tfdt = MP4.box(MP4.types.tfdt, new Uint8Array([
             0x00, 0x00, 0x00, 0x00,  // version(0) & flags
-            (dtsBase >>> 24) & 0xFF, // baseMediaDecodeTime: int32
-            (dtsBase >>> 16) & 0xFF,
-            (dtsBase >>>  8) & 0xFF,
-            (dtsBase) & 0xFF
+            (baseMediaDecodeTime >>> 24) & 0xFF,  // baseMediaDecodeTime: int32
+            (baseMediaDecodeTime >>> 16) & 0xFF,
+            (baseMediaDecodeTime >>>  8) & 0xFF,
+            (baseMediaDecodeTime) & 0xFF
         ]));
         let sdtp = MP4.sdtp(track);
         let trun = MP4.trun(track, sdtp.byteLength + 16 + 16 + 8 + 16 + 8 + 8);

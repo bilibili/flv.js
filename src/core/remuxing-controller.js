@@ -66,7 +66,8 @@ class RemuxingController {
                          .bindDataSource(this._ioctl
             ));
 
-            this._remuxer.onFragGenerated = this._onRemuxerFragmentArrival.bind(this);
+            this._remuxer.onInitSegment = this._onRemuxerInitSegmentArrival.bind(this);
+            this._remuxer.onFragmentGenerated = this._onRemuxerFragmentArrival.bind(this);
         } else {
             // non-flv, throw exception or trigger event
             probeData = null;
@@ -83,8 +84,12 @@ class RemuxingController {
         Log.e(this.TAG, `DemuxException: name = ${this._demuxer.TAG}, type = ${type}, info = ${info}`);
     }
 
-    _onRemuxerFragmentArrival(frag) {
+    _onRemuxerInitSegmentArrival(type, initSegment) {
+        Log.v(this.TAG, `Init Segment: ${type}, size = ${initSegment.byteLength}`);
+    }
 
+    _onRemuxerFragmentArrival(type, fragment) {
+        Log.v(this.TAG, `Fragment arrival: ${type}, moof = ${fragment.moof.byteLength}, mdat: ${fragment.mdat.byteLength}`);
     }
 
 }

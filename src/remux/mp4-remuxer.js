@@ -5,7 +5,7 @@ import MP4 from './mp4-generator.js';
 class MP4Remuxer {
 
     constructor() {
-        this.TAG = 'MP4Remuxer';
+        this.TAG = this.constructor.name;
 
         this._dtsBase = -1;
         this._audioMeta = null;
@@ -28,7 +28,7 @@ class MP4Remuxer {
         return this;
     }
 
-    // prototype: function onInitSegment(type: string, initSegment: Uint8Array): void
+    // prototype: function onInitSegment(type: string, initSegment: ArrayBuffer): void
     get onInitSegment() {
         return this._onInitSegment;
     }
@@ -42,8 +42,7 @@ class MP4Remuxer {
     /* prototype: function onMediaSegment(type: string, mediaSegment: MediaSegment): void
        MediaSegment: {
            type: string,
-           moof: Uint8Array,
-           mdat: Uint8Array,
+           data: ArrayBuffer,
            sampleCount: int32
            startDts: int32,
            endDts: int32,
@@ -85,7 +84,7 @@ class MP4Remuxer {
         // dispatch metabox (Initialization Segment)
         if (type !== 'info') {
             if (this._onInitSegment) {
-                this._onInitSegment(type, metabox);
+                this._onInitSegment(type, metabox.buffer);
             } else {
                 throw 'MP4Remuxer: onInitSegment callback must be specified!';
             }
@@ -152,8 +151,7 @@ class MP4Remuxer {
 
         this._onMediaSegment('audio', {
             type: 'audio',
-            moof: moofbox,
-            mdat: mdatbox,
+            data: this._mergeBoxes(moofbox, mdatbox).buffer,
             sampleCount: mp4Samples.length,
             startDts: firstDts,
             endDts: lastDts,
@@ -257,14 +255,20 @@ class MP4Remuxer {
 
         this._onMediaSegment('video', {
             type: 'video',
-            moof: moofbox,
-            mdat: mdatbox,
+            data: this._mergeBoxes(moofbox, mdatbox).buffer,
             sampleCount: mp4Samples.length,
             startDts: firstDts,
             endDts: lastDts,
             startPts: firstPts,
             endPts: lastPts
         });
+    }
+
+    _mergeBoxes(moof, mdat) {
+        let result = new Uint8Array(moof.byteLength + mdat.byteLength);
+        result.set(moof, 0);
+        result.set(mdat, moof.byteLength);
+        return result;
     }
 
 }

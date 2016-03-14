@@ -30,13 +30,15 @@ class AMF {
         }
         let name = AMF.parseString(arrayBuffer, dataOffset, dataSize);
         let value = AMF.parseValue(arrayBuffer, dataOffset + name.size, dataSize - name.size);
+        let isObjectEnd = value.objectEnd;
 
         return {
             data: {
                 name: name.data,
                 value: value.data
             },
-            size: name.size + value.size
+            size: name.size + value.size,
+            objectEnd: isObjectEnd
         };
     }
 
@@ -51,8 +53,15 @@ class AMF {
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
         let length = v.getUint16(0, !le);
 
+        let str;
+        if (length > 0) {
+            str = decodeUTF8(new Uint8Array(arrayBuffer, dataOffset + 2, length));
+        } else {
+            str = '';
+        }
+
         return {
-            data: decodeUTF8(new Uint8Array(arrayBuffer, dataOffset + 2, length)),
+            data: str,
             size: 2 + length
         };
     }
@@ -64,19 +73,27 @@ class AMF {
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
         let length = v.getUint32(0, !le);
 
+        let str;
+        if (length > 0) {
+            str = decodeUTF8(new Uint8Array(arrayBuffer, dataOffset + 4, length));
+        } else {
+            str = '';
+        }
+
         return {
-            data: decodeUTF8(new Uint8Array(arrayBuffer, dataOffset + 4, length)),
+            data: str,
             size: 4 + length
         };
     }
 
     static parseDate(arrayBuffer, dataOffset, dataSize) {
-        if (dataSize !== 10) {
+        if (dataSize < 10) {
             throw 'Data size invalid when parse Date';
         }
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
         let timestamp = v.getFloat64(0, !le);
-        //let localTimeOffset = v.getInt16(8, !le);
+        let localTimeOffset = v.getInt16(8, !le);
+        timestamp += localTimeOffset * 60 * 1000;  // get UTC time
 
         return {
             data: new Date(timestamp),
@@ -94,6 +111,7 @@ class AMF {
         let offset = 1;
         let type = v.getUint8(0);
         let value;
+        let objectEnd = false;
 
         switch (type) {
             case 0:  // Number(Double) type
@@ -120,6 +138,8 @@ class AMF {
                 }
                 while (offset < dataSize - 4) {  // 4 === type(UI8) + ScriptDataObjectEnd(UI24)
                     let amfobj = AMF.parseObject(arrayBuffer, dataOffset + offset, dataSize - offset - terminal);
+                    if (amfobj.objectEnd)
+                        break;
                     value[amfobj.data.name] = amfobj.data.value;
                     offset += amfobj.size;
                 }
@@ -140,6 +160,8 @@ class AMF {
                 }
                 while (offset < dataSize - 8) {  // 8 === type(UI8) + ECMAArrayLength(UI32) + ScriptDataVariableEnd(UI24)
                     let amfvar = AMF.parseVariable(arrayBuffer, dataOffset + offset, dataSize - offset - terminal);
+                    if (amfvar.objectEnd)
+                        break;
                     value[amfvar.data.name] = amfvar.data.value;
                     offset += amfvar.size;
                 }
@@ -151,6 +173,11 @@ class AMF {
                 }
                 break;
             }
+            case 9:  // ScriptDataObjectEnd
+                value = undefined;
+                offset = 1;
+                objectEnd = true;
+                break;
             case 10: {  // Strict array type
                 // ScriptDataValue[n]. NOTE: according to video_file_format_spec_v10_1.pdf
                 value = [];
@@ -183,7 +210,8 @@ class AMF {
 
         return {
             data: value,
-            size: offset
+            size: offset,
+            objectEnd: objectEnd
         };
     }
 

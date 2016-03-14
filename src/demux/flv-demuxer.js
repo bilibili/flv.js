@@ -68,10 +68,6 @@ class FlvDemuxer {
             return mismatch;
         }
 
-        if ((data[4] >>> 3) !== 0 || (data[4] & 2) !== 0) {  // two reserved flags
-            return mismatch;
-        }
-
         let hasAudio = ((data[4] & 4) >>> 2) !== 0;
         let hasVideo = (data[4] & 1) !== 0;
 

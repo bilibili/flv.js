@@ -12,12 +12,14 @@ class MP4Remuxer {
         this._videoMeta = null;
 
         this._onInitSegment = null;
-        this._onFragmentGenerated = null;
+        this._onMediaSegment = null;
     }
 
     destroy() {
+        this._audioMeta = null;
+        this._videoMeta = null;
         this._onInitSegment = null;
-        this._onFragmentGenerated = null;
+        this._onMediaSegment = null;
     }
 
     bindDataSource(producer) {
@@ -37,8 +39,8 @@ class MP4Remuxer {
         this._onInitSegment = callback;
     }
 
-    /* prototype: function onFragmentGenerated(type: string, fragment: Fragment): void
-       Fragment: {
+    /* prototype: function onMediaSegment(type: string, mediaSegment: MediaSegment): void
+       MediaSegment: {
            type: string,
            moof: Uint8Array,
            mdat: Uint8Array,
@@ -49,22 +51,20 @@ class MP4Remuxer {
            endPts: int32
        }
     */
-    get onFragmentGenerated() {
-        return this._onFragmentGenerated;
+    get onMediaSegment() {
+        return this._onMediaSegment;
     }
 
-    set onFragmentGenerated(callback) {
-        if (typeof callback !== 'function') {
-            throw 'onFragmentGenerated must be a callback function!';
-        }
-
-        this._onFragmentGenerated = callback;
+    set onMediaSegment(callback) {
+        if (typeof callback !== 'function')
+            throw 'onMediaSegment must be a callback function!';
+        this._onMediaSegment = callback;
     }
 
     remux(audioTrack, videoTrack) {
         Log.v(this.TAG, `Received data, audioSize = ${audioTrack.length}, videoSize = ${videoTrack.length}, nbNalu = ${videoTrack.nbNalu}`);
-        if (!this._onFragmentGenerated) {
-            throw 'MP4Remuxer: onFragmentGenerated callback must be specificed!';
+        if (!this._onMediaSegment) {
+            throw 'MP4Remuxer: onMediaSegment callback must be specificed!';
         }
         this._remuxAudio(audioTrack);
         this._remuxVideo(videoTrack);
@@ -150,7 +150,7 @@ class MP4Remuxer {
         track.samples = [];
         track.length = 0;
 
-        this._onFragmentGenerated('audio', {
+        this._onMediaSegment('audio', {
             type: 'audio',
             moof: moofbox,
             mdat: mdatbox,
@@ -167,6 +167,10 @@ class MP4Remuxer {
         let samples = track.samples;
         let firstDts = -1, lastDts = -1;
         let firstPts = -1, lastPts = -1;
+
+        if (!samples || samples.length === 0) {
+            return;
+        }
 
         if (this._dtsBase === -1) {
             this._dtsBase = samples[0].dts;
@@ -251,7 +255,7 @@ class MP4Remuxer {
         track.length = 0;
         track.nbNalu = 0;
 
-        this._onFragmentGenerated('video', {
+        this._onMediaSegment('video', {
             type: 'video',
             moof: moofbox,
             mdat: mdatbox,

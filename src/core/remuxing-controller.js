@@ -67,7 +67,7 @@ class RemuxingController {
             ));
 
             this._remuxer.onInitSegment = this._onRemuxerInitSegmentArrival.bind(this);
-            this._remuxer.onFragmentGenerated = this._onRemuxerFragmentArrival.bind(this);
+            this._remuxer.onMediaSegment = this._onRemuxerMediaSegmentArrival.bind(this);
         } else {
             // non-flv, throw exception or trigger event
             probeData = null;
@@ -88,8 +88,8 @@ class RemuxingController {
         Log.v(this.TAG, `Init Segment: ${type}, size = ${initSegment.byteLength}`);
     }
 
-    _onRemuxerFragmentArrival(type, fragment) {
-        Log.v(this.TAG, `Fragment arrival: ${type}, moof = ${fragment.moof.byteLength}, mdat: ${fragment.mdat.byteLength}`);
+    _onRemuxerMediaSegmentArrival(type, mediaSegment) {
+        Log.v(this.TAG, `Media Segment: ${type}, moof = ${mediaSegment.moof.byteLength}, mdat: ${mediaSegment.mdat.byteLength}`);
     }
 
 }

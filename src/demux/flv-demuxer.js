@@ -218,7 +218,7 @@ class FlvDemuxer {
                     this._parseVideoData(chunk, dataOffset, dataSize, timestamp);
                     break;
                 case 18:  // ScriptDataObject
-                    this._parseFlvOnMetaData(chunk, dataOffset, dataSize);
+                    this._parseScriptData(chunk, dataOffset, dataSize);
                     break;
             }
 
@@ -241,17 +241,22 @@ class FlvDemuxer {
         return offset;  // consumed bytes, just equals latest offset index
     }
 
-    _parseFlvOnMetaData(arrayBuffer, dataOffset, dataSize) {
-        Log.v(this.TAG, 'Found onMetaData');
-        if (this._metadata) {
-            Log.w(this.TAG, 'Detected multiple onMetaData tag');
+    _parseScriptData(arrayBuffer, dataOffset, dataSize) {
+        let scriptData = AMF.parseScriptData(arrayBuffer, dataOffset, dataSize);
+
+        if (scriptData.hasOwnProperty('onMetaData')) {
+            Log.v(this.TAG, 'Found onMetaData');
+            if (this._metadata) {
+                Log.w(this.TAG, 'Detected multiple onMetaData tag');
+            }
+
+            this._metadata = scriptData;
+            if (!this._durationOverrided && typeof this._metadata.onMetaData.duration === 'number') {
+                this._duration = Math.floor(this._metadata.onMetaData.duration * 1000);
+            }
+            this._dispatch = false;
+            this._onMetadata('info', this._metadata);
         }
-        this._metadata = AMF.parseScriptData(arrayBuffer, dataOffset, dataSize);
-        if (!this._durationOverrided) {
-            this._duration = Math.floor(this._metadata.onMetaData.duration * 1000);
-        }
-        this._dispatch = false;
-        this._onMetadata('info', this._metadata);
     }
 
     _parseAudioData(arrayBuffer, dataOffset, dataSize, tagTimestamp) {

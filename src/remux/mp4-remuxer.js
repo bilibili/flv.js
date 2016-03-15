@@ -28,7 +28,14 @@ class MP4Remuxer {
         return this;
     }
 
-    // prototype: function onInitSegment(type: string, initSegment: ArrayBuffer): void
+    /* prototype: function onInitSegment(type: string, initSegment: ArrayBuffer): void
+       InitSegment: {
+           type: string,
+           data: ArrayBuffer,
+           codec: string,
+           container: string
+       }
+    */
     get onInitSegment() {
         return this._onInitSegment;
     }
@@ -61,7 +68,6 @@ class MP4Remuxer {
     }
 
     remux(audioTrack, videoTrack) {
-        Log.v(this.TAG, `Received data, audioSize = ${audioTrack.length}, videoSize = ${videoTrack.length}, nbNalu = ${videoTrack.nbNalu}`);
         if (!this._onMediaSegment) {
             throw 'MP4Remuxer: onMediaSegment callback must be specificed!';
         }
@@ -71,6 +77,7 @@ class MP4Remuxer {
 
     _onMetadataReceived(type, metadata) {
         let metabox = null;
+
         if (type === 'info') {
             // TODO
             Log.v(this.TAG, JSON.stringify(metadata.onMetaData));
@@ -82,19 +89,24 @@ class MP4Remuxer {
             metabox = MP4.generateInitSegment(metadata);
         }
         // dispatch metabox (Initialization Segment)
-        if (type !== 'info') {
-            if (this._onInitSegment) {
-                this._onInitSegment(type, metabox.buffer);
-            } else {
+        if (type === 'video' || type === 'audio') {
+            if (!this._onInitSegment) {
                 throw 'MP4Remuxer: onInitSegment callback must be specified!';
             }
+
+            this._onInitSegment(type, {
+                type: type,
+                data: metabox.buffer,
+                codec: metadata.codec,
+                container: `${type}/mp4`
+            });
         }
     }
 
     _remuxAudio(audioTrack) {
         let track = audioTrack;
         let samples = track.samples;
-        let firstDts = -1, lastDts = -1;
+        let firstDts = -1, lastDts = -1, lastPts = -1;
 
         if (!samples || samples.length === 0) {
             return;
@@ -141,7 +153,10 @@ class MP4Remuxer {
             mdatbox.set(unit, offset);
             offset += unit.byteLength;
         }
-        lastDts = mp4Samples[mp4Samples.length - 1].dts;
+        let latest = mp4Samples[mp4Samples.length - 1];
+        lastDts = latest.dts;
+        lastPts = latest.pts + latest.duration;
+
         track.samples = mp4Samples;
         track.sequenceNumber++;
 

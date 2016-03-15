@@ -56,7 +56,7 @@ let RemuxingWorker = function (self) {
                 data: initSegment
             }
         };
-        self.postMessage(obj, [initSegment]);
+        self.postMessage(obj, [initSegment.data]);  // data: ArrayBuffer
     }
 
     function onMediaSegment(type, mediaSegment) {

@@ -16,7 +16,7 @@ class Remuxer extends EventEmitter {
                 this._worker = work(RemuxingWorker);
                 this._workerDestroying = false;
                 this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
-                this._worker.postMessage({cmd: 'init', param: url}); // init
+                this._worker.postMessage({cmd: 'init', param: url});
             } catch (error) {
                 Log.e(this.TAG, 'Error while initialize remuxing worker, fallback to inline remuxing');
                 this._controller = new RemuxingController(url);

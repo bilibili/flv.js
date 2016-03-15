@@ -96,12 +96,12 @@ export class RemuxingController extends EventEmitter {
     }
 
     _onDemuxException(type, info) {
-        Log.e(this.TAG, `DemuxException: name = ${this._demuxer.TAG}, type = ${type}, info = ${info}`);
+        Log.e(this.TAG, `DemuxException: type = ${type}, info = ${info}`);
         this.emit(RemuxingEvents.DEMUX_ERROR, type, info);
     }
 
     _onRemuxerInitSegmentArrival(type, initSegment) {
-        Log.v(this.TAG, `Init Segment: ${type}, size = ${initSegment.byteLength}`);
+        Log.v(this.TAG, `Init Segment: ${type}, size = ${initSegment.data.byteLength}`);
         this.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);
     }
 

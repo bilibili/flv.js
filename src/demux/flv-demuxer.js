@@ -26,7 +26,7 @@ function ReadBig32(array, index) {
 class FlvDemuxer {
 
     constructor(probeData) {
-        this.TAG = 'FlvDemuxer';
+        this.TAG = this.constructor.name;
 
         this._onError = null;
         this._onMetadata = null;

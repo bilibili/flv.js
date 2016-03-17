@@ -72,29 +72,25 @@ class Remuxer extends EventEmitter {
     }
 
     _onInitSegment(type, initSegment) {
-        Log.v(this.TAG, 'onInitSegment');
         this.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);
     }
 
     _onMediaSegment(type, mediaSegment) {
-        Log.v(this.TAG, 'onMediaSegment');
         this.emit(RemuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
     }
 
     _onIOError(type, info) {
-        Log.v(this.TAG, 'onIOError');
         this.emit(RemuxingEvents.IO_ERROR, type, info);
     }
 
     _onDemuxError(type, info) {
-        Log.v(this.TAG, 'onDemuxError');
         this.emit(RemuxingEvents.DEMUX_ERROR, type, info);
     }
 
     _onWorkerMessage(e) {
         let message = e.data;
         let data = message.data;
-
+        Log.v(this.TAG, 'onWorkerMessage: ' + message.msg);
         switch (message.msg) {
             case 'destroyed':
                 this._workerDestroying = false;
@@ -102,10 +98,10 @@ class Remuxer extends EventEmitter {
                 this._worker = null;
                 break;
             case RemuxingEvents.INIT_SEGMENT:
-                this._onInitSegment(data.type, data.initSegment);
+                this._onInitSegment(data.type, data.data);
                 break;
             case RemuxingEvents.MEDIA_SEGMENT:
-                this._onMediaSegment(data.type, data.mediaSegment);
+                this._onMediaSegment(data.type, data.data);
                 break;
             case RemuxingEvents.IO_ERROR:
                 this._onIOError(data.type, data.info);

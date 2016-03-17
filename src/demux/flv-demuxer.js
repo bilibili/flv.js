@@ -432,6 +432,7 @@ class FlvDemuxer {
             // for other browsers, e.g. chrome...
             // Always use HE-AAC to make it easier to switch aac codec profile
             audioObjectType = 5;
+            extensionSamplingIndex = samplingIndex;
             config = new Array(4);
 
             // TODO: browser manifest codec consideration

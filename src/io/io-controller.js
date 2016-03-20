@@ -24,8 +24,8 @@ class IOController {
         this._url = url;
         this._totalLength = null;
         this._fullRequestFlag = false;
-        this._currentSegment = null;
-        this._progressSegments = [];
+        this._currentRange = null;
+        this._progressRanges = [];
         this._speed = 0;
         this._speedCalc = new SpeedCalculator();
         this._speedNormalizeList = [64, 128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096];
@@ -48,8 +48,8 @@ class IOController {
         this._stashBuffer = null;
         this._stashUsed = this._stashSize = this._bufferSize = this._stashByteStart = 0;
         this._enableStash = false;
-        this._currentSegment = null;
-        this._progressSegments = null;
+        this._currentRange = null;
+        this._progressRanges = null;
         this._speedCalc = null;
 
         this._onDataArrival = null;
@@ -118,9 +118,9 @@ class IOController {
     }
 
     open() {
-        this._currentSegment = {from: 0, to: -1};
-        this._progressSegments = [];
-        this._progressSegments.push(this._currentSegment);
+        this._currentRange = {from: 0, to: -1};
+        this._progressRanges = [];
+        this._progressRanges.push(this._currentRange);
         this._speedCalc.reset();
         this._fullRequestFlag = true;
         this._loader.open(this._url, {from: 0, to: -1});
@@ -142,32 +142,32 @@ class IOController {
         }
         let remain = this._flushStashBuffer(dropUnconsumed);
         if (remain) {
-            this._currentSegment.to -= remain;
+            this._currentRange.to -= remain;
         }
 
         this._loader.destroy();
         this._loader = null;
 
-        Log.v(this.TAG, 'segments before seek: ' + JSON.stringify(this._progressSegments));
+        Log.v(this.TAG, 'Ranges before seek: ' + JSON.stringify(this._progressRanges));
 
-        let segments = this._progressSegments;
-        let range = {from: bytes, to: -1};
+        let ranges = this._progressRanges;
+        let requestRange = {from: bytes, to: -1};
         let bufferedArea = false;
         let insertIndex = 0;
 
-        for (let i = 0; i < segments.length; i++) {
-            if (bytes >= segments[i].from && bytes <= segments[i].to) {
+        for (let i = 0; i < ranges.length; i++) {
+            if (bytes >= ranges[i].from && bytes <= ranges[i].to) {
                 bufferedArea = true;
                 break;
             }
 
-            if (i === segments.length - 1) {
-                insertIndex = segments.length;
+            if (i === ranges.length - 1) {
+                insertIndex = ranges.length;
                 break;
             }
 
-            if (bytes > segments[i].to && bytes < segments[i + 1].from) {
-                range.to = segments[i + 1].from - 1;
+            if (bytes > ranges[i].to && bytes < ranges[i + 1].from) {
+                requestRange.to = ranges[i + 1].from - 1;
                 insertIndex = i + 1;
                 break;
             }
@@ -177,13 +177,13 @@ class IOController {
             throw 'IOController: Seek target position has been buffered!';
         }
 
-        this._currentSegment = {from: range.from, to: -1};
-        segments.splice(insertIndex, 0, this._currentSegment);
+        this._currentRange = {from: requestRange.from, to: -1};
+        ranges.splice(insertIndex, 0, this._currentRange);
 
-        Log.v(this.TAG, 'segments after seek: ' + JSON.stringify(this._progressSegments));
+        Log.v(this.TAG, 'ranges after seek: ' + JSON.stringify(this._progressRanges));
 
         this._createLoader();
-        this._loader.open(this._url, range);
+        this._loader.open(this._url, requestRange);
     }
 
     updateUrl(url) {
@@ -269,7 +269,7 @@ class IOController {
 
     _dispatchChunks(chunks, byteStart) {
         Log.v(this.TAG, `_dispatchChunks: chunkSize = ${chunks.byteLength}, byteStart = ${byteStart}`);
-        this._currentSegment.to = byteStart + chunks.byteLength - 1;
+        this._currentRange.to = byteStart + chunks.byteLength - 1;
         return this._onDataArrival(chunks, byteStart);
     }
 
@@ -410,19 +410,19 @@ class IOController {
         return 0;
     }
 
-    _mergeSegmentsAndGetNext(from, to) {
-        let segments = this._progressSegments;
-        let length = segments.length;
+    _mergeRangesAndGetNext(from, to) {
+        let ranges = this._progressRanges;
+        let length = ranges.length;
         let next = {from: -1, to: -1};
 
         // left endpoint merge
         for (let i = 0; i < length; i++) {
-            if (segments[i].from === from && segments[i].to <= to) {
-                segments[i].to = to;
-                if (i > 0 && segments[i - 1].to + 1 === segments[i].from) {
-                    from = segments[i - 1].from;
-                    segments[i - 1].to = segments[i].to;
-                    segments.splice(i, 1);
+            if (ranges[i].from === from && ranges[i].to <= to) {
+                ranges[i].to = to;
+                if (i > 0 && ranges[i - 1].to + 1 === ranges[i].from) {
+                    from = ranges[i - 1].from;
+                    ranges[i - 1].to = ranges[i].to;
+                    ranges.splice(i, 1);
                     length--;
                 }
                 break;
@@ -431,27 +431,27 @@ class IOController {
 
         // right endpoint merge
         for (let i = 0; i < length; i++) {
-            if (segments[i].from === from && segments[i].to === to) {
-                if (i === length - 1) {  // latest segment
+            if (ranges[i].from === from && ranges[i].to === to) {
+                if (i === length - 1) {  // latest range
                     // +1s
-                    if (this._totalLength && segments[i].to + 1 < this._totalLength) {
-                        next.from = segments[i].to + 1;
+                    if (this._totalLength && ranges[i].to + 1 < this._totalLength) {
+                        next.from = ranges[i].to + 1;
                         next.to = -1;
                     }
-                } else if (to + 1 === segments[i + 1].from) {
-                    // Merge connected segments
-                    segments[i].to = segments[i + 1].to;
-                    segments.splice(i + 1, i);
+                } else if (to + 1 === ranges[i + 1].from) {
+                    // Merge connected ranges
+                    ranges[i].to = ranges[i + 1].to;
+                    ranges.splice(i + 1, i);
                     length--;
-                    if (i === length - 1) {  // latest segment
-                        if (this._totalLength && segments[i].to + 1 < this._totalLength) {
-                            next.from = segments[i].to + 1;
+                    if (i === length - 1) {  // latest range
+                        if (this._totalLength && ranges[i].to + 1 < this._totalLength) {
+                            next.from = ranges[i].to + 1;
                             next.to = -1;
                         }
                     } else {
-                        if (segments[i].to < segments[i + 1].from - 1) {
-                            next.from = segments[i].to + 1;
-                            next.to = segments[i + 1].from - 1;
+                        if (ranges[i].to < ranges[i + 1].from - 1) {
+                            next.from = ranges[i].to + 1;
+                            next.to = ranges[i + 1].from - 1;
                         }
                     }
                 }
@@ -467,11 +467,11 @@ class IOController {
         this._flushStashBuffer(true);
 
         Log.v(this.TAG, `Loader complete, from = ${from}, to = ${to}`);
-        Log.v(this.TAG, JSON.stringify(this._progressSegments));
+        Log.v(this.TAG, JSON.stringify(this._progressRanges));
 
-        let next = this._mergeSegmentsAndGetNext(from, to);
+        let next = this._mergeRangesAndGetNext(from, to);
 
-        Log.v(this.TAG, 'Adjusted segments: ' + JSON.stringify(this._progressSegments));
+        Log.v(this.TAG, 'Adjusted ranges: ' + JSON.stringify(this._progressRanges));
 
         // continue loading from appropriate position
         if (next.from !== -1) {
@@ -488,8 +488,8 @@ class IOController {
             case LoaderError.kEarlyEof: {
                 // http reconnect
                 Log.w(this.TAG, 'Connection lost, trying reconnect...');
-                let current = this._currentSegment;
-                let next = this._mergeSegmentsAndGetNext(current.from, current.to);
+                let current = this._currentRange;
+                let next = this._mergeRangesAndGetNext(current.from, current.to);
                 if (next.from !== -1) {
                     this._internalSeek(next.from, false);
                 }

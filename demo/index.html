@@ -8,13 +8,47 @@
 
 <body>
     
+    <video name="videoElement" controls width="1024" height="576">
+        Your browser is too old which doesn't support HTML5 video.
+    </video>
+
+    <br>
+
+    <button onclick="flv_prepare()">Prepare</button>
+    <button onclick="flv_start()">Start</button>
+    <button onclick="flv_pause()">Pause</button>
+    <button onclick="button">Stop</button>
+    <input style="width:100px" type="text" name="seekpoint"/>
+    <button onclick="button">SeekTo</button>
+
     <script src="../dist/flv.js"></script>
     
     <script>
-        console.log('isSupported: ' + Flv.isSupported());
-        var url = 'http://127.0.0.1/flv/railgun.flv';
-        var flv = new Flv(url);
-        flv.openStream();
+        console.log('isSupported: ' + flvjs.PlayerFactory.isSupported());
+        var mediaDataSource = {
+            type: 'flv',
+            url: 'http://127.0.0.1/flv/railgun.flv'
+        }
+        var element = document.getElementsByName('videoElement')[0];
+        player = flvjs.PlayerFactory.createPlayer(mediaDataSource);
+        player.attachMediaElement(element);
+
+        function flv_prepare() {
+            debugger;
+            player.prepare();
+        }
+
+        function flv_start() {
+            player.start();
+        }
+
+        function flv_pause() {
+            player.pause();
+        }
+
+        function flv_stop() {
+            console.log('Fuck!');
+        }
     </script>
     
 </body>

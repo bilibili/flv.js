@@ -1,78 +1,16 @@
-import EventEmitter from 'events';
-import MSEController from './core/mse-controller.js';
-import IOController from './io/io-controller.js';
-import Remuxer from './core/remuxer.js';
+import PlayerFactory from './player/player-factory.js';
+import FlvPlayer from './player/flv-player.js';
+import NativePlayer from './player/native-player.js';
+import LoggingControl from './utils/logging-control.js';
 
-class Flv {
+// entry/index file
 
-    static isSupported() {
-        return (window.MediaSource && window.MediaSource.isTypeSupported('video/mp4; codecs="avc1.42E01E,mp4a.40.2"'));
-    }
+let flvjs = {};
+flvjs.PlayerFactory = PlayerFactory;
+flvjs.FlvPlayer = FlvPlayer;
+flvjs.NativePlayer = NativePlayer;
+flvjs.LoggingControl = LoggingControl;
 
-    constructor(url) {
-        this._mseController = new MSEController();
-        this._ioController = new IOController(url);
-        this._remuxer = new Remuxer(true);
-    }
-
-    addEventListener(type, listener) {
-
-    }
-
-    removeEventListener(type, listener) {
-
-    }
-
-    attachMediaElement() {
-
-    }
-
-    detachMediaElement() {
-
-    }
-
-    setMediaUrl(url) {
-        if (typeof url !== 'string') {
-            throw 'setMediaUrl requires a string!';
-        }
-
-        this._url = url;
-    }
-
-    setMediaSegmentUrls(urls) {
-        if (!Array.isArray(urls)) {
-            throw 'setMediaSegmentUrls requires a string array!';
-        }
-
-        // TODO
-    }
-
-    getMediaInfo() {
-
-    }
-
-    start() {
-
-    }
-
-    pause() {
-
-    }
-
-    stop() {
-
-    }
-
-    seekTo() {
-
-    }
-
-    openStream() {
-        this._ioController.openStream();
-        this._remuxer.seek(12450, 45120);
-    }
-
-}
-
-window.Flv = Flv;
-export default Flv;
+// export interface to global context
+window.flvjs = flvjs;
+export default flvjs;

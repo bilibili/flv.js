@@ -1,4 +1,5 @@
 import Log from '../utils/logger.js';
+import LoggingControl from '../utils/logging-control.js';
 import {RemuxingController, RemuxingEvents} from './remuxing-controller.js';
 
 /* post message to worker:
@@ -44,6 +45,9 @@ let RemuxingWorker = function (self) {
                 break;
             case 'seek':
                 controller.seek(e.data.param);
+                break;
+            case 'logging_config':
+                LoggingControl.applyConfig(e.data.param);
                 break;
         }
     });

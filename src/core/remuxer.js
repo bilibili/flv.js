@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
 import Log from '../utils/logger.js';
+import LoggingControl from '../utils/logging-control.js';
 import {RemuxingController, RemuxingEvents} from './remuxing-controller.js';
 import RemuxingWorker from './remuxing-worker.js';
 
@@ -17,6 +18,11 @@ class Remuxer extends EventEmitter {
                 this._workerDestroying = false;
                 this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
                 this._worker.postMessage({cmd: 'init', param: url});
+                this.e = {
+                    onLoggingConfigChanged: this._onLoggingConfigChanged.bind(this)
+                };
+                LoggingControl.registerListener(this.e.onLoggingConfigChanged);
+                this._worker.postMessage({cmd: 'logging_config', param: LoggingControl.getConfig()});
             } catch (error) {
                 Log.e(this.TAG, 'Error while initialize remuxing worker, fallback to inline remuxing');
                 this._controller = new RemuxingController(url);
@@ -39,12 +45,18 @@ class Remuxer extends EventEmitter {
             if (!this._workerDestroying) {
                 this._workerDestroying = true;
                 this._worker.postMessage({cmd: 'destroy'});
+                LoggingControl.removeListener(this.e.onLoggingConfigChanged);
+                this.e = null;
             }
         } else {
             this._controller.destroy();
             this._controller = null;
         }
         this.removeAllListeners();
+    }
+
+    hasWorker() {
+        return this._worker != null;
     }
 
     open() {  // TODO: pass url during constructing or open()?
@@ -85,6 +97,12 @@ class Remuxer extends EventEmitter {
 
     _onDemuxError(type, info) {
         this.emit(RemuxingEvents.DEMUX_ERROR, type, info);
+    }
+
+    _onLoggingConfigChanged(config) {
+        if (this._worker) {
+            this._worker.postMessage({cmd: 'logging_config', param: config});
+        }
     }
 
     _onWorkerMessage(e) {

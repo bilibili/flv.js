@@ -141,7 +141,7 @@ class MP4Remuxer {
                 pts: dts,
                 cts: 0,
                 size: unit.byteLength,
-                duration: Math.floor(1024 / this._audioMeta.audioSampleRate * 1000),
+                duration: Math.floor(1024 / this._audioMeta.audioSampleRate * this._audioMeta.timescale),
                 flags: {
                     isLeading: 0,
                     dependsOn: 1,

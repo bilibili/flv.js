@@ -630,7 +630,7 @@ class FlvDemuxer {
                 naluSize >>>= 8;
             }
             if (naluSize > dataSize - lengthSize) {
-                Log.w(`Malformed Nalus near timestamp ${dts}, NaluSize > DataSize!`);
+                Log.w(this.TAG, `Malformed Nalus near timestamp ${dts}, NaluSize > DataSize!`);
                 return;
             }
 

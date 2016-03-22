@@ -101,12 +101,14 @@ export class RemuxingController extends EventEmitter {
     }
 
     _onRemuxerInitSegmentArrival(type, initSegment) {
-        Log.v(this.TAG, `Init Segment: ${type}, size = ${initSegment.data.byteLength}`);
+        let is = initSegment;
+        Log.v(this.TAG, `Init Segment: ${type}, codec/container: ${is.codec}/${is.container}`);
         this.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);
     }
 
     _onRemuxerMediaSegmentArrival(type, mediaSegment) {
-        Log.v(this.TAG, `Media Segment: ${type}, size = ${mediaSegment.data.byteLength}`);
+        let ms = mediaSegment;
+        Log.v(this.TAG, `Media Segment: ${type}, startDts = ${ms.startDts}, startPts = ${ms.startPts}, endDts = ${ms.endDts}, endPts = ${ms.endPts}`);
         this.emit(RemuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
     }
 

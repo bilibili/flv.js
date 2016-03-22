@@ -8,6 +8,10 @@ class MP4Remuxer {
         this.TAG = this.constructor.name;
 
         this._dtsBase = -1;
+        this._dtsBaseInited = false;
+        this._audioDtsBase = Infinity;
+        this._videoDtsBase = Infinity;
+
         this._audioMeta = null;
         this._videoMeta = null;
 
@@ -114,8 +118,14 @@ class MP4Remuxer {
             return;
         }
 
-        if (this._dtsBase === -1) {
-            this._dtsBase = samples[0].dts;
+        if (!this._dtsBaseInited) {
+            this._audioDtsBase = samples[0].dts;
+            if (this._audioDtsBase === Infinity || this._videoDtsBase === Infinity) {
+                this._dtsBase = 0;
+            } else {
+                this._dtsBase = Math.min(this._audioDtsBase, this._videoDtsBase);
+                this._dtsBaseInited = true;
+            }
         }
 
         let bytes = 8 + track.length;
@@ -187,8 +197,14 @@ class MP4Remuxer {
             return;
         }
 
-        if (this._dtsBase === -1) {
-            this._dtsBase = samples[0].dts;
+        if (!this._dtsBaseInited) {
+            this._videoDtsBase = samples[0].dts;
+            if (this._audioDtsBase === Infinity || this._videoDtsBase === Infinity) {
+                this._dtsBase = 0;
+            } else {
+                this._dtsBase = Math.min(this._audioDtsBase, this._videoDtsBase);
+                this._dtsBaseInited = true;
+            }
         }
 
         let bytes = 8 + videoTrack.length;

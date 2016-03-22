@@ -13,6 +13,8 @@ class MP4Remuxer {
 
         this._onInitSegment = null;
         this._onMediaSegment = null;
+
+        this._isChrome = (self.navigator.userAgent.toLowerCase().indexOf('chrome') > -1);
     }
 
     destroy() {
@@ -229,7 +231,7 @@ class MP4Remuxer {
                 let nextDts = samples[0].dts - this._dtsBase;
                 sampleDuration = nextDts - dts;
             } else {
-                if (mp4Sample.length >= 1) {  // lastest sample, use second last duration
+                if (mp4Samples.length >= 1) {  // lastest sample, use second last duration
                     sampleDuration = mp4Samples[mp4Samples.length - 1].duration;
                 } else {  // the only one sample, calculate duration from fps
                     let timescale = this._videoMeta.timescale;
@@ -264,7 +266,7 @@ class MP4Remuxer {
         track.sequenceNumber++;
 
         // workaround for chrome: force first sample as a random access point
-        if (mp4Samples.length && navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
+        if (this._isChrome) {
             let flags = mp4Samples[0].flags;
             flags.dependsOn = 2;
             flags.isNonSync = 0;

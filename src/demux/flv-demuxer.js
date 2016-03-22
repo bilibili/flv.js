@@ -517,6 +517,10 @@ class FlvDemuxer {
             meta.id = track.id;
             meta.timescale = this._timescale;
             meta.duration = this._duration;
+        } else {
+            if (typeof meta.avcc !== 'undefined') {
+                Log.w(this.TAG, 'Found another AVCDecoderConfigurationRecord!');
+            }
         }
 
         let version = v.getUint8(0);  // configurationVersion
@@ -604,7 +608,8 @@ class FlvDemuxer {
             }
         }
 
-        meta.avcc = new Uint8Array(arrayBuffer, dataOffset, dataSize);
+        meta.avcc = new Uint8Array(dataSize);
+        meta.avcc.set(new Uint8Array(arrayBuffer, dataOffset, dataSize), 0);
         Log.v(this.TAG, 'Parsed AVCDecoderConfigurationRecord');
         // flush parsed frames
         if (this._dispatch && (this._audioTrack.length || this._videoTrack.length)) {

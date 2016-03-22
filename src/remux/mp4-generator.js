@@ -247,7 +247,7 @@ class MP4 {
             (timescale) & 0xFF,
             (duration >>> 24) & 0xFF,   // duration: 4 bytes
             (duration >>> 16) & 0xFF,
-            (duration >>> 8) & 0xFF,
+            (duration >>>  8) & 0xFF,
             (duration) & 0xFF,
             0x55, 0xC4,             // language: und (undetermined)
             0x00, 0x00              // pre_defined = 0
@@ -472,7 +472,9 @@ class MP4 {
     static trun(track, offset) {
         let samples = track.samples || [];
         let sampleCount = samples.length;
-        let data = new Uint8Array(12 + 16 * sampleCount);
+        let dataSize = 12 + 16 * sampleCount;
+        let data = new Uint8Array(dataSize);
+        offset += 8 + dataSize;
 
         data.set([
             0x00, 0x00, 0x0F, 0x01,      // version(0) & flags

@@ -228,8 +228,15 @@ class MP4Remuxer {
             if (samples.length >= 1) {
                 let nextDts = samples[0].dts - this._dtsBase;
                 sampleDuration = nextDts - dts;
-            } else {  // lastest sample. use second last duration
-                sampleDuration = mp4Samples[mp4Samples.length - 1].duration;
+            } else {
+                if (mp4Sample.length >= 1) {  // lastest sample, use second last duration
+                    sampleDuration = mp4Samples[mp4Samples.length - 1].duration;
+                } else {  // the only one sample, calculate duration from fps
+                    let timescale = this._videoMeta.timescale;
+                    let fps_den = this._videoMeta.frameRate.fps_den;
+                    let fps_num = this._videoMeta.frameRate.fps_num;
+                    sampleDuration = Math.floor(timescale * (fps_den / fps_num));
+                }
             }
 
             let mp4Sample = {

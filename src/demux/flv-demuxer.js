@@ -41,6 +41,7 @@ class FlvDemuxer {
         this._videoMetadata = null;
         this._naluLengthSize = 4;
         this._timestampBase = 0;
+        this._timescale = 1000;
         this._duration = 0;  // int32, in milliseconds
         this._durationOverrided = false;
 
@@ -252,7 +253,7 @@ class FlvDemuxer {
 
             this._metadata = scriptData;
             if (!this._durationOverrided && typeof this._metadata.onMetaData.duration === 'number') {
-                this._duration = Math.floor(this._metadata.onMetaData.duration * 1000);
+                this._duration = Math.floor(this._metadata.onMetaData.duration * this._timescale);
             }
             this._dispatch = false;
             this._onMetadata('info', this._metadata);
@@ -268,7 +269,7 @@ class FlvDemuxer {
             meta = this._audioMetadata = {};
             meta.type = 'audio';
             meta.id = track.id;
-            meta.timescale = 1000;
+            meta.timescale = this._timescale;
             meta.duration = this._duration;
 
             let le = this._littleEndian;
@@ -514,7 +515,7 @@ class FlvDemuxer {
             meta = this._videoMetadata = {};
             meta.type = 'video';
             meta.id = track.id;
-            meta.timescale = 1000;
+            meta.timescale = this._timescale;
             meta.duration = this._duration;
         }
 

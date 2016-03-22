@@ -4,37 +4,78 @@
 <head>
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
     <title>flv.js demo</title>
+
+    <style>
+        .mainContainer {
+            display: block;
+            width: 1024px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .urlInput {
+            display: block;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+
+        .centeredVideo {
+            display: block;
+            width: 100%;
+            height: 576px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: auto;
+        }
+
+        .controls {
+            display: block;
+            width: 100%;
+            text-align: left;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
 </head>
 
 <body>
     
-    <video name="videoElement" controls width="1024" height="576">
-        Your browser is too old which doesn't support HTML5 video.
-    </video>
-
-    <br>
-
-    <button onclick="flv_prepare()">Prepare</button>
-    <button onclick="flv_start()">Start</button>
-    <button onclick="flv_pause()">Pause</button>
-    <button onclick="button">Stop</button>
-    <input style="width:100px" type="text" name="seekpoint"/>
-    <button onclick="button">SeekTo</button>
+    <div class="mainContainer">
+        <input name="urlinput" class="urlInput" type="text" value="http://127.0.0.1/flv/mj2_18.flv"/>
+        <video name="videoElement" class="centeredVideo" controls autoplay width="1024" height="576">
+            Your browser is too old which doesn't support HTML5 video.
+        </video>
+        <br>
+        <div class="controls">
+            <button onclick="flv_prepare()">Prepare</button>
+            <button onclick="flv_start()">Start</button>
+            <button onclick="flv_pause()">Pause</button>
+            <button onclick="flv_stop()">Stop</button>
+            <input style="width:100px" type="text" name="seekpoint">
+            </input>
+            <button>SeekTo</button>
+            <!--<button onclick="downloadMedia('video')">DumpVideo</button>
+            <button onclick="downloadMedia('audio')">DumpAudio</button>-->
+        </div>
+    </div>
 
     <script src="../dist/flv.js"></script>
     
     <script>
-        console.log('isSupported: ' + flvjs.PlayerFactory.isSupported());
-        var mediaDataSource = {
-            type: 'flv',
-            url: 'http://127.0.0.1/flv/railgun.flv'
-        }
-        var element = document.getElementsByName('videoElement')[0];
-        player = flvjs.PlayerFactory.createPlayer(mediaDataSource);
-        player.attachMediaElement(element);
 
         function flv_prepare() {
-            debugger;
+            console.log('isSupported: ' + flvjs.PlayerFactory.isSupported());
+            var urlinput = document.getElementsByName('urlinput')[0];
+            var mediaDataSource = {
+                type: 'flv',
+                url: urlinput.value
+            }
+            var element = document.getElementsByName('videoElement')[0];
+            player = flvjs.PlayerFactory.createPlayer(mediaDataSource);
+            player.attachMediaElement(element);
             player.prepare();
         }
 
@@ -48,6 +89,11 @@
 
         function flv_stop() {
             console.log('Fuck!');
+        }
+
+        function downloadMedia(type) {
+            var url = player._getDownloadURL(type);
+            window.open(url);
         }
     </script>
     

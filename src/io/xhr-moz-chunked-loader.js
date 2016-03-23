@@ -33,7 +33,6 @@ class MozChunkedLoader extends BaseLoader {
             this._xhr.onreadystatechange = null;
             this._xhr.onprogress = null;
             this._xhr.onloadend = null;
-            this._xhr.ontimeout = null;
             this._xhr.onerror = null;
             this._xhr = null;
         }
@@ -47,12 +46,10 @@ class MozChunkedLoader extends BaseLoader {
         let xhr = this._xhr = new XMLHttpRequest();
 
         xhr.open('GET', url, true);
-        xhr.timeout = 10000;
         xhr.responseType = 'moz-chunked-arraybuffer';
         xhr.onreadystatechange = this._onReadyStateChange.bind(this);
         xhr.onprogress = this._onProgress.bind(this);
         xhr.onloadend = this._onLoadEnd.bind(this);
-        xhr.ontimeout = this._onTimeout.bind(this);
         xhr.onerror = this._onXhrError.bind(this);
 
         if (range.from !== 0 || range.to !== -1) {
@@ -126,15 +123,6 @@ class MozChunkedLoader extends BaseLoader {
         this._status = LoaderStatus.kComplete;
         if (this._onComplete) {
             this._onComplete(this._range.from, this._range.from + this._receivedLength - 1);
-        }
-    }
-
-    _onTimeout(e) {
-        this._status = LoaderStatus.kError;
-        if (this._onError) {
-            this._onError(LoaderError.kConnectingTimeout, {code: -1, msg: 'Connection timeout'});
-        } else {
-            throw 'MozChunkedLoader: Connection timeout';
         }
     }
 

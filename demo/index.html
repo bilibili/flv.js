@@ -74,6 +74,11 @@
                 url: urlinput.value
             }
             var element = document.getElementsByName('videoElement')[0];
+            if (typeof player !== 'undefined') {
+                player.detachMediaElement(element);
+                player.destroy();
+                player = null;
+            }
             player = flvjs.PlayerFactory.createPlayer(mediaDataSource);
             player.attachMediaElement(element);
             player.prepare();
@@ -95,6 +100,24 @@
             var url = player._getDownloadURL(type);
             window.open(url);
         }
+
+        function getUrlParam(key, defaultValue) {
+            var pageUrl = window.location.search.substring(1);
+            var pairs = pageUrl.split('&');
+            for (var i = 0; i < pairs.length; i++) {
+                var keyAndValue = pairs[i].split('=');
+                if (keyAndValue[0] === key) {
+                    return keyAndValue[1];
+                }
+            }
+            return defaultValue;
+        }
+
+        var urlInputBox = document.getElementsByName('urlinput')[0];
+        var url = decodeURIComponent(getUrlParam('src', urlInputBox.value));
+        urlInputBox.value = url;
+
+        flv_prepare();
     </script>
     
 </body>

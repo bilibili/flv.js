@@ -173,7 +173,7 @@ class IOController {
             }
         }
 
-        if (bufferedArea) {
+        if (bufferedArea) {  // TODO: allow re-load buffered area
             throw 'IOController: Seek target position has been buffered!';
         }
 

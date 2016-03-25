@@ -39,7 +39,7 @@ class FlvPlayer extends BasePlayer {
 
     detachMediaElement() {
         if (this._mediaElement) {
-            this._msectl.detachMediaElement(this._mediaElement);
+            this._msectl.detachMediaElement();
             this._mediaElement = null;
         }
     }

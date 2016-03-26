@@ -11,6 +11,8 @@ class MP4Remuxer {
         this._dtsBaseInited = false;
         this._audioDtsBase = Infinity;
         this._videoDtsBase = Infinity;
+        this._audioNextDts = 0;
+        this._videoNextDts = 0;
 
         this._audioMeta = null;
         this._videoMeta = null;
@@ -18,7 +20,7 @@ class MP4Remuxer {
         this._onInitSegment = null;
         this._onMediaSegment = null;
 
-        this._isChrome = (self.navigator.userAgent.toLowerCase().indexOf('chrome') > -1);
+        this._isChrome = false; //(self.navigator.userAgent.toLowerCase().indexOf('chrome') > -1);
     }
 
     destroy() {
@@ -73,6 +75,10 @@ class MP4Remuxer {
         this._onMediaSegment = callback;
     }
 
+    insertDiscontinuity() {
+        this._audioDtsBase = this._videoDtsBase = 0;
+    }
+
     remux(audioTrack, videoTrack) {
         if (!this._onMediaSegment) {
             throw 'MP4Remuxer: onMediaSegment callback must be specificed!';
@@ -112,6 +118,7 @@ class MP4Remuxer {
     _remuxAudio(audioTrack) {
         let track = audioTrack;
         let samples = track.samples;
+        let dtsCorrection = -1;
         let firstDts = -1, lastDts = -1, lastPts = -1;
 
         if (!samples || samples.length === 0) {
@@ -143,9 +150,28 @@ class MP4Remuxer {
         while (samples.length) {
             let aacSample = samples.shift();
             let unit = aacSample.unit;
-            let dts = aacSample.dts - this._dtsBase;
+
+            if (dtsCorrection === -1) {
+                dtsCorrection = (aacSample.dts - this._dtsBase) - this._audioNextDts;
+            }
+
+            let dts = aacSample.dts - this._dtsBase - dtsCorrection;
             if (firstDts === -1) {
                 firstDts = dts;
+            }
+
+            let sampleDuration = 0;
+
+            if (samples.length >= 1) {
+                let nextDts = samples[0].dts - this._dtsBase - dtsCorrection;
+                sampleDuration = nextDts - dts;
+            } else {
+                if (mp4Samples.length >= 1) {  // use second last sample duration
+                    sampleDuration = mp4Samples[mp4Samples.length - 1].duration;
+                } else {  // the only one sample, calculate from aac sample rate.
+                    // The decode result of an aac sample is 1024 PCM samples
+                    sampleDuration = Math.floor(1024 / this._audioMeta.audioSampleRate * this._audioMeta.timescale);
+                }
             }
 
             let mp4Sample = {
@@ -153,7 +179,7 @@ class MP4Remuxer {
                 pts: dts,
                 cts: 0,
                 size: unit.byteLength,
-                duration: Math.floor(1024 / this._audioMeta.audioSampleRate * this._audioMeta.timescale),
+                duration: sampleDuration,
                 flags: {
                     isLeading: 0,
                     dependsOn: 1,
@@ -166,8 +192,9 @@ class MP4Remuxer {
             offset += unit.byteLength;
         }
         let latest = mp4Samples[mp4Samples.length - 1];
-        lastDts = latest.dts;
-        lastPts = latest.pts + latest.duration;
+        lastDts = latest.dts + latest.duration;
+        lastPts = lastDts;
+        this._audioNextDts = lastDts;
 
         track.samples = mp4Samples;
         track.sequenceNumber++;
@@ -183,13 +210,14 @@ class MP4Remuxer {
             startDts: firstDts,
             endDts: lastDts,
             startPts: firstDts,
-            endPts: lastDts
+            endPts: lastPts
         });
     }
 
     _remuxVideo(videoTrack) {
         let track = videoTrack;
         let samples = track.samples;
+        let dtsCorrection = -1;
         let firstDts = -1, lastDts = -1;
         let firstPts = -1, lastPts = -1;
 
@@ -222,7 +250,11 @@ class MP4Remuxer {
             let avcSample = samples.shift();
             let keyframe = avcSample.isKeyframe;
 
-            let dts = avcSample.dts - this._dtsBase;
+            if (dtsCorrection === -1) {
+                dtsCorrection = (avcSample.dts - this._dtsBase) - this._videoNextDts;
+            }
+
+            let dts = avcSample.dts - this._dtsBase - dtsCorrection;
             let cts = avcSample.cts;
             let pts = dts + cts;
 
@@ -244,12 +276,13 @@ class MP4Remuxer {
             let sampleDuration = 0;
 
             if (samples.length >= 1) {
-                let nextDts = samples[0].dts - this._dtsBase;
+                let nextDts = samples[0].dts - this._dtsBase - dtsCorrection;
                 sampleDuration = nextDts - dts;
             } else {
                 if (mp4Samples.length >= 1) {  // lastest sample, use second last duration
                     sampleDuration = mp4Samples[mp4Samples.length - 1].duration;
                 } else {  // the only one sample, calculate duration from fps
+                    // TODO: zero-fps may cause duration to be NaN (also videoNextDts)
                     let timescale = this._videoMeta.timescale;
                     let fps_den = this._videoMeta.frameRate.fps_den;
                     let fps_num = this._videoMeta.frameRate.fps_num;
@@ -275,8 +308,9 @@ class MP4Remuxer {
             mp4Samples.push(mp4Sample);
         }
         let latest = mp4Samples[mp4Samples.length - 1];
-        lastDts = latest.dts;
+        lastDts = latest.dts + latest.duration;
         lastPts = latest.pts + latest.duration;
+        this._videoNextDts = lastDts;
 
         track.samples = mp4Samples;
         track.sequenceNumber++;

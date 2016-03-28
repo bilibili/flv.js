@@ -2,8 +2,29 @@ import ExpGolomb from './exp-golomb.js';
 
 class SPSParser {
 
+    static _ebsp2rbsp(uint8array) {
+        let src = uint8array;
+        let src_length = src.byteLength;
+        let dst = new Uint8Array(src_length);
+        let dst_idx = 0;
+
+        for (let i = 0; i < src_length; i++) {
+            if (i >= 2) {
+                // Unescape: Skip 0x03 after 00 00
+                if (src[i] === 0x03 && src[i - 1] === 0x00 && src[i - 2] === 0x00) {
+                    continue;
+                }
+            }
+            dst[dst_idx] = src[i];
+            dst_idx++;
+        }
+
+        return new Uint8Array(dst.buffer, 0, dst_idx);
+    }
+
     static parseSPS(uint8array) {
-        let gb = new ExpGolomb(uint8array);
+        let rbsp = SPSParser._ebsp2rbsp(uint8array);
+        let gb = new ExpGolomb(rbsp);
 
         gb.readByte();
         let profile_idc = gb.readByte();  // profile_idc
@@ -103,29 +124,29 @@ class SPSParser {
                     sar_width = gb.readByte() << 8 | gb.readByte();
                     sar_height = gb.readByte() << 8 | gb.readByte();
                 }
+            }
 
-                if (gb.readBool()) {  // overscan_info_present_flag
-                    gb.readBool();  // overscan_appropriate_flag
+            if (gb.readBool()) {  // overscan_info_present_flag
+                gb.readBool();  // overscan_appropriate_flag
+            }
+            if (gb.readBool()) {  // video_signal_type_present_flag
+                gb.readBits(4);  // video_format & video_full_range_flag
+                if (gb.readBool()) {  // colour_description_present_flag
+                    gb.readBits(24);  // colour_primaries & transfer_characteristics & matrix_coefficients
                 }
-                if (gb.readBool()) {  // video_signal_type_present_flag
-                    gb.readBits(4);  // video_format & video_full_range_flag
-                    if (gb.readBool()) {  // colour_description_present_flag
-                        gb.readBits(24);  // colour_primaries & transfer_characteristics & matrix_coefficients
-                    }
-                }
-                if (gb.readBool()) {  // chroma_loc_info_present_flag
-                    gb.readUEG();  // chroma_sample_loc_type_top_field
-                    gb.readUEG();  // chroma_sample_loc_type_bottom_field
-                }
-                if (gb.readBool()) {  // timing_info_present_flag
-                    let num_units_in_tick = gb.readBits(32);
-                    let time_scale = gb.readBits(32);
-                    fps_fixed = gb.readBool();  // fixed_frame_rate_flag
+            }
+            if (gb.readBool()) {  // chroma_loc_info_present_flag
+                gb.readUEG();  // chroma_sample_loc_type_top_field
+                gb.readUEG();  // chroma_sample_loc_type_bottom_field
+            }
+            if (gb.readBool()) {  // timing_info_present_flag
+                let num_units_in_tick = gb.readBits(32);
+                let time_scale = gb.readBits(32);
+                fps_fixed = gb.readBool();  // fixed_frame_rate_flag
 
-                    fps_num = time_scale;
-                    fps_den = num_units_in_tick * 2;
-                    fps = fps_num / fps_den;
-                }
+                fps_num = time_scale;
+                fps_den = num_units_in_tick * 2;
+                fps = fps_num / fps_den;
             }
         }
 

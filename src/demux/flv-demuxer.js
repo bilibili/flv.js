@@ -44,6 +44,12 @@ class FlvDemuxer {
         this._timescale = 1000;
         this._duration = 0;  // int32, in milliseconds
         this._durationOverrided = false;
+        this._referenceFrameRate = {
+            fixed: true,
+            fps: 23.976,
+            fps_num: 23976,
+            fps_den: 1000
+        };
 
         this._videoTrack = {type: 'video', id: 1, sequenceNumber: 0, samples: [], length: 0, nbNalu: 0};
         this._audioTrack = {type: 'audio', id: 2, sequenceNumber: 0, samples: [], length: 0};
@@ -254,6 +260,14 @@ class FlvDemuxer {
             this._metadata = scriptData;
             if (!this._durationOverrided && typeof this._metadata.onMetaData.duration === 'number') {
                 this._duration = Math.floor(this._metadata.onMetaData.duration * this._timescale);
+            }
+            if (typeof this._metadata.onMetaData.framerate === 'number') {
+                let fps_num = Math.floor(this._metadata.onMetaData.framerate * 1000);
+                let fps = fps_num / 1000;
+                this._referenceFrameRate.fixed = true;
+                this._referenceFrameRate.fps = fps;
+                this._referenceFrameRate.fps_num = fps_num;
+                this._referenceFrameRate.fps_den = 1000;
             }
             this._dispatch = false;
             this._onMetadata('info', this._metadata);
@@ -567,8 +581,12 @@ class FlvDemuxer {
             meta.profile = config.profile_string;
             meta.bitDepth = config.bit_depth;
             meta.chromaFormat = config.chroma_format;
-            meta.frameRate = config.frame_rate;
             meta.sarRatio = config.sar_ratio;
+            meta.frameRate = config.frame_rate;
+
+            if (config.frame_rate.fps_num === 0 || config.frame_rate.fps_den === 0) {
+                meta.frameRate = this._referenceFrameRate;
+            }
 
             let codecArray = sps.subarray(1, 4);
             let codecString = 'avc1.';

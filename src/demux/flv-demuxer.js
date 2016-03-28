@@ -263,11 +263,13 @@ class FlvDemuxer {
             }
             if (typeof this._metadata.onMetaData.framerate === 'number') {
                 let fps_num = Math.floor(this._metadata.onMetaData.framerate * 1000);
-                let fps = fps_num / 1000;
-                this._referenceFrameRate.fixed = true;
-                this._referenceFrameRate.fps = fps;
-                this._referenceFrameRate.fps_num = fps_num;
-                this._referenceFrameRate.fps_den = 1000;
+                if (fps_num > 0) {
+                    let fps = fps_num / 1000;
+                    this._referenceFrameRate.fixed = true;
+                    this._referenceFrameRate.fps = fps;
+                    this._referenceFrameRate.fps_num = fps_num;
+                    this._referenceFrameRate.fps_den = 1000;
+                }
             }
             this._dispatch = false;
             this._onMetadata('info', this._metadata);

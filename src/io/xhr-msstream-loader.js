@@ -72,7 +72,7 @@ class MSStreamLoader extends BaseLoader {
         reader.onprogress = this._msrOnProgress.bind(this);
         reader.onload = this._msrOnLoad.bind(this);
         reader.onerror = this._msrOnError.bind(this);
- 
+
         let xhr = this._xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
         xhr.responseType = 'ms-stream';

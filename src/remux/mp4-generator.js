@@ -339,7 +339,7 @@ class MP4 {
             0x04,                    // descriptor_type
             0x0F + configSize,       // length
             0x40,                    // codec: mpeg4_audio
-            0x05,                    // stream_type: Audio
+            0x15,                    // stream_type: Audio
             0x00, 0x00, 0x00,        // buffer_size
             0x00, 0x00, 0x00, 0x00,  // maxBitrate
             0x00, 0x00, 0x00, 0x00,  // avgBitrate

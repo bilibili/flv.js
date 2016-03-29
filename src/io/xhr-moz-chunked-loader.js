@@ -12,6 +12,7 @@ class MozChunkedLoader extends BaseLoader {
             xhr.responseType = 'moz-chunked-arraybuffer';
             return (xhr.responseType === 'moz-chunked-arraybuffer');
         } catch (e) {
+            Log.w('MozChunkedLoader', e.message);
             return false;
         }
     }

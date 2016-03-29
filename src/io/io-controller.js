@@ -3,11 +3,10 @@ import {LoaderStatus, LoaderError} from './loader.js';
 import SpeedCalculator from './speed-calculator.js';
 import FetchStreamLoader from './fetch-stream-loader.js';
 import MozChunkedLoader from './xhr-moz-chunked-loader.js';
+import MSStreamLoader from './xhr-msstream-loader.js';
 
 // Manage IO Loaders
 class IOController {
-
-    // TODO: events. callbacks or EventEmitter?
 
     constructor(url) {
         this.TAG = this.constructor.name;
@@ -101,6 +100,8 @@ class IOController {
     _selectLoader() {
         if (FetchStreamLoader.isSupported()) {
             this._loaderClass = FetchStreamLoader;
+        } else if (MSStreamLoader.isSupported()) {
+            this._loaderClass = MSStreamLoader;
         } else if (MozChunkedLoader.isSupported()) {
             this._loaderClass = MozChunkedLoader;
         } else {
@@ -341,7 +342,7 @@ class IOController {
                 let stashArray = new Uint8Array(this._stashBuffer, 0, this._stashSize);
                 stashArray.set(new Uint8Array(chunk), this._stashUsed);
                 this._stashUsed += chunk.byteLength;
-            } else {  // stashUsed + chunkSize > stashSize, size limit excceed
+            } else {  // stashUsed + chunkSize > stashSize, size limit exceeded
                 let stashArray = new Uint8Array(this._stashBuffer, 0, this._bufferSize);
                 if (this._stashUsed > 0) {  // There're stash datas in buffer
                     // dispatch the whole stashBuffer, and stash remain data

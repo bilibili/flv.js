@@ -36,9 +36,16 @@ class FlvDemuxer {
         this._firstParse = true;
         this._dispatch = false;
 
+        this._hasAudio = probeData.hasAudioTrack;
+        this._hasVideo = probeData.hasVideoTrack;
+
+        this._audioInitialMetadataDispatched = false;
+        this._videoInitialMetadataDispatched = false;
+
         this._metadata = null;
         this._audioMetadata = null;
         this._videoMetadata = null;
+
         this._naluLengthSize = 4;
         this._timestampBase = 0;
         this._timescale = 1000;
@@ -153,12 +160,24 @@ class FlvDemuxer {
         this._duration = duration;
     }
 
+    _isInitialMetadataDispatched() {
+        if (this._hasAudio && this._hasVideo) {  // both audio & video
+            return this._audioInitialMetadataDispatched && this._videoInitialMetadataDispatched;
+        }
+        if (this._hasAudio && !this._hasVideo) {  // audio only
+            return this._audioInitialMetadataDispatched;
+        }
+        if (!this._hasAudio && this._hasVideo) {  // video only
+            return this._videoInitialMetadataDispatched;
+        }
+    }
+
     // function parseChunks(chunk: ArrayBuffer, byteStart: number): number;
     parseChunks(chunk, byteStart) {
         Log.v(this.TAG, 'FlvDemuxer: received chunk start = ' + byteStart + ', size = ' + chunk.byteLength);
 
-        if (!this._onError || !this._onMetadata) {
-            throw 'Flv: onError & onMetadata callback must be specified';
+        if (!this._onError || !this._onMetadata || !this._onDataAvailable) {
+            throw 'Flv: onError & onMetadata & onDataAvailable callback must be specified';
         }
 
         let offset = 0;
@@ -237,12 +256,11 @@ class FlvDemuxer {
             offset += 11 + dataSize + 4;  // tagBody + dataSize + prevTagSize
         }
 
-        if (this._onDataAvailable) {
+        // dispatch parsed frames to consumer (typically, the remuxer)
+        if (this._isInitialMetadataDispatched()) {
             if (this._dispatch && (this._audioTrack.length || this._videoTrack.length)) {
                 this._onDataAvailable(this._audioTrack, this._videoTrack);
             }
-        } else {
-            throw 'Flv: No existing consumer (onDataAvailable) callback!';
         }
 
         return offset;  // consumed bytes, just equals latest offset index
@@ -256,8 +274,14 @@ class FlvDemuxer {
             if (this._metadata) {
                 Log.w(this.TAG, 'Detected multiple onMetaData tag');
             }
-
             this._metadata = scriptData;
+
+            if (typeof this._metadata.onMetaData.hasAudio === 'boolean') {
+                this._hasAudio = this._metadata.onMetaData.hasAudio;
+            }
+            if (typeof this._metadata.onMetaData.hasVideo === 'boolean') {
+                this._hasVideo = this._metadata.onMetaData.hasVideo;
+            }
             if (!this._durationOverrided && typeof this._metadata.onMetaData.duration === 'number') {
                 this._duration = Math.floor(this._metadata.onMetaData.duration * this._timescale);
             }
@@ -344,9 +368,13 @@ class FlvDemuxer {
             meta.config = misc.config;
             Log.v(this.TAG, 'Parsed AACSequenceHeader (AudioSpecificConfig)');
 
-            // force dispatch (or flush) parsed frames to remuxer
-            if (this._dispatch && (this._audioTrack.length || this._videoTrack.length)) {
-                this._onDataAvailable(this._audioTrack, this._videoTrack);
+            if (this._isInitialMetadataDispatched()) {
+                // Non-initial metadata, force dispatch (or flush) parsed frames to remuxer
+                if (this._dispatch && (this._audioTrack.length || this._videoTrack.length)) {
+                    this._onDataAvailable(this._audioTrack, this._videoTrack);
+                }
+            } else {
+                this._audioInitialMetadataDispatched = true;
             }
             // then notify new metadata
             this._dispatch = false;
@@ -631,9 +659,14 @@ class FlvDemuxer {
         meta.avcc = new Uint8Array(dataSize);
         meta.avcc.set(new Uint8Array(arrayBuffer, dataOffset, dataSize), 0);
         Log.v(this.TAG, 'Parsed AVCDecoderConfigurationRecord');
-        // flush parsed frames
-        if (this._dispatch && (this._audioTrack.length || this._videoTrack.length)) {
-            this._onDataAvailable(this._audioTrack, this._videoTrack);
+
+        if (this._isInitialMetadataDispatched()) {
+            // flush parsed frames
+            if (this._dispatch && (this._audioTrack.length || this._videoTrack.length)) {
+                this._onDataAvailable(this._audioTrack, this._videoTrack);
+            }
+        } else {
+            this._videoInitialMetadataDispatched = true;
         }
         // notify new metadata
         this._dispatch = false;

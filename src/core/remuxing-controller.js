@@ -21,6 +21,7 @@ export class RemuxingController extends EventEmitter {
 
         this._demuxer = null;
         this._remuxer = null;
+        this._mediaInfo = null;
 
         this._ioctl = new IOController(url);
         this._ioctl.stashBufferEnabled = true;
@@ -29,6 +30,7 @@ export class RemuxingController extends EventEmitter {
     }
 
     destroy() {
+        this._mediaInfo = null;
         if (this._ioctl) {
             if (this._ioctl.isWorking()) {
                 this._ioctl.abort();
@@ -75,6 +77,7 @@ export class RemuxingController extends EventEmitter {
             this._remuxer = new MP4Remuxer();
 
             this._demuxer.onError = this._onDemuxException.bind(this);
+            this._demuxer.onMediaInfo = this._onMediaInfo.bind(this);
 
             this._remuxer.bindDataSource(this._demuxer
                          .bindDataSource(this._ioctl
@@ -84,6 +87,7 @@ export class RemuxingController extends EventEmitter {
             this._remuxer.onMediaSegment = this._onRemuxerMediaSegmentArrival.bind(this);
         } else {
             // non-flv, throw exception or trigger event
+            // TODO: abort IO loading progress
             probeData = null;
             Log.e(this.TAG, 'Non-FLV, Unsupported media type!');
         }
@@ -98,6 +102,11 @@ export class RemuxingController extends EventEmitter {
     _onDemuxException(type, info) {
         Log.e(this.TAG, `DemuxException: type = ${type}, info = ${info}`);
         this.emit(RemuxingEvents.DEMUX_ERROR, type, info);
+    }
+
+    _onMediaInfo(mediaInfo) {
+        Log.v(this.TAG, 'onMediaInfo');
+        this._mediaInfo = mediaInfo;
     }
 
     _onRemuxerInitSegmentArrival(type, initSegment) {

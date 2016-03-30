@@ -32,7 +32,7 @@ class MP4Remuxer {
 
     bindDataSource(producer) {
         producer.onDataAvailable = this.remux.bind(this);
-        producer.onMetadata = this._onMetadataReceived.bind(this);
+        producer.onTrackMetadata = this._onTrackMetadataReceived.bind(this);
         return this;
     }
 
@@ -87,32 +87,29 @@ class MP4Remuxer {
         this._remuxVideo(videoTrack);
     }
 
-    _onMetadataReceived(type, metadata) {
+    _onTrackMetadataReceived(type, metadata) {
         let metabox = null;
 
-        if (type === 'info') {
-            // TODO
-            Log.v(this.TAG, JSON.stringify(metadata.onMetaData));
-        } else if (type === 'audio') {
+        if (type === 'audio') {
             this._audioMeta = metadata;
             metabox = MP4.generateInitSegment(metadata);
         } else if (type === 'video') {
             this._videoMeta = metadata;
             metabox = MP4.generateInitSegment(metadata);
+        } else {
+            return;
         }
-        // dispatch metabox (Initialization Segment)
-        if (type === 'video' || type === 'audio') {
-            if (!this._onInitSegment) {
-                throw 'MP4Remuxer: onInitSegment callback must be specified!';
-            }
 
-            this._onInitSegment(type, {
-                type: type,
-                data: metabox.buffer,
-                codec: metadata.codec,
-                container: `${type}/mp4`
-            });
+        // dispatch metabox (Initialization Segment)
+        if (!this._onInitSegment) {
+            throw 'MP4Remuxer: onInitSegment callback must be specified!';
         }
+        this._onInitSegment(type, {
+            type: type,
+            data: metabox.buffer,
+            codec: metadata.codec,
+            container: `${type}/mp4`
+        });
     }
 
     _remuxAudio(audioTrack) {

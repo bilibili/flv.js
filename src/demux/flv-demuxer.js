@@ -2,6 +2,7 @@ import Log from '../utils/logger.js';
 import AMF from './amf-parser.js';
 import SPSParser from './sps-parser.js';
 import {DemuxerError} from './demuxer.js';
+import MediaInfo from '../core/media-info.js';
 
 function Swap16(src) {
     return (((src >>> 8) & 0xFF) |
@@ -29,7 +30,8 @@ class FlvDemuxer {
         this.TAG = this.constructor.name;
 
         this._onError = null;
-        this._onMetadata = null;
+        this._onMediaInfo = null;
+        this._onTrackMetadata = null;
         this._onDataAvailable = null;
 
         this._dataOffset = probeData.dataOffset;
@@ -42,6 +44,7 @@ class FlvDemuxer {
         this._audioInitialMetadataDispatched = false;
         this._videoInitialMetadataDispatched = false;
 
+        this._mediaInfo = new MediaInfo();
         this._metadata = null;
         this._audioMetadata = null;
         this._videoMetadata = null;
@@ -70,7 +73,8 @@ class FlvDemuxer {
 
     destroy() {
         this._onError = null;
-        this._onMetadata = null;
+        this._onMediaInfo = null;
+        this._onTrackMetadata = null;
         this._onDataAvailable = null;
     }
 
@@ -110,14 +114,25 @@ class FlvDemuxer {
     }
 
     // prototype: function(type: string, metadata: any): void
-    get onMetadata() {
-        return this._onMetadata;
+    get onTrackMetadata() {
+        return this._onTrackMetadata;
     }
 
-    set onMetadata(callback) {
+    set onTrackMetadata(callback) {
         if (typeof callback !== 'function')
-            throw 'onMetadata must be a callback function!';
-        this._onMetadata = callback;
+            throw 'onTrackMetadata must be a callback function!';
+        this._onTrackMetadata = callback;
+    }
+
+    // prototype: function(mediaInfo: MediaInfo): void
+    get onMediaInfo() {
+        return this._onMediaInfo;
+    }
+
+    set onMediaInfo(callback) {
+        if (typeof callback !== 'function')
+            throw 'onMediaInfo must be a callback function!';
+        this._onMediaInfo = callback;
     }
 
     // prototype: function(type: number, info: string): void
@@ -172,12 +187,16 @@ class FlvDemuxer {
         }
     }
 
+    _isMediaInfoComplete() {
+        return (this._mediaInfo.metadata != null && this._mediaInfo.keyframesIndex != null);
+    }
+
     // function parseChunks(chunk: ArrayBuffer, byteStart: number): number;
     parseChunks(chunk, byteStart) {
         Log.v(this.TAG, 'FlvDemuxer: received chunk start = ' + byteStart + ', size = ' + chunk.byteLength);
 
-        if (!this._onError || !this._onMetadata || !this._onDataAvailable) {
-            throw 'Flv: onError & onMetadata & onDataAvailable callback must be specified';
+        if (!this._onError || !this._onMediaInfo || !this._onTrackMetadata || !this._onDataAvailable) {
+            throw 'Flv: onError & onMediaInfo & onTrackMetadata & onDataAvailable callback must be specified';
         }
 
         let offset = 0;
@@ -295,9 +314,29 @@ class FlvDemuxer {
                     this._referenceFrameRate.fps_den = 1000;
                 }
             }
+            if (typeof this._metadata.onMetaData.keyframes === 'object') {
+                let keyframes = this._metadata.onMetaData.keyframes;
+                this._mediaInfo.keyframesIndex = this._parseKeyframesIndex(keyframes);
+            }
             this._dispatch = false;
-            this._onMetadata('info', this._metadata);
+            this._mediaInfo.metadata = this._metadata.onMetaData;
+            if (this._isMediaInfoComplete()) {
+                this._onMediaInfo(this._mediaInfo);
+            }
         }
+    }
+
+    _parseKeyframesIndex(keyframes) {
+        let milliseconds = [];
+
+        for (let time of keyframes.times) {
+            milliseconds.push(Math.floor(time * 1000));
+        }
+
+        return {
+            milliseconds: milliseconds,
+            filepositions: keyframes.filepositions
+        };
     }
 
     _parseAudioData(arrayBuffer, dataOffset, dataSize, tagTimestamp) {
@@ -378,7 +417,7 @@ class FlvDemuxer {
             }
             // then notify new metadata
             this._dispatch = false;
-            this._onMetadata('audio', meta);
+            this._onTrackMetadata('audio', meta);
             return;
         } else if (aacData.packetType === 1) {  // AAC raw frame data
             let dts = tagTimestamp;
@@ -670,7 +709,7 @@ class FlvDemuxer {
         }
         // notify new metadata
         this._dispatch = false;
-        this._onMetadata('video', meta);
+        this._onTrackMetadata('video', meta);
     }
 
     _parseAVCVideoData(arrayBuffer, dataOffset, dataSize, dts, cts) {

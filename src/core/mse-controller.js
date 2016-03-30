@@ -90,9 +90,12 @@ class MSEController {
     appendInitSegment(initSegment) {
         let is = initSegment;
         let mimeType = `${is.container};codecs=${is.codec}`;
+        let firstInitSegment = false;
+
         Log.v(this.TAG, 'Received Initialization Segment, mimetype: ' + mimeType);
         if (mimeType !== this._mimeTypes[is.type]) {
             if (!this._mimeTypes[is.type]) {  // empty, first chance create sourcebuffer
+                firstInitSegment = true;
                 this._mimeTypes[is.type] = mimeType;
                 try {
                     // TODO: MediaSource readyState checking
@@ -109,8 +112,10 @@ class MSEController {
         }
 
         this._pendingSegments[is.type].push(is);
-        if (this._sourceBuffers[is.type] && !this._sourceBuffers[is.type].updating) {
-            this._doAppendSegments();
+        if (!firstInitSegment) {  // append immediately only if init segment in subsequence
+            if (this._sourceBuffers[is.type] && !this._sourceBuffers[is.type].updating) {
+                this._doAppendSegments();
+            }
         }
     }
 

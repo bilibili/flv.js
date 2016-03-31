@@ -340,6 +340,11 @@ class FlvDemuxer {
     }
 
     _parseAudioData(arrayBuffer, dataOffset, dataSize, tagTimestamp) {
+        if (dataSize <= 1) {
+            Log.w(this.TAG, 'Flv: Invalid audio packet, missing SoundData payload!');
+            return;
+        }
+
         let meta = this._audioMetadata;
         let track = this._audioTrack;
 
@@ -430,6 +435,11 @@ class FlvDemuxer {
     }
 
     _parseAACAudioData(arrayBuffer, dataOffset, dataSize) {
+        if (dataSize <= 1) {
+            Log.w(this.TAG, 'Flv: Invalid AAC packet, missing AACPacketType or/and Data!');
+            return;
+        }
+
         let result = {};
         let array = new Uint8Array(arrayBuffer, dataOffset, dataSize);
 
@@ -550,6 +560,11 @@ class FlvDemuxer {
     }
 
     _parseVideoData(arrayBuffer, dataOffset, dataSize, tagTimestamp) {
+        if (dataSize <= 1) {
+            Log.w(this.TAG, 'Flv: Invalid video packet, missing VideoData payload!');
+            return;
+        }
+
         let spec = (new Uint8Array(arrayBuffer, dataOffset, dataSize))[0];
 
         let frameType = (spec & 240) >>> 4;  // unused

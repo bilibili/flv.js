@@ -77,14 +77,20 @@ let RemuxingWorker = function (self) {
     function onIOError(type, info) {
         self.postMessage({
             msg: RemuxingEvents.IO_ERROR,
-            data: info
+            data: {
+                type: type,
+                info: info
+            }
         });
     }
 
     function onDemuxError(type, info) {
         self.postMessage({
             msg: RemuxingEvents.DEMUX_ERROR,
-            data: info
+            data: {
+                type: type,
+                info: info
+            }
         });
     }
 

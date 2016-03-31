@@ -4,12 +4,11 @@ import LoggingControl from '../utils/logging-control.js';
 import {RemuxingController, RemuxingEvents} from './remuxing-controller.js';
 import RemuxingWorker from './remuxing-worker.js';
 
-class Remuxer extends EventEmitter {
+class Remuxer {
 
     constructor(enableWorker, url) {
-        super();
-
         this.TAG = this.constructor.name;
+        this._emitter = new EventEmitter();
 
         if (enableWorker && typeof (Worker) !== 'undefined') {
             try {
@@ -52,7 +51,16 @@ class Remuxer extends EventEmitter {
             this._controller.destroy();
             this._controller = null;
         }
-        this.removeAllListeners();
+        this._emitter.removeAllListeners();
+        this._emitter = null;
+    }
+
+    on(event, listener) {
+        this._emitter.addListener(event, listener);
+    }
+
+    off(event, listener) {
+        this._emitter.removeListener(event, listener);
     }
 
     hasWorker() {
@@ -84,19 +92,19 @@ class Remuxer extends EventEmitter {
     }
 
     _onInitSegment(type, initSegment) {
-        this.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);
+        this._emitter.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);
     }
 
     _onMediaSegment(type, mediaSegment) {
-        this.emit(RemuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
+        this._emitter.emit(RemuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
     }
 
     _onIOError(type, info) {
-        this.emit(RemuxingEvents.IO_ERROR, type, info);
+        this._emitter.emit(RemuxingEvents.IO_ERROR, type, info);
     }
 
     _onDemuxError(type, info) {
-        this.emit(RemuxingEvents.DEMUX_ERROR, type, info);
+        this._emitter.emit(RemuxingEvents.DEMUX_ERROR, type, info);
     }
 
     _onLoggingConfigChanged(config) {

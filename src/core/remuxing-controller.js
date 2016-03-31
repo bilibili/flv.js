@@ -13,11 +13,11 @@ export const RemuxingEvents = {
     MEDIA_SEGMENT: 'media_segment'
 };
 
-export class RemuxingController extends EventEmitter {
+export class RemuxingController {
 
     constructor(url) {
-        super();
         this.TAG = this.constructor.name;
+        this._emitter = new EventEmitter();
 
         this._demuxer = null;
         this._remuxer = null;
@@ -46,7 +46,16 @@ export class RemuxingController extends EventEmitter {
             this._remuxer.destroy();
             this._remuxer = null;
         }
-        this.removeAllListeners();
+        this._emitter.removeAllListeners();
+        this._emitter = null;
+    }
+
+    on(event, listener) {
+        this._emitter.addListener(event, listener);
+    }
+
+    off(event, listener) {
+        this._emitter.removeListener(event, listener);
     }
 
     start() {
@@ -72,7 +81,7 @@ export class RemuxingController extends EventEmitter {
         let probeData = null;
 
         if ((probeData = FlvDemuxer.probe(data)).match) {
-            Log.v(this.TAG, 'Create FLVDemuxer');
+            Log.v(this.TAG, 'Create FlvDemuxer');
             this._demuxer = new FlvDemuxer(probeData);
             this._remuxer = new MP4Remuxer();
 
@@ -96,12 +105,12 @@ export class RemuxingController extends EventEmitter {
 
     _onIOException(type, info) {
         Log.e(this.TAG, `IOException: type = ${type}, code = ${info.code}, msg = ${info.msg}`);
-        this.emit(RemuxingEvents.IO_ERROR, type, info);
+        this._emitter.emit(RemuxingEvents.IO_ERROR, type, info);
     }
 
     _onDemuxException(type, info) {
         Log.e(this.TAG, `DemuxException: type = ${type}, info = ${info}`);
-        this.emit(RemuxingEvents.DEMUX_ERROR, type, info);
+        this._emitter.emit(RemuxingEvents.DEMUX_ERROR, type, info);
     }
 
     _onMediaInfo(mediaInfo) {
@@ -112,13 +121,13 @@ export class RemuxingController extends EventEmitter {
     _onRemuxerInitSegmentArrival(type, initSegment) {
         let is = initSegment;
         Log.v(this.TAG, `Init Segment: ${type}, codec/container: ${is.codec}/${is.container}`);
-        this.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);
+        this._emitter.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);
     }
 
     _onRemuxerMediaSegmentArrival(type, mediaSegment) {
         let ms = mediaSegment;
         Log.v(this.TAG, `Media Segment: ${type}, startDts = ${ms.startDts}, startPts = ${ms.startPts}, endDts = ${ms.endDts}, endPts = ${ms.endPts}`);
-        this.emit(RemuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
+        this._emitter.emit(RemuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
     }
 
 }

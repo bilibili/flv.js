@@ -50,7 +50,7 @@ class FetchStreamLoader extends BaseLoader {
         };
 
         this._status = LoaderStatus.kConnecting;
-        self.fetch(this._url, params).then(function (res) {
+        self.fetch(this._url, params).then((res) => {
             if (this._requestAbort) {
                 this._requestAbort = false;
                 this._status = LoaderStatus.kIdle;
@@ -75,14 +75,14 @@ class FetchStreamLoader extends BaseLoader {
                     throw 'FetchStreamLoader: Http code invalid, ' + res.status + ' ' + res.statusText;
                 }
             }
-        }.bind(this)).catch(function (e) {
+        }).catch((e) => {
             this._status = LoaderStatus.kError;
             if (this._onError) {
                 this._onError(LoaderError.kException, {code: -1, msg: e.message});
             } else {
                 throw e;
             }
-        }.bind(this));
+        });
     }
 
     abort() {
@@ -90,7 +90,7 @@ class FetchStreamLoader extends BaseLoader {
     }
 
     _pump(reader) {  // ReadableStreamReader
-        return reader.read().then(function (result) {
+        return reader.read().then((result) => {
             if (result.done) {
                 this._status = LoaderStatus.kComplete;
                 if (this._onComplete) {
@@ -116,7 +116,7 @@ class FetchStreamLoader extends BaseLoader {
 
                 return this._pump(reader);
             }
-        }.bind(this)).catch(function (e) {
+        }).catch((e) => {
             this._status = LoaderStatus.kError;
             let type = 0;
             let info = null;
@@ -135,7 +135,7 @@ class FetchStreamLoader extends BaseLoader {
             } else {
                 throw info.msg;
             }
-        }.bind(this));
+        });
     }
 
 }

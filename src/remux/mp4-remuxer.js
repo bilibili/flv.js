@@ -11,8 +11,8 @@ class MP4Remuxer {
         this._dtsBaseInited = false;
         this._audioDtsBase = Infinity;
         this._videoDtsBase = Infinity;
-        this._audioNextDts = 0;
-        this._videoNextDts = 0;
+        this._audioNextDts = undefined;
+        this._videoNextDts = undefined;
 
         this._audioMeta = null;
         this._videoMeta = null;
@@ -76,7 +76,7 @@ class MP4Remuxer {
     }
 
     insertDiscontinuity() {
-        this._audioDtsBase = this._videoDtsBase = 0;
+        this._audioNextDts = this._videoNextDts = undefined;
     }
 
     remux(audioTrack, videoTrack) {
@@ -149,7 +149,11 @@ class MP4Remuxer {
             let unit = aacSample.unit;
 
             if (dtsCorrection === -1) {
-                dtsCorrection = (aacSample.dts - this._dtsBase) - this._audioNextDts;
+                if (this._audioNextDts == undefined) {
+                    dtsCorrection = 0;
+                } else {
+                    dtsCorrection = (aacSample.dts - this._dtsBase) - this._audioNextDts;
+                }
             }
 
             let dts = aacSample.dts - this._dtsBase - dtsCorrection;
@@ -248,7 +252,11 @@ class MP4Remuxer {
             let keyframe = avcSample.isKeyframe;
 
             if (dtsCorrection === -1) {
-                dtsCorrection = (avcSample.dts - this._dtsBase) - this._videoNextDts;
+                if (this._videoNextDts == undefined) {
+                    dtsCorrection = 0;
+                } else {
+                    dtsCorrection = (avcSample.dts - this._dtsBase) - this._videoNextDts;
+                }
             }
 
             let dts = avcSample.dts - this._dtsBase - dtsCorrection;

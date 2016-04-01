@@ -3,13 +3,32 @@ class MediaInfo {
     constructor() {
         this.metadata = null;
         this.keyframesIndex = null;
-        this.duration = 0;
-        this.width = 0;
-        this.height = 0;
-        this.mimetype = null;
+        this.duration = null;
+        this.mimeType = null;
         this.audioCodec = null;
         this.videoCodec = null;
-        this.originalVideoCodec = null;
+        this.audioBitrate = null;
+        this.videoBitrate = null;
+        this.width = null;
+        this.height = null;
+        this.fps = null;
+        this.profile = null;
+        this.chromaFormat = null;
+        this.sarNum = null;
+        this.sarDen = null;
+    }
+
+    isComplete() {
+        return this.metadata != null &&
+               this.keyframesIndex != null &&
+               this.duration != null &&
+               this.mimeType != null &&
+               this.audioCodec != null &&
+               this.videoCodec != null &&
+               this.audioBitrate != null &&
+               this.videoBitrate != null &&
+               this.width != null &&
+               this.height != null;
     }
 
     isSeekable() {

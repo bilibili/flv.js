@@ -181,6 +181,7 @@ class SPSParser {
             profile_string: profile_string,  // baseline, high, high10, ...
             bit_depth: bit_depth,  // 8bit, 10bit, ...
             chroma_format: chroma_format,  // 4:2:0, 4:2:2, ...
+            chroma_format_string: SPSParser.getChromaFormatString(chroma_format),
 
             frame_rate: {
                 fixed: fps_fixed,
@@ -228,6 +229,19 @@ class SPSParser {
                 return 'High422';
             case 244:
                 return 'High444';
+            default:
+                return 'Unknown';
+        }
+    }
+
+    static getChromaFormatString(chroma) {
+        switch (chroma) {
+            case 420:
+                return '4:2:0';
+            case 422:
+                return '4:2:2';
+            case 444:
+                return '4:4:4';
             default:
                 return 'Unknown';
         }

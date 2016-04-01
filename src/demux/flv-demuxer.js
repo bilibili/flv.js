@@ -173,6 +173,10 @@ class FlvDemuxer {
     set overridedDuration(duration) {
         this._durationOverrided = true;
         this._duration = duration;
+        this._mediaInfo.duration = duration;
+        if (this._mediaInfo.isComplete()) {
+            this._onMediaInfo(this._mediaInfo);
+        }
     }
 
     _isInitialMetadataDispatched() {
@@ -185,10 +189,6 @@ class FlvDemuxer {
         if (!this._hasAudio && this._hasVideo) {  // video only
             return this._videoInitialMetadataDispatched;
         }
-    }
-
-    _isMediaInfoComplete() {
-        return (this._mediaInfo.metadata != null && this._mediaInfo.keyframesIndex != null);
     }
 
     // function parseChunks(chunk: ArrayBuffer, byteStart: number): number;
@@ -294,18 +294,35 @@ class FlvDemuxer {
                 Log.w(this.TAG, 'Detected multiple onMetaData tag');
             }
             this._metadata = scriptData;
+            let onMetaData = this._metadata.onMetaData;
 
-            if (typeof this._metadata.onMetaData.hasAudio === 'boolean') {
-                this._hasAudio = this._metadata.onMetaData.hasAudio;
+            if (typeof onMetaData.hasAudio === 'boolean') {  // hasAudio
+                this._hasAudio = onMetaData.hasAudio;
             }
-            if (typeof this._metadata.onMetaData.hasVideo === 'boolean') {
-                this._hasVideo = this._metadata.onMetaData.hasVideo;
+            if (typeof onMetaData.hasVideo === 'boolean') {  // hasVideo
+                this._hasVideo = onMetaData.hasVideo;
             }
-            if (!this._durationOverrided && typeof this._metadata.onMetaData.duration === 'number') {
-                this._duration = Math.floor(this._metadata.onMetaData.duration * this._timescale);
+            if (typeof onMetaData.audiodatarate === 'number') {  // audiodatarate
+                this._mediaInfo.audioBitrate = onMetaData.audiodatarate;
+            } else {
+                this._mediaInfo.audioBitrate = 0;
             }
-            if (typeof this._metadata.onMetaData.framerate === 'number') {
-                let fps_num = Math.floor(this._metadata.onMetaData.framerate * 1000);
+            if (typeof onMetaData.videodatarate === 'number') {  // videodatarate
+                this._mediaInfo.videoBitrate = onMetaData.videodatarate;
+            } else {
+                this._mediaInfo.videoBitrate = 0;
+            }
+            if (typeof onMetaData.duration === 'number') {  // duration
+                if (!this._durationOverrided) {
+                    let duration = Math.floor(onMetaData.duration * this._timescale);
+                    this._duration = duration;
+                    this._mediaInfo.duration = duration;
+                }
+            } else {
+                this._mediaInfo.duration = 0;
+            }
+            if (typeof onMetaData.framerate === 'number') {  // framerate
+                let fps_num = Math.floor(onMetaData.framerate * 1000);
                 if (fps_num > 0) {
                     let fps = fps_num / 1000;
                     this._referenceFrameRate.fixed = true;
@@ -314,13 +331,13 @@ class FlvDemuxer {
                     this._referenceFrameRate.fps_den = 1000;
                 }
             }
-            if (typeof this._metadata.onMetaData.keyframes === 'object') {
-                let keyframes = this._metadata.onMetaData.keyframes;
+            if (typeof onMetaData.keyframes === 'object') {  // keyframes
+                let keyframes = onMetaData.keyframes;
                 this._mediaInfo.keyframesIndex = this._parseKeyframesIndex(keyframes);
             }
             this._dispatch = false;
-            this._mediaInfo.metadata = this._metadata.onMetaData;
-            if (this._isMediaInfoComplete()) {
+            this._mediaInfo.metadata = onMetaData;
+            if (this._mediaInfo.isComplete()) {
                 this._onMediaInfo(this._mediaInfo);
             }
         }
@@ -423,6 +440,15 @@ class FlvDemuxer {
             // then notify new metadata
             this._dispatch = false;
             this._onTrackMetadata('audio', meta);
+
+            let mi = this._mediaInfo;
+            mi.audioCodec = meta.codec;
+            if (mi.videoCodec != null) {
+                mi.mimeType = 'video/x-flv; codecs="' + mi.videoCodec + ',' + mi.audioCodec + '"';
+            }
+            if (mi.isComplete()) {
+                this._onMediaInfo(mi);
+            }
             return;
         } else if (aacData.packetType === 1) {  // AAC raw frame data
             let dts = tagTimestamp;
@@ -604,6 +630,11 @@ class FlvDemuxer {
     }
 
     _parseAVCDecoderConfigurationRecord(arrayBuffer, dataOffset, dataSize) {
+        if (dataSize < 7) {
+            Log.w(this.TAG, 'Flv: Invalid AVCDecoderConfigurationRecord, lack of data!');
+            return;
+        }
+
         let meta = this._videoMetadata;
         let track = this._videoTrack;
         let le = this._littleEndian;
@@ -638,7 +669,6 @@ class FlvDemuxer {
         }
 
         let spsCount = v.getUint8(5) & 31;  // numOfSequenceParameterSets
-        Log.v(this.TAG, 'SPS count = ' + spsCount);
         if (spsCount === 0 || spsCount > 1) {
             this._onError(DemuxerError.kFormatError, `Flv: Invalid H264 SPS count: ${spsCount}`);
             return;
@@ -682,10 +712,26 @@ class FlvDemuxer {
                 codecString += h;
             }
             meta.codec = codecString;
+
+            let mi = this._mediaInfo;
+            mi.width = meta.width;
+            mi.height = meta.height;
+            mi.fps = meta.frameRate.fps;
+            mi.profile = meta.profile;
+            mi.chromaFormat = config.chroma_format_string;
+            mi.sarNum = meta.sarRatio.width;
+            mi.sarDen = meta.sarRatio.height;
+            mi.videoCodec = codecString;
+
+            if (mi.audioCodec != null) {
+                mi.mimeType = 'video/x-flv; codecs="' + mi.videoCodec + ',' + mi.audioCodec + '"';
+            }
+            if (mi.isComplete()) {
+                this._onMediaInfo(mi);
+            }
         }
 
         let ppsCount = v.getUint8(offset);  // numOfPictureParameterSets
-        Log.v(this.TAG, 'PPS count = ' + ppsCount);
         if (ppsCount === 0 || ppsCount > 1) {
             this._onError(DemuxerError.kFormatError, `Flv: Invalid H264 PPS count: ${ppsCount}`);
             return;

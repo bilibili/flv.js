@@ -54,9 +54,8 @@
             <button onclick="flv_start()">Start</button>
             <button onclick="flv_pause()">Pause</button>
             <button onclick="flv_stop()">Stop</button>
-            <input style="width:100px" type="text" name="seekpoint">
-            </input>
-            <button>SeekTo</button>
+            <input style="width:100px" type="text" name="seekpoint"/>
+            <button onclick="flv_seekto()">SeekTo</button>
             <!--<button onclick="downloadMedia('video')">DumpVideo</button>
             <button onclick="downloadMedia('audio')">DumpAudio</button>-->
         </div>
@@ -65,7 +64,6 @@
     <script src="../dist/flv.js"></script>
     
     <script>
-
         function flv_prepare() {
             console.log('isSupported: ' + flvjs.PlayerFactory.isSupported());
             var urlinput = document.getElementsByName('urlinput')[0];
@@ -94,6 +92,11 @@
 
         function flv_stop() {
             console.log('Fuck!');
+        }
+
+        function flv_seekto() {
+            var input = document.getElementsByName('seekpoint')[0];
+            player.seekTo(parseFloat(input.value));
         }
 
         function downloadMedia(type) {

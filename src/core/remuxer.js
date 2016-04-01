@@ -36,6 +36,7 @@ class Remuxer {
             ctl.on(RemuxingEvents.DEMUX_ERROR, this._onDemuxError.bind(this));
             ctl.on(RemuxingEvents.INIT_SEGMENT, this._onInitSegment.bind(this));
             ctl.on(RemuxingEvents.MEDIA_SEGMENT, this._onMediaSegment.bind(this));
+            ctl.on(RemuxingEvents.RECOMMEND_SEEKPOINT, this._onRecommendSeekpoint.bind(this));
         }
     }
 
@@ -107,6 +108,11 @@ class Remuxer {
         this._emitter.emit(RemuxingEvents.DEMUX_ERROR, type, info);
     }
 
+    _onRecommendSeekpoint(milliseconds) {
+        Log.v(this.TAG, 'onRecommendSeekpoint');
+        this._emitter.emit(RemuxingEvents.RECOMMEND_SEEKPOINT, milliseconds);
+    }
+
     _onLoggingConfigChanged(config) {
         if (this._worker) {
             this._worker.postMessage({cmd: 'logging_config', param: config});
@@ -134,6 +140,9 @@ class Remuxer {
                 break;
             case RemuxingEvents.DEMUX_ERROR:
                 this._onDemuxError(data.type, data.info);
+                break;
+            case RemuxingEvents.RECOMMEND_SEEKPOINT:
+                this._onRecommendSeekpoint(data);
                 break;
             default:
                 break;

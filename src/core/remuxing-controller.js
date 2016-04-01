@@ -10,7 +10,8 @@ export const RemuxingEvents = {
     IO_ERROR: 'io_error',
     DEMUX_ERROR: 'demux_error',
     INIT_SEGMENT: 'init_segment',
-    MEDIA_SEGMENT: 'media_segment'
+    MEDIA_SEGMENT: 'media_segment',
+    RECOMMEND_SEEKPOINT: 'recommend_seekpoint'
 };
 
 export class RemuxingController {
@@ -68,11 +69,22 @@ export class RemuxingController {
     }
 
     seek(milliseconds) {
-        // TODO: Get bytes position from MediaInfo.KeyframesIndex
-        // this._ioctl.seek(bytes);
+        Log.v(this.TAG, 'Request seek time: ' + milliseconds);
         if (this._ioctl.isWorking()) {
-            this._ioctl.seek(milliseconds);
+            if (this._mediaInfo == null) {
+                return;
+            }
+            if (!this._mediaInfo.isSeekable()) {
+                return;
+            }
+
+            let position = this._mediaInfo.getNearestKeyframePosition(milliseconds);
+            Log.v(this.TAG, 'Nearest keyframe time: ' + position.milliseconds);
+            this._ioctl.seek(position.fileposition);
+            this._remuxer.insertDiscontinuity();
+            this._emitter.emit(RemuxingEvents.RECOMMEND_SEEKPOINT, position.milliseconds);
         } else {
+            // TODO
             throw 'IOController is not working, unable to seek';
         }
     }

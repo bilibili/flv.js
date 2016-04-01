@@ -29,6 +29,7 @@ let RemuxingWorker = function (self) {
                 controller.on(RemuxingEvents.DEMUX_ERROR, onDemuxError.bind(this));
                 controller.on(RemuxingEvents.INIT_SEGMENT, onInitSegment.bind(this));
                 controller.on(RemuxingEvents.MEDIA_SEGMENT, onMediaSegment.bind(this));
+                controller.on(RemuxingEvents.RECOMMEND_SEEKPOINT, onRecommendSeekpoint.bind(this));
                 break;
             case 'destroy':
                 if (controller) {
@@ -91,6 +92,13 @@ let RemuxingWorker = function (self) {
                 type: type,
                 info: info
             }
+        });
+    }
+
+    function onRecommendSeekpoint(milliseconds) {
+        self.postMessage({
+            msg: RemuxingEvents.RECOMMEND_SEEKPOINT,
+            data: milliseconds
         });
     }
 

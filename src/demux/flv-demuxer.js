@@ -329,9 +329,9 @@ class FlvDemuxer {
     _parseKeyframesIndex(keyframes) {
         let times = [];
 
-        for (let time of keyframes.times) {
+        keyframes.times.forEach((time) => {
             times.push(Math.floor(time * 1000));
-        }
+        });
 
         return {
             times: times,

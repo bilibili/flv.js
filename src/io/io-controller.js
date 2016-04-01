@@ -12,7 +12,8 @@ class IOController {
         this.TAG = this.constructor.name;
 
         this._stashUsed = 0;
-        this._stashSize = 1024 * 256;  // initial size: 256KB
+        this._stashInitialSize = 1024 * 256;  // initial size: 256KB
+        this._stashSize = this._stashInitialSize;
         this._bufferSize = 1024 * 1024 * 3;  // initial size: 3MB
         this._stashBuffer = new ArrayBuffer(this._bufferSize);
         this._stashByteStart = 0;
@@ -175,7 +176,7 @@ class IOController {
         }
 
         if (bufferedArea) {  // TODO: allow re-load buffered area
-            throw 'IOController: Seek target position has been buffered!';
+            Log.w(this.TAG, 'Seek target position has been buffered!');
         }
 
         this._currentRange = {from: requestRange.from, to: -1};
@@ -183,6 +184,8 @@ class IOController {
 
         Log.v(this.TAG, 'ranges after seek: ' + JSON.stringify(this._progressRanges));
 
+        this._speedCalc.reset();
+        this._stashSize = this._stashInitialSize;
         this._createLoader();
         this._loader.open(this._url, requestRange);
     }
@@ -442,7 +445,7 @@ class IOController {
                 } else if (to + 1 === ranges[i + 1].from) {
                     // Merge connected ranges
                     ranges[i].to = ranges[i + 1].to;
-                    ranges.splice(i + 1, i);
+                    ranges.splice(i + 1, 1);
                     length--;
                     if (i === length - 1) {  // latest range
                         if (this._totalLength && ranges[i].to + 1 < this._totalLength) {

@@ -45,6 +45,8 @@ class FlvDemuxer {
         this._videoInitialMetadataDispatched = false;
 
         this._mediaInfo = new MediaInfo();
+        this._mediaInfo.hasAudio = this._hasAudio;
+        this._mediaInfo.hasVideo = this._hasVideo;
         this._metadata = null;
         this._audioMetadata = null;
         this._videoMetadata = null;
@@ -298,19 +300,23 @@ class FlvDemuxer {
 
             if (typeof onMetaData.hasAudio === 'boolean') {  // hasAudio
                 this._hasAudio = onMetaData.hasAudio;
+                this._mediaInfo.hasAudio = this._hasAudio;
             }
             if (typeof onMetaData.hasVideo === 'boolean') {  // hasVideo
                 this._hasVideo = onMetaData.hasVideo;
+                this._mediaInfo.hasVideo = this._hasVideo;
             }
             if (typeof onMetaData.audiodatarate === 'number') {  // audiodatarate
                 this._mediaInfo.audioBitrate = onMetaData.audiodatarate;
-            } else {
-                this._mediaInfo.audioBitrate = 0;
             }
             if (typeof onMetaData.videodatarate === 'number') {  // videodatarate
                 this._mediaInfo.videoBitrate = onMetaData.videodatarate;
-            } else {
-                this._mediaInfo.videoBitrate = 0;
+            }
+            if (typeof onMetaData.width === 'number') {  // width
+                this._mediaInfo.width = onMetaData.width;
+            }
+            if (typeof onMetaData.height === 'number') {  // height
+                this._mediaInfo.height = onMetaData.height;
             }
             if (typeof onMetaData.duration === 'number') {  // duration
                 if (!this._durationOverrided) {
@@ -329,11 +335,13 @@ class FlvDemuxer {
                     this._referenceFrameRate.fps = fps;
                     this._referenceFrameRate.fps_num = fps_num;
                     this._referenceFrameRate.fps_den = 1000;
+                    this._mediaInfo.fps = fps;
                 }
             }
             if (typeof onMetaData.keyframes === 'object') {  // keyframes
                 let keyframes = onMetaData.keyframes;
                 this._mediaInfo.keyframesIndex = this._parseKeyframesIndex(keyframes);
+                onMetaData.keyframes = null;  // keyframes has been extracted, remove it
             }
             this._dispatch = false;
             this._mediaInfo.metadata = onMetaData;
@@ -443,8 +451,14 @@ class FlvDemuxer {
 
             let mi = this._mediaInfo;
             mi.audioCodec = meta.codec;
-            if (mi.videoCodec != null) {
-                mi.mimeType = 'video/x-flv; codecs="' + mi.videoCodec + ',' + mi.audioCodec + '"';
+            mi.audioSampleRate = meta.audioSampleRate;
+            mi.audioChannelCount = meta.channelCount;
+            if (mi.hasVideo) {
+                if (mi.videoCodec != null) {
+                    mi.mimeType = 'video/x-flv; codecs="' + mi.videoCodec + ',' + mi.audioCodec + '"';
+                }
+            } else {
+                mi.mimeType = 'video/x-flv; codecs="' + mi.audioCodec + '"';
             }
             if (mi.isComplete()) {
                 this._onMediaInfo(mi);
@@ -723,8 +737,12 @@ class FlvDemuxer {
             mi.sarDen = meta.sarRatio.height;
             mi.videoCodec = codecString;
 
-            if (mi.audioCodec != null) {
-                mi.mimeType = 'video/x-flv; codecs="' + mi.videoCodec + ',' + mi.audioCodec + '"';
+            if (mi.hasAudio) {
+                if (mi.audioCodec != null) {
+                    mi.mimeType = 'video/x-flv; codecs="' + mi.videoCodec + ',' + mi.audioCodec + '"';
+                }
+            } else {
+                mi.mimeType = 'video/x-flv; codecs="' + mi.videoCodec + '"';
             }
             if (mi.isComplete()) {
                 this._onMediaInfo(mi);

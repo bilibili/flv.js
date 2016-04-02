@@ -1,14 +1,19 @@
 class MediaInfo {
 
     constructor() {
-        this.metadata = null;
-        this.keyframesIndex = null;
-        this.duration = null;
         this.mimeType = null;
+        this.duration = null;
+
+        this.hasAudio = null;
+        this.hasVideo = null;
         this.audioCodec = null;
         this.videoCodec = null;
         this.audioBitrate = null;
         this.videoBitrate = null;
+
+        this.audioSampleRate = null;
+        this.audioChannelCount = null;
+
         this.width = null;
         this.height = null;
         this.fps = null;
@@ -16,19 +21,37 @@ class MediaInfo {
         this.chromaFormat = null;
         this.sarNum = null;
         this.sarDen = null;
+
+        this.metadata = null;
+        this.keyframesIndex = null;
     }
 
     isComplete() {
-        return this.metadata != null &&
-               this.keyframesIndex != null &&
+        let audioInfoComplete = (this.hasAudio === false) ||
+                                (this.hasAudio === true &&
+                                 this.audioCodec != null &&
+                                 this.audioBitrate != null &&
+                                 this.audioSampleRate != null &&
+                                 this.audioChannelCount != null);
+
+        let videoInfoComplete = (this.hasVideo === false) ||
+                                (this.hasVideo === true &&
+                                 this.videoCodec != null &&
+                                 this.videoBitrate != null &&
+                                 this.width != null &&
+                                 this.height != null &&
+                                 this.fps != null &&
+                                 this.profile != null &&
+                                 this.chromaFormat != null &&
+                                 this.sarNum != null &&
+                                 this.sarDen != null);
+
+        // keyframesIndex may not be present
+        return this.mimeType != null &&
                this.duration != null &&
-               this.mimeType != null &&
-               this.audioCodec != null &&
-               this.videoCodec != null &&
-               this.audioBitrate != null &&
-               this.videoBitrate != null &&
-               this.width != null &&
-               this.height != null;
+               this.metadata != null &&
+               audioInfoComplete &&
+               videoInfoComplete;
     }
 
     isSeekable() {

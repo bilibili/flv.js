@@ -126,7 +126,7 @@ export class RemuxingController {
     }
 
     _onMediaInfo(mediaInfo) {
-        Log.v(this.TAG, 'onMediaInfo');
+        Log.v(this.TAG, 'onMediaInfo: ' + JSON.stringify(mediaInfo));
         this._mediaInfo = mediaInfo;
     }
 

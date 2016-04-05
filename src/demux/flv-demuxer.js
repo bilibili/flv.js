@@ -450,7 +450,7 @@ class FlvDemuxer {
             this._onTrackMetadata('audio', meta);
 
             let mi = this._mediaInfo;
-            mi.audioCodec = meta.codec;
+            mi.audioCodec = 'mp4a.40.' + misc.originalAudioObjectType;
             mi.audioSampleRate = meta.audioSampleRate;
             mi.audioChannelCount = meta.channelCount;
             if (mi.hasVideo) {
@@ -514,12 +514,13 @@ class FlvDemuxer {
         */
 
         let audioObjectType = 0;
+        let originalAudioObjectType = 0;
         let audioExtensionObjectType = null;
         let samplingIndex = 0;
         let extensionSamplingIndex = null;
 
         // 5 bits
-        audioObjectType = array[0] >>> 3;
+        audioObjectType = originalAudioObjectType = array[0] >>> 3;
         // 4 bits
         samplingIndex = ((array[0] & 0x07) << 1) | (array[1] >>> 7);
         if (samplingIndex < 0 || samplingIndex >= mpegSamplingRates.length) {
@@ -595,7 +596,8 @@ class FlvDemuxer {
             config: config,
             samplingRate: samplingFrequence,
             channelCount: channelConfig,
-            codec: 'mp4a.40.' + audioObjectType
+            codec: 'mp4a.40.' + audioObjectType,
+            originalAudioObjectType: originalAudioObjectType
         };
     }
 

@@ -1,5 +1,6 @@
 import Log from '../utils/logger.js';
 import MP4 from './mp4-generator.js';
+import {SampleInfo, MediaSegmentInfo, MediaSegmentInfoList} from './media-segment-info.js';
 
 // Fragmented mp4 remuxer
 class MP4Remuxer {
@@ -17,6 +18,9 @@ class MP4Remuxer {
         this._audioMeta = null;
         this._videoMeta = null;
 
+        this._audioSegmentInfoList = new MediaSegmentInfoList('audio');
+        this._videoSegmentInfoList = new MediaSegmentInfoList('video');
+
         this._onInitSegment = null;
         this._onMediaSegment = null;
 
@@ -26,6 +30,8 @@ class MP4Remuxer {
     destroy() {
         this._audioMeta = null;
         this._videoMeta = null;
+        this._audioSegmentInfoList = null;
+        this._videoSegmentInfoList = null;
         this._onInitSegment = null;
         this._onMediaSegment = null;
     }
@@ -171,7 +177,9 @@ class MP4Remuxer {
                     sampleDuration = mp4Samples[mp4Samples.length - 1].duration;
                 } else {  // the only one sample, calculate from aac sample rate.
                     // The decode result of an aac sample is 1024 PCM samples
-                    sampleDuration = Math.floor(1024 / this._audioMeta.audioSampleRate * this._audioMeta.timescale);
+                    let sampleRate = this._audioMeta.audioSampleRate;
+                    let timescale = this._audioMeta.timescale;
+                    sampleDuration = Math.floor(1024 / sampleRate * timescale);
                 }
             }
 
@@ -181,6 +189,7 @@ class MP4Remuxer {
                 cts: 0,
                 size: unit.byteLength,
                 duration: sampleDuration,
+                originalDts: aacSample.dts,
                 flags: {
                     isLeading: 0,
                     dependsOn: 1,
@@ -196,6 +205,20 @@ class MP4Remuxer {
         lastDts = latest.dts + latest.duration;
         lastPts = lastDts;
         this._audioNextDts = lastDts;
+
+        // fill media segment info & add to info list
+        let info = new MediaSegmentInfo();
+        info.startDts = firstDts;
+        info.endDts = lastDts;
+        info.firstSample = new SampleInfo(mp4Samples[0].dts,
+                                          mp4Samples[0].duration,
+                                          mp4Samples[0].originalDts,
+                                          false);
+        info.lastSample = new SampleInfo(latest.dts,
+                                         latest.duration,
+                                         latest.originalDts,
+                                         false);
+        this._audioSegmentInfoList.append(info);
 
         track.samples = mp4Samples;
         track.sequenceNumber++;
@@ -246,6 +269,7 @@ class MP4Remuxer {
 
         let offset = 8;
         let mp4Samples = [];
+        let info = new MediaSegmentInfo();
 
         while (samples.length) {
             let avcSample = samples.shift();
@@ -287,7 +311,6 @@ class MP4Remuxer {
                 if (mp4Samples.length >= 1) {  // lastest sample, use second last duration
                     sampleDuration = mp4Samples[mp4Samples.length - 1].duration;
                 } else {  // the only one sample, calculate duration from fps
-                    // TODO: zero-fps may cause duration to be NaN (also videoNextDts)
                     let timescale = this._videoMeta.timescale;
                     let fps_den = this._videoMeta.frameRate.fps_den;
                     let fps_num = this._videoMeta.frameRate.fps_num;
@@ -295,12 +318,19 @@ class MP4Remuxer {
                 }
             }
 
+            if (keyframe) {
+                let syncPoint = new SampleInfo(dts, sampleDuration, avcSample.dts, true);
+                info.appendSyncPoint(syncPoint);
+            }
+
             let mp4Sample = {
                 dts: dts,
                 pts: pts,
                 cts: cts,
                 size: sampleSize,
+                isKeyframe: keyframe,
                 duration: sampleDuration,
+                originalDts: avcSample.dts,
                 flags: {
                     isLeading: 0,
                     dependsOn: keyframe ? 2 : 1,
@@ -316,6 +346,19 @@ class MP4Remuxer {
         lastDts = latest.dts + latest.duration;
         lastPts = latest.pts + latest.duration;
         this._videoNextDts = lastDts;
+
+        // fill media segment info & add to info list
+        info.startDts = firstDts;
+        info.endDts = lastDts;
+        info.firstSample = new SampleInfo(mp4Samples[0].dts,
+                                          mp4Samples[0].duration,
+                                          mp4Samples[0].originalDts,
+                                          mp4Samples[0].isKeyframe);
+        info.lastSample = new SampleInfo(latest.dts,
+                                         latest.duration,
+                                         latest.originalDts,
+                                         latest.isKeyframe);
+        this._videoSegmentInfoList.append(info);
 
         track.samples = mp4Samples;
         track.sequenceNumber++;

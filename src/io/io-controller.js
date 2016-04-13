@@ -31,6 +31,7 @@ class IOController {
         this._speedNormalizeList = [64, 128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096];
 
         this._onDataArrival = null;
+        this._onSeeked = null;
         this._onError = null;
 
         this._selectLoader();
@@ -53,6 +54,7 @@ class IOController {
         this._speedCalc = null;
 
         this._onDataArrival = null;
+        this._onSeeked = null;
         this._onError = null;
     }
 
@@ -75,6 +77,17 @@ class IOController {
         }
 
         this._onDataArrival = callback;
+    }
+
+    // TODO: add SeekReason: Request / internal(continue loading, reconnecting)
+    get onSeeked() {
+        return this._onSeeked;
+    }
+
+    set onSeeked(callback) {
+        if (typeof callback !== 'function')
+            throw 'onSeeked must be a callback function!';
+        this._onSeeked = callback;
     }
 
     // prototype: function onError(type: number, info: {code: number, msg: string}): void
@@ -188,6 +201,10 @@ class IOController {
         this._stashSize = this._stashInitialSize;
         this._createLoader();
         this._loader.open(this._url, requestRange);
+
+        if (this._onSeeked) {
+            this._onSeeked();
+        }
     }
 
     updateUrl(url) {

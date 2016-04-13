@@ -28,6 +28,11 @@ export class RemuxingController {
         this._ioctl.stashBufferEnabled = true;
         this._ioctl.onError = this._onIOException.bind(this);
         this._ioctl.onDataArrival = this._onInitChunkArrival.bind(this);
+        this._ioctl.onSeeked = () => {
+            if (this._remuxer) {
+                this._remuxer.insertDiscontinuity();
+            }
+        };
     }
 
     destroy() {
@@ -81,7 +86,6 @@ export class RemuxingController {
             let position = this._mediaInfo.getNearestKeyframePosition(milliseconds);
             Log.v(this.TAG, 'Nearest keyframe time: ' + position.milliseconds);
             this._ioctl.seek(position.fileposition);
-            this._remuxer.insertDiscontinuity();
             this._emitter.emit(RemuxingEvents.RECOMMEND_SEEKPOINT, position.milliseconds);
         } else {
             // TODO

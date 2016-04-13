@@ -421,6 +421,7 @@ class FlvDemuxer {
 
             meta.audioSampleRate = soundRate;
             meta.channelCount = (soundType === 0 ? 1 : 2);
+            meta.refSampleDuration = Math.floor(1024 / meta.audioSampleRate * meta.timescale);
             meta.codec = 'mp4a.40.5';  // TODO: browser manifest codec consideration
         }
 
@@ -435,6 +436,8 @@ class FlvDemuxer {
             meta.channelCount = misc.channelCount;
             meta.codec = misc.codec;
             meta.config = misc.config;
+            // The decode result of an aac sample is 1024 PCM samples
+            meta.refSampleDuration = Math.floor(1024 / meta.audioSampleRate * meta.timescale);
             Log.v(this.TAG, 'Parsed AACSequenceHeader (AudioSpecificConfig)');
 
             if (this._isInitialMetadataDispatched()) {
@@ -717,6 +720,10 @@ class FlvDemuxer {
             if (config.frame_rate.fps_num === 0 || config.frame_rate.fps_den === 0) {
                 meta.frameRate = this._referenceFrameRate;
             }
+
+            let fps_den = meta.frameRate.fps_den;
+            let fps_num = meta.frameRate.fps_num;
+            meta.refSampleDuration = Math.floor(meta.timescale * (fps_den / fps_num));
 
             let codecArray = sps.subarray(1, 4);
             let codecString = 'avc1.';

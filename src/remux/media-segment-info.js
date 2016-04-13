@@ -15,8 +15,10 @@ export class SampleInfo {
 export class MediaSegmentInfo {
 
     constructor() {
-        this.startDts = 0;
+        this.beginDts = 0;
         this.endDts = 0;
+        this.originalBeginDts = 0;
+        this.originalEndDts = 0;
         this.syncPoints = [];     // SampleInfo[n], for video IDR frames only
         this.firstSample = null;  // SampleInfo
         this.lastSample = null;   // SampleInfo
@@ -42,8 +44,19 @@ export class MediaSegmentInfoList {
         return this._type;
     }
 
-    _searchNearestSegmentBefore(startDts) {
+    get length() {
+        return this._list.length;
+    }
+
+    isEmpty() {
+        return this._list.length === 0;
+    }
+
+    _searchNearestSegmentBefore(originalBeginDts) {
         let list = this._list;
+        if (list.length === 0) {
+            return -2;
+        }
         let last = list.length - 1;
         let mid = 0;
         let lbound = 0;
@@ -51,17 +64,17 @@ export class MediaSegmentInfoList {
 
         let idx = 0;
 
-        if (startDts < list[0].startDts) {
+        if (originalBeginDts < list[0].originalBeginDts) {
             idx = -1;
             return idx;
         }
 
         while (lbound <= ubound) {
             mid = lbound + Math.floor((ubound - lbound) / 2);
-            if (mid === last || (startDts >= list[mid].endDts && startDts < list[mid + 1].startDts)) {
+            if (mid === last || (originalBeginDts > list[mid].lastSample.originalDts && originalBeginDts < list[mid + 1].originalBeginDts)) {
                 idx = mid;
                 break;
-            } else if (list[mid].startDts < startDts) {
+            } else if (list[mid].originalBeginDts < originalBeginDts) {
                 lbound = mid + 1;
             } else {
                 ubound = mid - 1;
@@ -70,8 +83,8 @@ export class MediaSegmentInfoList {
         return idx;
     }
 
-    _searchNearestSegmentAfter(startDts) {
-        return this._searchNearestSegmentBefore(startDts) + 1;
+    _searchNearestSegmentAfter(originalBeginDts) {
+        return this._searchNearestSegmentBefore(originalBeginDts) + 1;
     }
 
     append(mediaSegmentInfo) {
@@ -80,14 +93,14 @@ export class MediaSegmentInfoList {
         let lastAppendIdx = this._lastAppendLocation;
         let insertIdx = 0;
 
-        if (lastAppendIdx !== -1 && msi.startDts >= list[lastAppendIdx].endDts &&
+        if (lastAppendIdx !== -1 && msi.beginDts >= list[lastAppendIdx].endDts &&
                                     ((lastAppendIdx === list.length - 1) ||
                                     (lastAppendIdx < list.length - 1 &&
-                                    msi.startDts < list[lastAppendIdx + 1].startDts))) {
+                                    msi.beginDts < list[lastAppendIdx + 1].beginDts))) {
             insertIdx = lastAppendIdx + 1;  // use cached location idx
         } else {
             if (list.length > 0) {
-                insertIdx = this._searchNearestSegmentBefore(msi.startDts) + 1;
+                insertIdx = this._searchNearestSegmentBefore(msi.originalBeginDts) + 1;
             }
         }
 
@@ -95,16 +108,8 @@ export class MediaSegmentInfoList {
         this._list.splice(insertIdx, 0, msi);
     }
 
-    getLastSegment() {
-        if (this._list.length > 0) {
-            return this._list[this._list.length - 1];
-        } else {
-            return null;
-        }
-    }
-
-    getLastSegmentBefore(startDts) {
-        let idx = this._searchNearestSegmentBefore(startDts);
+    getLastSegmentBefore(originalBeginDts) {
+        let idx = this._searchNearestSegmentBefore(originalBeginDts);
         if (idx >= 0) {
             return this._list[idx];
         } else {  // -1
@@ -112,12 +117,17 @@ export class MediaSegmentInfoList {
         }
     }
 
-    getLastSampleBefore(startDts) {
-        return this.getLastSegmentBefore(startDts).lastSample;
+    getLastSampleBefore(originalBeginDts) {
+        let segment = this.getLastSegmentBefore(originalBeginDts);
+        if (segment != null) {
+            return segment.lastSample;
+        } else {
+            return null;
+        }
     }
 
-    getLastSyncPointBefore(startDts) {
-        let syncPoints = this.getLastSegmentBefore(startDts).syncPoints;
+    getLastSyncPointBefore(originalBeginDts) {
+        let syncPoints = this.getLastSegmentBefore(originalBeginDts).syncPoints;
         if (syncPoints.length > 0) {
             return syncPoints[syncPoints.length - 1];
         } else {
@@ -125,17 +135,13 @@ export class MediaSegmentInfoList {
         }
     }
 
-    getFirstSegmentAfter(startDts) {
-        let idx = this._searchNearestSegmentAfter(startDts);
+    getFirstSegmentAfter(originalBeginDts) {
+        let idx = this._searchNearestSegmentAfter(originalBeginDts);
         if (idx >= 0 && idx < this._list.length) {
             return this._list[idx];
         } else {
             return null;
         }
-    }
-
-    getFirstSampleAfter(startDts) {
-        return this.getFirstSegmentAfter(startDts).firstSample;
     }
 
 }

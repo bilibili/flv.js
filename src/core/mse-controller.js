@@ -96,7 +96,6 @@ class MSEController {
         if (mimeType !== this._mimeTypes[is.type]) {
             if (!this._mimeTypes[is.type]) {  // empty, first chance create sourcebuffer
                 firstInitSegment = true;
-                this._mimeTypes[is.type] = mimeType;
                 try {
                     // TODO: MediaSource readyState checking
                     let sb = this._sourceBuffers[is.type] = this._mediaSource.addSourceBuffer(mimeType);
@@ -106,9 +105,9 @@ class MSEController {
                     Log.e(this.TAG, error.message);
                 }
             } else {
-                // TODO: manifest codec changed, fire error
-                throw 'MSEController: Codec/Container changed in latest Initialization Segment!';
+                Log.v(this.TAG, `Notice: ${is.type} mimetype changed, origin: ${this._mimeTypes[is.type]}, target: ${mimeType}`);
             }
+            this._mimeTypes[is.type] = mimeType;
         }
 
         this._pendingSegments[is.type].push(is);

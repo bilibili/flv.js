@@ -774,13 +774,8 @@ class FlvDemuxer {
                 continue;
             }
 
-            // Notice: Nalu without header (00 00 00 01)
-            let pps = new Uint8Array(arrayBuffer, dataOffset + offset, len);
+            // pps is useless for extracting video information
             offset += len;
-
-            if (!meta.pps) {
-                meta.pps = [pps];
-            }
         }
 
         meta.avcc = new Uint8Array(dataSize);

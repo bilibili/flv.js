@@ -30,14 +30,12 @@ class MediaInfo {
         let audioInfoComplete = (this.hasAudio === false) ||
                                 (this.hasAudio === true &&
                                  this.audioCodec != null &&
-                                 this.audioBitrate != null &&
                                  this.audioSampleRate != null &&
                                  this.audioChannelCount != null);
 
         let videoInfoComplete = (this.hasVideo === false) ||
                                 (this.hasVideo === true &&
                                  this.videoCodec != null &&
-                                 this.videoBitrate != null &&
                                  this.width != null &&
                                  this.height != null &&
                                  this.fps != null &&

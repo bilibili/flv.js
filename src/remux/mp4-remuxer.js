@@ -65,9 +65,9 @@ class MP4Remuxer {
            type: string,
            data: ArrayBuffer,
            sampleCount: int32
-           startDts: int32,
+           beginDts: int32,
            endDts: int32,
-           startPts: int32,
+           beginPts: int32,
            endPts: int32
        }
     */
@@ -245,9 +245,9 @@ class MP4Remuxer {
             type: 'audio',
             data: this._mergeBoxes(moofbox, mdatbox).buffer,
             sampleCount: mp4Samples.length,
-            startDts: firstDts,
+            beginDts: firstDts,
             endDts: lastDts,
-            startPts: firstDts,
+            beginPts: firstDts,
             endPts: lastPts
         });
     }
@@ -407,9 +407,9 @@ class MP4Remuxer {
             type: 'video',
             data: this._mergeBoxes(moofbox, mdatbox).buffer,
             sampleCount: mp4Samples.length,
-            startDts: firstDts,
+            beginDts: firstDts,
             endDts: lastDts,
-            startPts: firstPts,
+            beginPts: firstPts,
             endPts: lastPts
         });
     }

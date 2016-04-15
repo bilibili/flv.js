@@ -13,6 +13,7 @@ class FlvPlayer extends BasePlayer {
         this.e.onvSeeking = this._onvSeeking.bind(this);
         this.e.onvSeeked = this._onvSeeked.bind(this);
 
+        this._pendingSeekTime = null;  // in seconds
         this._requestSetTime = false;
         this._seekpointRecord = null;
 
@@ -54,6 +55,11 @@ class FlvPlayer extends BasePlayer {
         this._msectl.attachMediaElement(mediaElement);
         mediaElement.addEventListener('seeking', this.e.onvSeeking);
         mediaElement.addEventListener('seeked', this.e.onvSeeked);
+
+        if (this._pendingSeekTime != null) {
+            mediaElement.currentTime = this._pendingSeekTime;
+            this._pendingSeekTime = null;
+        }
     }
 
     detachMediaElement() {
@@ -72,7 +78,7 @@ class FlvPlayer extends BasePlayer {
         this._remuxer.open();
     }
 
-    start() {
+    play() {
         this._mediaElement.play();
     }
 
@@ -80,9 +86,19 @@ class FlvPlayer extends BasePlayer {
         this._mediaElement.pause();
     }
 
-    seekTo(seconds) {
-        Log.v(this.TAG, 'Received seekTo request');
-        this._internalSeek(seconds, false);
+    get currentTime() {
+        if (this._mediaElement) {
+            return this._mediaElement.currentTime;
+        }
+        return 0;
+    }
+
+    set currentTime(seconds) {
+        if (this._mediaElement) {
+            this._internalSeek(seconds);
+        } else {
+            this._pendingSeekTime = seconds;
+        }
     }
 
     _isTimepointBuffered(seconds) {

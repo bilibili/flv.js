@@ -225,10 +225,12 @@ class MP4Remuxer {
         info.originalBeginDts = mp4Samples[0].originalDts;
         info.originalEndDts = latest.originalDts + latest.duration;
         info.firstSample = new SampleInfo(mp4Samples[0].dts,
+                                          mp4Samples[0].pts,
                                           mp4Samples[0].duration,
                                           mp4Samples[0].originalDts,
                                           false);
         info.lastSample = new SampleInfo(latest.dts,
+                                         latest.pts,
                                          latest.duration,
                                          latest.originalDts,
                                          false);
@@ -345,7 +347,7 @@ class MP4Remuxer {
             }
 
             if (keyframe) {
-                let syncPoint = new SampleInfo(dts, sampleDuration, avcSample.dts, true);
+                let syncPoint = new SampleInfo(dts, pts, sampleDuration, avcSample.dts, true);
                 info.appendSyncPoint(syncPoint);
             }
 
@@ -379,10 +381,12 @@ class MP4Remuxer {
         info.originalBeginDts = mp4Samples[0].originalDts;
         info.originalEndDts = latest.originalDts + latest.duration;
         info.firstSample = new SampleInfo(mp4Samples[0].dts,
+                                          mp4Samples[0].pts,
                                           mp4Samples[0].duration,
                                           mp4Samples[0].originalDts,
                                           mp4Samples[0].isKeyframe);
         info.lastSample = new SampleInfo(latest.dts,
+                                         latest.pts,
                                          latest.duration,
                                          latest.originalDts,
                                          latest.isKeyframe);

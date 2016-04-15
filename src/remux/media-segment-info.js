@@ -1,8 +1,9 @@
 // Represents an media sample (audio / video)
 export class SampleInfo {
 
-    constructor(dts, duration, originalDts, isSync) {
+    constructor(dts, pts, duration, originalDts, isSync) {
         this.dts = dts;
+        this.pts = pts;
         this.duration = duration;
         this.originalDts = originalDts;
         this.isSyncPoint = isSync;

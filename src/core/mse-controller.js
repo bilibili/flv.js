@@ -1,4 +1,5 @@
 import Log from '../utils/logger.js';
+import {SampleInfo, MediaSegmentInfo, MediaSegmentInfoList} from './media-segment-info.js';
 
 const State = {
     ERROR: -2,
@@ -49,6 +50,10 @@ class MSEController {
         this._pendingSegments = {
             video: [],
             audio: []
+        };
+        this._segmentInfoLists = {
+            video: new MediaSegmentInfoList('video'),
+            audio: new MediaSegmentInfoList('audio')
         };
     }
 
@@ -144,6 +149,9 @@ class MSEController {
                 let segment = pendingSegments[type].shift();
                 try {
                     this._sourceBuffers[type].appendBuffer(segment.data);
+                    if (segment.hasOwnProperty('info')) {
+                        this._segmentInfoLists[type].append(segment.info);
+                    }
                 } catch (error) {
                     Log.e(this.TAG, error.message);
                 }

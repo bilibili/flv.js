@@ -1,6 +1,6 @@
 import Log from '../utils/logger.js';
 import MP4 from './mp4-generator.js';
-import {SampleInfo, MediaSegmentInfo, MediaSegmentInfoList} from './media-segment-info.js';
+import {SampleInfo, MediaSegmentInfo, MediaSegmentInfoList} from '../core/media-segment-info.js';
 
 // Fragmented mp4 remuxer
 class MP4Remuxer {
@@ -65,10 +65,7 @@ class MP4Remuxer {
            type: string,
            data: ArrayBuffer,
            sampleCount: int32
-           beginDts: int32,
-           endDts: int32,
-           beginPts: int32,
-           endPts: int32
+           info: MediaSegmentInfo
        }
     */
     get onMediaSegment() {
@@ -248,10 +245,7 @@ class MP4Remuxer {
             type: 'audio',
             data: this._mergeBoxes(moofbox, mdatbox).buffer,
             sampleCount: mp4Samples.length,
-            beginDts: firstDts,
-            endDts: lastDts,
-            beginPts: firstDts,
-            endPts: lastDts
+            info: info
         });
     }
 
@@ -414,10 +408,7 @@ class MP4Remuxer {
             type: 'video',
             data: this._mergeBoxes(moofbox, mdatbox).buffer,
             sampleCount: mp4Samples.length,
-            beginDts: firstDts,
-            endDts: lastDts,
-            beginPts: firstPts,
-            endPts: lastPts
+            info: info
         });
     }
 

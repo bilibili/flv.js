@@ -142,7 +142,8 @@ export class RemuxingController {
 
     _onRemuxerMediaSegmentArrival(type, mediaSegment) {
         let ms = mediaSegment;
-        Log.v(this.TAG, `Media Segment: ${type}, beginDts = ${ms.beginDts}, beginPts = ${ms.beginPts}, endDts = ${ms.endDts}, endPts = ${ms.endPts}`);
+        let info = ms.info;
+        Log.v(this.TAG, `Media Segment: ${type}, beginDts = ${info.beginDts}, beginPts = ${info.beginPts}, endDts = ${info.endDts}, endPts = ${info.endPts}`);
         this._emitter.emit(RemuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
     }
 

@@ -215,13 +215,14 @@ class MP4Remuxer {
         }
         let latest = mp4Samples[mp4Samples.length - 1];
         lastDts = latest.dts + latest.duration;
-        lastPts = lastDts;
         this._audioNextDts = lastDts;
 
         // fill media segment info & add to info list
         let info = new MediaSegmentInfo();
         info.beginDts = firstDts;
         info.endDts = lastDts;
+        info.beginPts = firstDts;
+        info.endPts = lastDts;
         info.originalBeginDts = mp4Samples[0].originalDts;
         info.originalEndDts = latest.originalDts + latest.duration;
         info.firstSample = new SampleInfo(mp4Samples[0].dts,
@@ -250,7 +251,7 @@ class MP4Remuxer {
             beginDts: firstDts,
             endDts: lastDts,
             beginPts: firstDts,
-            endPts: lastPts
+            endPts: lastDts
         });
     }
 
@@ -378,6 +379,8 @@ class MP4Remuxer {
         // fill media segment info & add to info list
         info.beginDts = firstDts;
         info.endDts = lastDts;
+        info.beginPts = firstPts;
+        info.endPts = lastPts;
         info.originalBeginDts = mp4Samples[0].originalDts;
         info.originalEndDts = latest.originalDts + latest.duration;
         info.firstSample = new SampleInfo(mp4Samples[0].dts,

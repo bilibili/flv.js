@@ -75,22 +75,18 @@ export class RemuxingController {
 
     seek(milliseconds) {
         Log.v(this.TAG, 'Request seek time: ' + milliseconds);
-        if (this._ioctl.isWorking()) {
-            if (this._mediaInfo == null) {
-                return;
-            }
-            if (!this._mediaInfo.isSeekable()) {
-                return;
-            }
 
-            let position = this._mediaInfo.getNearestKeyframePosition(milliseconds);
-            Log.v(this.TAG, 'Nearest keyframe time: ' + position.milliseconds);
-            this._ioctl.seek(position.fileposition);
-            this._emitter.emit(RemuxingEvents.RECOMMEND_SEEKPOINT, position.milliseconds);
-        } else {
-            // TODO
-            throw 'IOController is not working, unable to seek';
+        if (this._mediaInfo == null) {
+            return;
         }
+        if (!this._mediaInfo.isSeekable()) {
+            return;
+        }
+
+        let position = this._mediaInfo.getNearestKeyframePosition(milliseconds);
+        Log.v(this.TAG, 'Nearest keyframe time: ' + position.milliseconds);
+        this._ioctl.seek(position.fileposition);
+        this._emitter.emit(RemuxingEvents.RECOMMEND_SEEKPOINT, position.milliseconds);
     }
 
     _onInitChunkArrival(data, byteStart) {

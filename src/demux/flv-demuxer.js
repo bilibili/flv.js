@@ -1,5 +1,6 @@
 import Log from '../utils/logger.js';
 import AMF from './amf-parser.js';
+import BSearch from '../utils/bsearch.js';
 import SPSParser from './sps-parser.js';
 import {DemuxerError} from './demuxer.js';
 import MediaInfo from '../core/media-info.js';
@@ -47,6 +48,7 @@ class FlvDemuxer {
         this._mediaInfo = new MediaInfo();
         this._mediaInfo.hasAudio = this._hasAudio;
         this._mediaInfo.hasVideo = this._hasVideo;
+        this._needBuildKeyframes = true;
         this._metadata = null;
         this._audioMetadata = null;
         this._videoMetadata = null;
@@ -262,7 +264,7 @@ class FlvDemuxer {
                     this._parseAudioData(chunk, dataOffset, dataSize, timestamp);
                     break;
                 case 9:  // Video
-                    this._parseVideoData(chunk, dataOffset, dataSize, timestamp);
+                    this._parseVideoData(chunk, dataOffset, dataSize, timestamp, byteStart + offset);
                     break;
                 case 18:  // ScriptDataObject
                     this._parseScriptData(chunk, dataOffset, dataSize);
@@ -339,9 +341,19 @@ class FlvDemuxer {
                 }
             }
             if (typeof onMetaData.keyframes === 'object') {  // keyframes
+                this._mediaInfo.hasKeyframesIndex = true;
+                this._needBuildKeyframes = false;
                 let keyframes = onMetaData.keyframes;
                 this._mediaInfo.keyframesIndex = this._parseKeyframesIndex(keyframes);
                 onMetaData.keyframes = null;  // keyframes has been extracted, remove it
+            } else {
+                this._mediaInfo.hasKeyframesIndex = false;
+                if (this._needBuildKeyframes) {
+                    this._mediaInfo.keyframesIndex = {
+                        times: [],
+                        filepositions: []
+                    };
+                }
             }
             this._dispatch = false;
             this._mediaInfo.metadata = onMetaData;
@@ -604,7 +616,7 @@ class FlvDemuxer {
         };
     }
 
-    _parseVideoData(arrayBuffer, dataOffset, dataSize, tagTimestamp) {
+    _parseVideoData(arrayBuffer, dataOffset, dataSize, tagTimestamp, tagPosition) {
         if (dataSize <= 1) {
             Log.w(this.TAG, 'Flv: Invalid video packet, missing VideoData payload!');
             return;
@@ -620,10 +632,10 @@ class FlvDemuxer {
             return;
         }
 
-        this._parseAVCVideoPacket(arrayBuffer, dataOffset + 1, dataSize - 1, tagTimestamp);
+        this._parseAVCVideoPacket(arrayBuffer, dataOffset + 1, dataSize - 1, tagTimestamp, tagPosition);
     }
 
-    _parseAVCVideoPacket(arrayBuffer, dataOffset, dataSize, tagTimestamp) {
+    _parseAVCVideoPacket(arrayBuffer, dataOffset, dataSize, tagTimestamp, tagPosition) {
         if (dataSize < 4) {
             Log.w(this.TAG, 'Flv: Invalid AVC packet, missing AVCPacketType or/and CompositionTime');
             return;
@@ -639,7 +651,7 @@ class FlvDemuxer {
             Log.v(this.TAG, 'Found AVCDecoderConfigurationRecord');
             this._parseAVCDecoderConfigurationRecord(arrayBuffer, dataOffset + 4, dataSize - 4);
         } else if (packetType === 1) {  // One or more Nalus
-            this._parseAVCVideoData(arrayBuffer, dataOffset + 4, dataSize - 4, tagTimestamp, cts);
+            this._parseAVCVideoData(arrayBuffer, dataOffset + 4, dataSize - 4, tagTimestamp, cts, tagPosition);
         } else if (packetType === 2) {
             // empty, AVC end of sequence
         } else {
@@ -795,7 +807,7 @@ class FlvDemuxer {
         this._onTrackMetadata('video', meta);
     }
 
-    _parseAVCVideoData(arrayBuffer, dataOffset, dataSize, dts, cts) {
+    _parseAVCVideoData(arrayBuffer, dataOffset, dataSize, dts, cts, tagPosition) {
         let le = this._littleEndian;
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
 
@@ -819,6 +831,11 @@ class FlvDemuxer {
 
             if (unitType === 5) {  // IDR
                 keyframe = true;
+                if (this._needBuildKeyframes) {
+                    let table = this._mediaInfo.keyframesIndex;
+                    let idx = BSearch.insert(table.filepositions, tagPosition);
+                    table.times.splice(idx, 0, dts);
+                }
             }
 
             let data = new Uint8Array(arrayBuffer, dataOffset + offset, lengthSize + naluSize);

@@ -23,6 +23,7 @@ class MediaInfo {
         this.sarDen = null;
 
         this.metadata = null;
+        this.hasKeyframesIndex = null;
         this.keyframesIndex = null;
     }
 
@@ -48,6 +49,7 @@ class MediaInfo {
         return this.mimeType != null &&
                this.duration != null &&
                this.metadata != null &&
+               this.hasKeyframesIndex != null &&
                audioInfoComplete &&
                videoInfoComplete;
     }

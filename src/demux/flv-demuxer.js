@@ -729,7 +729,9 @@ class FlvDemuxer {
             meta.sarRatio = config.sar_ratio;
             meta.frameRate = config.frame_rate;
 
-            if (config.frame_rate.fps_num === 0 || config.frame_rate.fps_den === 0) {
+            if (config.frame_rate.fixed === false ||
+                config.frame_rate.fps_num === 0 ||
+                config.frame_rate.fps_den === 0) {
                 meta.frameRate = this._referenceFrameRate;
             }
 

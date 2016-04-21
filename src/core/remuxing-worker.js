@@ -20,6 +20,8 @@ let RemuxingWorker = function (self) {
     let TAG = 'RemuxingWorker';
     let controller = null;
 
+    require('es6-promise').polyfill();
+
     self.addEventListener('message', function (e) {
         Log.v(TAG, 'worker onmessage: ' + e.data.cmd);
         switch (e.data.cmd) {

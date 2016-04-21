@@ -9,6 +9,7 @@
     "serve": "http-server -p 8000 ."
   },
   "dependencies": {
+    "es6-promise": "^3.1.2",
     "webworkify": "^1.1.0"
   },
   "devDependencies": {

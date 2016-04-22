@@ -17,6 +17,8 @@ class FlvPlayer extends BasePlayer {
         this._requestSetTime = false;
         this._seekpointRecord = null;
 
+        this._progressCheckId = 0;
+
         this._mediaDataSource = mediaDataSource;
         this._mediaElement = null;
         this._msectl = new MSEController();
@@ -35,9 +37,15 @@ class FlvPlayer extends BasePlayer {
                 this._mediaElement.currentTime = milliseconds / 1000;
             }
         });
+
+        this._msectl.on(this._msectl.BUFFER_FULL, this._onmseBufferFull.bind(this));
     }
 
     destroy() {
+        if (this._progressCheckId !== 0) {
+            window.clearInterval(this._progressCheckId);
+            this._progressCheckId = 0;
+        }
         if (this._mediaElement) {
             this.detachMediaElement();
         }
@@ -101,6 +109,47 @@ class FlvPlayer extends BasePlayer {
         }
     }
 
+    _onmseBufferFull() {
+        if (this._remuxer) {
+            this._remuxer.pause();
+
+            if (this._progressCheckId === 0) {
+                this._progressCheckId = window.setInterval(this._checkProgressAndResume.bind(this), 2000);
+            }
+        }
+    }
+
+    _checkProgressAndResume() {
+        let currentTime = this._mediaElement.currentTime;
+        let buffered = this._mediaElement.buffered;
+
+        let to = 0;
+        let needResume = false;
+        let inBufferedRange = false;
+
+        for (let i = 0; i < buffered.length; i++) {
+            let from = buffered.start(i);
+            to = buffered.end(i);
+            if (currentTime >= from && currentTime < to) {
+                inBufferedRange = true;
+                if (currentTime >= to - 15) {
+                    needResume = true;
+                }
+                break;
+            }
+        }
+
+        Log.v(this.TAG, `needResume: ${needResume}, current: ${currentTime}, right: ${to}`);
+
+        if (needResume || !inBufferedRange) {
+            window.clearInterval(this._progressCheckId);
+            this._progressCheckId = 0;
+            if (needResume) {
+                this._remuxer.resume();
+            }
+        }
+    }
+
     _isTimepointBuffered(seconds) {
         let buffered = this._mediaElement.buffered;
 
@@ -122,6 +171,10 @@ class FlvPlayer extends BasePlayer {
             this._requestSetTime = true;
             this._mediaElement.currentTime = seconds;
         } else {
+            if (this._progressCheckId !== 0) {
+                window.clearInterval(this._progressCheckId);
+                this._progressCheckId = 0;
+            }
             this._remuxer.seek(Math.floor(seconds * 1000));  // in milliseconds
             // no need to set mediaElement.currentTime,
             // just wait for the recommend_seekpoint callback

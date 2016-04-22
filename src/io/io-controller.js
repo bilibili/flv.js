@@ -30,6 +30,9 @@ class IOController {
         this._speedCalc = new SpeedCalculator();
         this._speedNormalizeList = [64, 128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096];
 
+        this._paused = false;
+        this._resumeFrom = 0;
+
         this._onDataArrival = null;
         this._onSeeked = null;
         this._onError = null;
@@ -59,7 +62,11 @@ class IOController {
     }
 
     isWorking() {
-        return this._loader && this._loader.isWorking();
+        return this._loader && this._loader.isWorking() && !this._paused;
+    }
+
+    isPaused() {
+        return this._paused;
     }
 
     get status() {
@@ -145,7 +152,32 @@ class IOController {
         this._loader.abort();
     }
 
+    pause() {
+        if (this.isWorking()) {
+            this._loader.abort();
+            if (this._stashUsed !== 0) {
+                this._resumeFrom = this._stashByteStart;
+                this._currentRange.to = this._stashByteStart - 1;
+            } else {
+                this._resumeFrom = this._currentRange.to + 1;
+            }
+            this._stashUsed = 0;
+            this._stashByteStart = 0;
+            this._paused = true;
+        }
+    }
+
+    resume() {
+        if (this._paused) {
+            this._paused = false;
+            let bytes = this._resumeFrom;
+            this._resumeFrom = 0;
+            this._internalSeek(bytes, true);
+        }
+    }
+
     seek(bytes) {
+        this._paused = false;
         this._internalSeek(bytes, true);
     }
 
@@ -197,6 +229,7 @@ class IOController {
 
         Log.v(this.TAG, 'ranges after seek: ' + JSON.stringify(this._progressRanges));
 
+        this._speed = 0;
         this._speedCalc.reset();
         this._stashSize = this._stashInitialSize;
         this._createLoader();
@@ -306,6 +339,9 @@ class IOController {
         if (!this._onDataArrival) {
             throw 'IOController: No existing consumer (onDataArrival) callback!';
         }
+        if (this._paused) {
+            return;
+        }
 
         this._speedCalc.addBytes(chunk.byteLength);
 
@@ -318,8 +354,6 @@ class IOController {
                 this._adjustStashSize(normalized);
             }
         }
-
-        // TODO: Too many newed Uint8Arrays... may cause gc pressure?
 
         if (!this._enableStash) {  // disable stash
             if (this._stashUsed === 0) {

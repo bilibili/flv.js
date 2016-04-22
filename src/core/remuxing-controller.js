@@ -73,6 +73,18 @@ export class RemuxingController {
         // TODO: clean up resources?
     }
 
+    pause() {  // take a rest
+        if (this._ioctl.isWorking()) {
+            this._ioctl.pause();
+        }
+    }
+
+    resume() {
+        if (this._ioctl.isPaused()) {
+            this._ioctl.resume();
+        }
+    }
+
     seek(milliseconds) {
         Log.v(this.TAG, 'Request seek time: ' + milliseconds);
 

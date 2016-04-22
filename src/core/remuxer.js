@@ -96,6 +96,22 @@ class Remuxer {
         }
     }
 
+    pause() {
+        if (this._worker) {
+            this._worker.postMessage({cmd: 'pause'});
+        } else {
+            this._controller.pause();
+        }
+    }
+
+    resume() {
+        if (this._worker) {
+            this._worker.postMessage({cmd: 'resume'});
+        } else {
+            this._controller.resume();
+        }
+    }
+
     _onInitSegment(type, initSegment) {
         new Promise(resolve => resolve()).then(() => {
             this._emitter.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);

@@ -49,6 +49,12 @@ let RemuxingWorker = function (self) {
             case 'seek':
                 controller.seek(e.data.param);
                 break;
+            case 'pause':
+                controller.pause();
+                break;
+            case 'resume':
+                controller.resume();
+                break;
             case 'logging_config':
                 LoggingControl.applyConfig(e.data.param);
                 break;

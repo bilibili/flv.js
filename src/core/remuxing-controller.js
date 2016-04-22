@@ -11,6 +11,7 @@ export const RemuxingEvents = {
     DEMUX_ERROR: 'demux_error',
     INIT_SEGMENT: 'init_segment',
     MEDIA_SEGMENT: 'media_segment',
+    MEDIA_INFO: 'media_info',
     RECOMMEND_SEEKPOINT: 'recommend_seekpoint'
 };
 
@@ -140,6 +141,7 @@ export class RemuxingController {
     _onMediaInfo(mediaInfo) {
         Log.v(this.TAG, 'onMediaInfo: ' + JSON.stringify(mediaInfo));
         this._mediaInfo = mediaInfo;
+        this._emitter.emit(RemuxingEvents.MEDIA_INFO, mediaInfo);
     }
 
     _onRemuxerInitSegmentArrival(type, initSegment) {

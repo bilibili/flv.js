@@ -32,6 +32,7 @@ let RemuxingWorker = function (self) {
                 controller.on(RemuxingEvents.DEMUX_ERROR, onDemuxError.bind(this));
                 controller.on(RemuxingEvents.INIT_SEGMENT, onInitSegment.bind(this));
                 controller.on(RemuxingEvents.MEDIA_SEGMENT, onMediaSegment.bind(this));
+                controller.on(RemuxingEvents.MEDIA_INFO, onMediaInfo.bind(this));
                 controller.on(RemuxingEvents.RECOMMEND_SEEKPOINT, onRecommendSeekpoint.bind(this));
                 break;
             case 'destroy':
@@ -82,6 +83,14 @@ let RemuxingWorker = function (self) {
             }
         };
         self.postMessage(obj, [mediaSegment.data]);  // data: ArrayBuffer
+    }
+
+    function onMediaInfo(mediaInfo) {
+        let obj = {
+            msg: RemuxingEvents.MEDIA_INFO,
+            data: mediaInfo
+        };
+        self.postMessage(obj);
     }
 
     function onIOError(type, info) {

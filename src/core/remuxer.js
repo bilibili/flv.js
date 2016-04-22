@@ -3,6 +3,7 @@ import Log from '../utils/logger.js';
 import LoggingControl from '../utils/logging-control.js';
 import {RemuxingController, RemuxingEvents} from './remuxing-controller.js';
 import RemuxingWorker from './remuxing-worker.js';
+import MediaInfo from './media-info.js';
 
 class Remuxer {
 
@@ -36,6 +37,7 @@ class Remuxer {
             ctl.on(RemuxingEvents.DEMUX_ERROR, this._onDemuxError.bind(this));
             ctl.on(RemuxingEvents.INIT_SEGMENT, this._onInitSegment.bind(this));
             ctl.on(RemuxingEvents.MEDIA_SEGMENT, this._onMediaSegment.bind(this));
+            ctl.on(RemuxingEvents.MEDIA_INFO, this._onMediaInfo.bind(this));
             ctl.on(RemuxingEvents.RECOMMEND_SEEKPOINT, this._onRecommendSeekpoint.bind(this));
         }
     }
@@ -120,6 +122,12 @@ class Remuxer {
         });
     }
 
+    _onMediaInfo(mediaInfo) {
+        new Promise(resolve => resolve()).then(() => {
+            this._emitter.emit(RemuxingEvents.MEDIA_INFO, mediaInfo);
+        });
+    }
+
     _onIOError(type, info) {
         new Promise(resolve => resolve()).then(() => {
             this._emitter.emit(RemuxingEvents.IO_ERROR, type, info);
@@ -158,6 +166,10 @@ class Remuxer {
             case RemuxingEvents.INIT_SEGMENT:
             case RemuxingEvents.MEDIA_SEGMENT:
                 this._emitter.emit(message.msg, data.type, data.data);
+                break;
+            case RemuxingEvents.MEDIA_INFO:
+                Object.setPrototypeOf(data, MediaInfo.prototype);
+                this._emitter.emit(message.msg, data);
                 break;
             case RemuxingEvents.IO_ERROR:
             case RemuxingEvents.DEMUX_ERROR:

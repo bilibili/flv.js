@@ -83,7 +83,7 @@ export class RemuxingController {
             return;
         }
 
-        let position = this._mediaInfo.getNearestKeyframePosition(milliseconds);
+        let position = this._mediaInfo.getNearestKeyframe(milliseconds);
         Log.v(this.TAG, 'Nearest keyframe time: ' + position.milliseconds);
         this._ioctl.seek(position.fileposition);
         this._emitter.emit(RemuxingEvents.RECOMMEND_SEEKPOINT, position.milliseconds);

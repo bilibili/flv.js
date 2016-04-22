@@ -58,7 +58,7 @@ class MediaInfo {
         return (this.keyframesIndex != null);
     }
 
-    getNearestKeyframePosition(milliseconds) {
+    getNearestKeyframe(milliseconds) {
         if (this.keyframesIndex == null) {
             return null;
         }

@@ -1,3 +1,4 @@
+import EventEmitter from 'events';
 import Log from '../utils/logger.js';
 import {SampleInfo, MediaSegmentInfo, MediaSegmentInfoList} from './media-segment-info.js';
 
@@ -15,6 +16,7 @@ const State = {
 };
 
 // Media Source Extension controller
+// Events: error, buffer_full, buffer_flushed
 class MSEController {
 
     static isSupported() {
@@ -23,6 +25,11 @@ class MSEController {
 
     constructor() {
         this.TAG = this.constructor.name;
+
+        this._emitter = new EventEmitter();
+        this.ERROR = 'error';
+        this.BUFFER_FULL = 'buffer_full';
+        this.BUFFER_FLUSHED = 'buffer_flushed';
 
         this.e = {};
         this.e.onSourceOpen = this._onSourceOpen.bind(this);
@@ -38,6 +45,8 @@ class MSEController {
 
         this._mediaSourceObjectURL = null;
         this._mediaElement = null;
+
+        this._isBufferFull = false;
 
         this._mimeTypes = {
             video: null,
@@ -75,6 +84,16 @@ class MSEController {
             this.detachMediaElement();
         }
         this.e = null;
+        this._emitter.removeAllListeners();
+        this._emitter = null;
+    }
+
+    on(event, listener) {
+        this._emitter.addListener(event, listener);
+    }
+
+    off(event, listener) {
+        this._emitter.removeListener(event, listener);
     }
 
     attachMediaElement(mediaElement) {
@@ -108,6 +127,8 @@ class MSEController {
                     sb.addEventListener('updateend', this.e.onSourceBufferUpdateEnd);
                 } catch (error) {
                     Log.e(this.TAG, error.message);
+                    this._emitter.emit(this.ERROR, {code: error.code, msg: error.message});
+                    return;
                 }
             } else {
                 Log.v(this.TAG, `Notice: ${is.type} mimetype changed, origin: ${this._mimeTypes[is.type]}, target: ${mimeType}`);
@@ -152,8 +173,21 @@ class MSEController {
                     if (segment.hasOwnProperty('info')) {
                         this._segmentInfoLists[type].append(segment.info);
                     }
+                    this._isBufferFull = false;
                 } catch (error) {
+                    this._pendingSegments[type].unshift(segment);
                     Log.e(this.TAG, error.message);
+                    if (error.code === 22) {  // QuotaExceededError
+                        // report buffer full, abort network IO
+                        if (!this._isBufferFull) {
+                            this._emitter.emit(this.BUFFER_FULL);
+                        }
+                        this._isBufferFull = true;
+                    } else {
+                        // TODO: fire an error
+                        // TODO: need more detail
+                        this._emitter.emit(this.ERROR, {code: error.code, msg: error.message});
+                    }
                 }
             }
         }
@@ -184,6 +218,7 @@ class MSEController {
 
     _onSourceBufferUpdateEnd() {
         Log.v(this.TAG, 'SourceBuffer UpdateEnd');
+        // TODO: collect and report buffered ranges
         if (this._hasPendingSegments()) {
             this._doAppendSegments();
         }

@@ -97,24 +97,34 @@ class Remuxer {
     }
 
     _onInitSegment(type, initSegment) {
-        this._emitter.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);
+        new Promise(resolve => resolve()).then(() => {
+            this._emitter.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);
+        });
     }
 
     _onMediaSegment(type, mediaSegment) {
-        this._emitter.emit(RemuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
+        new Promise(resolve => resolve()).then(() => {
+            this._emitter.emit(RemuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
+        });
     }
 
     _onIOError(type, info) {
-        this._emitter.emit(RemuxingEvents.IO_ERROR, type, info);
+        new Promise(resolve => resolve()).then(() => {
+            this._emitter.emit(RemuxingEvents.IO_ERROR, type, info);
+        });
     }
 
     _onDemuxError(type, info) {
-        this._emitter.emit(RemuxingEvents.DEMUX_ERROR, type, info);
+        new Promise(resolve => resolve()).then(() => {
+            this._emitter.emit(RemuxingEvents.DEMUX_ERROR, type, info);
+        });
     }
 
     _onRecommendSeekpoint(milliseconds) {
         Log.v(this.TAG, 'onRecommendSeekpoint');
-        this._emitter.emit(RemuxingEvents.RECOMMEND_SEEKPOINT, milliseconds);
+        new Promise(resolve => resolve()).then(() => {
+            this._emitter.emit(RemuxingEvents.RECOMMEND_SEEKPOINT, milliseconds);
+        });
     }
 
     _onLoggingConfigChanged(config) {
@@ -134,19 +144,15 @@ class Remuxer {
                 this._worker = null;
                 break;
             case RemuxingEvents.INIT_SEGMENT:
-                this._onInitSegment(data.type, data.data);
-                break;
             case RemuxingEvents.MEDIA_SEGMENT:
-                this._onMediaSegment(data.type, data.data);
+                this._emitter.emit(message.msg, data.type, data.data);
                 break;
             case RemuxingEvents.IO_ERROR:
-                this._onIOError(data.type, data.info);
-                break;
             case RemuxingEvents.DEMUX_ERROR:
-                this._onDemuxError(data.type, data.info);
+                this._emitter.emit(message.msg, data.type, data.info);
                 break;
             case RemuxingEvents.RECOMMEND_SEEKPOINT:
-                this._onRecommendSeekpoint(data);
+                this._emitter.emit(message.msg, data);
                 break;
             default:
                 break;

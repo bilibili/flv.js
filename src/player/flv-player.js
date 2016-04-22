@@ -32,7 +32,7 @@ class FlvPlayer extends BasePlayer {
         });
         this._remuxer.on('media_info', (mediaInfo) => {
             Log.v(this.TAG, 'Received MediaInfo update!');
-        })
+        });
         this._remuxer.on('recommend_seekpoint', (milliseconds) => {
             Log.v(this.TAG, 'Recommended seekpoint: ' + milliseconds);
             if (this._mediaElement) {

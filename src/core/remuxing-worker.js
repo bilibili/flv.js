@@ -1,5 +1,6 @@
 import Log from '../utils/logger.js';
 import LoggingControl from '../utils/logging-control.js';
+import Polyfill from '../utils/polyfill.js';
 import {RemuxingController, RemuxingEvents} from './remuxing-controller.js';
 
 /* post message to worker:
@@ -20,7 +21,7 @@ let RemuxingWorker = function (self) {
     let TAG = 'RemuxingWorker';
     let controller = null;
 
-    require('es6-promise').polyfill();
+    Polyfill.install();
 
     self.addEventListener('message', function (e) {
         Log.v(TAG, 'worker onmessage: ' + e.data.cmd);

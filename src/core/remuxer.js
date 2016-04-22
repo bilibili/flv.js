@@ -6,10 +6,6 @@ import RemuxingWorker from './remuxing-worker.js';
 
 class Remuxer {
 
-    static init() {
-        require('es6-promise').polyfill();
-    }
-
     constructor(enableWorker, url) {
         this.TAG = this.constructor.name;
         this._emitter = new EventEmitter();
@@ -176,7 +172,5 @@ class Remuxer {
     }
 
 }
-
-Remuxer.init();
 
 export default Remuxer;

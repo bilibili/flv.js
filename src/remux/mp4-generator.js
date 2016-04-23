@@ -345,7 +345,8 @@ class MP4 {
     }
 
     static esds(meta) {
-        let config = meta.config;
+        let esdsSubType = meta.esdsSubType;
+        let config = meta.config || [];
         let configSize = config.length;
         let data = new Uint8Array([
             0x00, 0x00, 0x00, 0x00,  // version 0 + flags
@@ -357,7 +358,7 @@ class MP4 {
 
             0x04,                    // descriptor_type
             0x0F + configSize,       // length
-            0x40,                    // codec: mpeg4_audio
+            esdsSubType,             // codec
             0x15,                    // stream_type: Audio
             0x00, 0x00, 0x00,        // buffer_size
             0x00, 0x00, 0x00, 0x00,  // maxBitrate

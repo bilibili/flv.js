@@ -1,6 +1,6 @@
 class BSearch {
 
-    static _search(array, value, compare) {
+    static search(array, value, compare) {
         if (array.length === 0) {
             return 0;
         }
@@ -36,7 +36,7 @@ class BSearch {
         if (compare == undefined) {
             compare = BSearch.less;
         }
-        let idx = BSearch._search(array, value, compare);
+        let idx = BSearch.search(array, value, compare);
         array.splice(idx, 0, value);
         return idx;
     }
@@ -46,7 +46,7 @@ class BSearch {
     }
 
     static greater(a, b) {
-        return a - b;
+        return b - a;
     }
 
 }

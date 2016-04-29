@@ -163,12 +163,16 @@ class MP4Remuxer {
                         dtsCorrection = 0;
                     } else {
                         let lastSample = this._audioSegmentInfoList.getLastSampleBefore(originalDts);
-                        let distance = (originalDts - (lastSample.originalDts + lastSample.duration));
-                        if (distance < 0 || distance <= 3) {
-                            distance = 0;
+                        if (lastSample != null) {
+                            let distance = (originalDts - (lastSample.originalDts + lastSample.duration));
+                            if (distance < 0 || distance <= 3) {
+                                distance = 0;
+                            }
+                            let expectedDts = lastSample.dts + lastSample.duration + distance;
+                            dtsCorrection = originalDts - expectedDts;
+                        } else {  // lastSample == null
+                            dtsCorrection = 0;
                         }
-                        let expectedDts = lastSample.dts + lastSample.duration + distance;
-                        dtsCorrection = originalDts - expectedDts;
                     }
                 } else {
                     dtsCorrection = originalDts - this._audioNextDts;
@@ -294,12 +298,16 @@ class MP4Remuxer {
                         dtsCorrection = 0;
                     } else {
                         let lastSample = this._videoSegmentInfoList.getLastSampleBefore(originalDts);
-                        let distance = (originalDts - (lastSample.originalDts + lastSample.duration));
-                        if (distance < 0 || distance <= 3) {
-                            distance = 0;
+                        if (lastSample != null) {
+                            let distance = (originalDts - (lastSample.originalDts + lastSample.duration));
+                            if (distance < 0 || distance <= 3) {
+                                distance = 0;
+                            }
+                            let expectedDts = lastSample.dts + lastSample.duration + distance;
+                            dtsCorrection = originalDts - expectedDts;
+                        } else {  // lastSample == null
+                            dtsCorrection = 0;
                         }
-                        let expectedDts = lastSample.dts + lastSample.duration + distance;
-                        dtsCorrection = originalDts - expectedDts;
                     }
                 } else {
                     dtsCorrection = originalDts - this._videoNextDts;

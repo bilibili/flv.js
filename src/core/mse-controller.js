@@ -162,11 +162,14 @@ class MSEController {
         }
     }
 
-    removeBuffersAfter(seconds) {
+    seek(seconds) {
+        // drop pendingSegments after seekpoint & remove buffers after seekpoint
         for (let type in this._sourceBuffers) {
             if (!this._sourceBuffers[type]) {
                 continue;
             }
+
+            // search remove start position
             let sb = this._sourceBuffers[type];
             let removeStart = -1;
             let removeEnd = -1;
@@ -182,6 +185,19 @@ class MSEController {
             }
 
             if (removeStart !== -1 && removeEnd > removeStart) {
+                // discard pending segments which has timestamp later than removeStart
+                let removeStartMS = Math.floor(removeStart * 1000);
+                let length = this._pendingSegments[type].length;
+                for (let i = 0; i < length; i++) {
+                    let segment = this._pendingSegments[type][i];
+                    if (segment.info.beginDts >= removeStartMS) {
+                        this._pendingSegments[type].splice(i, 1);
+                        i--;
+                        length--;
+                    }
+                }
+
+                // remove ranges
                 this._pendingRemoveRanges[type].push({start: removeStart, end: removeEnd});
                 if (!sb.updating) {
                     this._doRemoveRanges();
@@ -218,7 +234,6 @@ class MSEController {
                     this._isBufferFull = false;
                 } catch (error) {
                     this._pendingSegments[type].unshift(segment);
-                    Log.e(this.TAG, error.message);
                     if (error.code === 22) {  // QuotaExceededError
                         // report buffer full, abort network IO
                         if (!this._isBufferFull) {
@@ -228,6 +243,7 @@ class MSEController {
                     } else {
                         // TODO: fire an error
                         // TODO: need more detail
+                        Log.e(this.TAG, error.message);
                         this._emitter.emit(this.ERROR, {code: error.code, msg: error.message});
                     }
                 }

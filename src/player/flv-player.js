@@ -178,7 +178,7 @@ class FlvPlayer extends BasePlayer {
                 window.clearInterval(this._progressCheckId);
                 this._progressCheckId = 0;
             }
-            this._msectl.removeBuffersAfter(seconds);
+            this._msectl.seek(seconds);
             this._remuxer.seek(Math.floor(seconds * 1000));  // in milliseconds
             // no need to set mediaElement.currentTime,
             // just wait for the recommend_seekpoint callback
@@ -193,7 +193,7 @@ class FlvPlayer extends BasePlayer {
                 if (!this._isTimepointBuffered(target)) {
                     // .currentTime is consists with .buffered timestamp
                     // Chrome/Edge use DTS, while FireFox/Safari use PTS
-                    this._msectl.removeBuffersAfter(target);
+                    this._msectl.seek(target);
                     this._remuxer.seek(Math.floor(target * 1000));
                 }
             } else {

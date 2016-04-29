@@ -108,7 +108,6 @@ class FetchStreamLoader extends BaseLoader {
                 let chunk = result.value;
                 let byteStart = this._range.from + this._receivedLength;
                 this._receivedLength += chunk.byteLength;
-                Log.v(this.TAG, 'Received chunk, size = ' + chunk.byteLength + ', total_received = ' + this._receivedLength);
 
                 if (this._onDataArrival) {
                     this._onDataArrival(chunk, byteStart, this._receivedLength);
@@ -121,8 +120,9 @@ class FetchStreamLoader extends BaseLoader {
             let type = 0;
             let info = null;
 
-            if (this._contentLength === null ||
-                (this._contentLength !== null && this._receivedLength < this._contentLength)) {
+            if (e.code === 19 && // NETWORK_ERR
+                (this._contentLength === null ||
+                (this._contentLength !== null && this._receivedLength < this._contentLength))) {
                 type = LoaderError.kEarlyEof;
                 info = {code: e.code, msg: 'Fetch stream meet Early-EOF'};
             } else {

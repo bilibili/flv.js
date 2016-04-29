@@ -96,7 +96,8 @@ export class MediaSegmentInfoList {
         let lastAppendIdx = this._lastAppendLocation;
         let insertIdx = 0;
 
-        if (lastAppendIdx !== -1 && msi.beginDts >= list[lastAppendIdx].endDts &&
+        if (lastAppendIdx !== -1 && lastAppendIdx < list.length &&
+                                    msi.beginDts >= list[lastAppendIdx].endDts &&
                                     ((lastAppendIdx === list.length - 1) ||
                                     (lastAppendIdx < list.length - 1 &&
                                     msi.beginDts < list[lastAppendIdx + 1].beginDts))) {
@@ -109,6 +110,40 @@ export class MediaSegmentInfoList {
 
         this._lastAppendLocation = insertIdx;
         this._list.splice(insertIdx, 0, msi);
+
+    removeSegmentsAfter(originalDts) {
+        let list = this._list;
+        if (list.length === 0) {
+            return;
+        }
+        let last = list.length - 1;
+        let mid = 0;
+        let lbound = 0;
+        let ubound = last;
+        
+        let idx = 0;
+        
+        if (originalDts < list[0].originalBeginDts) {
+            idx = 0;
+            lbound = ubound + 1;
+        }
+
+        while (lbound <= ubound) {
+            mid = lbound + Math.floor((ubound - lbound) / 2);
+            if (mid === last || (list[mid].lastSample.originalDts < originalDts && originalDts <= list[mid + 1].originalBeginDts)) {
+                idx = mid + 1;
+                break;
+            } else if (list[mid].originalBeginDts <= originalDts && originalDts < list[mid].originalEndDts) {
+                idx = mid;
+                break;
+            } else if (originalDts > list[mid].lastSample.originalDts) {
+                lbound = mid + 1;
+            } else {
+                ubound = mid - 1;
+            }
+        }
+ 
+        this._list.splice(idx, this._list.length - idx);
     }
 
     getLastSegmentBefore(originalBeginDts) {

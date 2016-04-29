@@ -55,7 +55,7 @@ class MediaInfo {
     }
 
     isSeekable() {
-        return (this.keyframesIndex != null);
+        return this.hasKeyframesIndex === true;
     }
 
     getNearestKeyframe(milliseconds) {

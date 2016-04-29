@@ -179,10 +179,8 @@ class MSStreamLoader extends BaseLoader {
             this._onDataArrival(slice, byteStart, this._receivedLength);
         }
 
-        Log.v(this.TAG, `Received Chunk, size = ${slice.byteLength}, total_received = ${this._receivedLength}`);
-
         if (bigbuffer.byteLength >= this._bufferLimit) {
-            Log.v(this.TAG, 'MSStream buffer exceeded max size, reconnecting...');
+            Log.v(this.TAG, `MSStream buffer exceeded max size near ${byteStart + slice.byteLength}, reconnecting...`);
             this._doReconnectIfNeeded();
         }
     }

@@ -106,8 +106,6 @@ class MozChunkedLoader extends BaseLoader {
         let byteStart = this._range.from + this._receivedLength;
         this._receivedLength += chunk.byteLength;
 
-        Log.v(this.TAG, 'Received chunk, size = ' + chunk.byteLength + ', total_received = ' + this._receivedLength);
-
         if (this._onDataArrival) {
             this._onDataArrival(chunk, byteStart, this._receivedLength);
         }

@@ -74,7 +74,8 @@ export class MediaSegmentInfoList {
 
         while (lbound <= ubound) {
             mid = lbound + Math.floor((ubound - lbound) / 2);
-            if (mid === last || (originalBeginDts > list[mid].lastSample.originalDts && originalBeginDts < list[mid + 1].originalBeginDts)) {
+            if (mid === last || (originalBeginDts > list[mid].lastSample.originalDts &&
+                                (originalBeginDts < list[mid + 1].originalBeginDts))) {
                 idx = mid;
                 break;
             } else if (list[mid].originalBeginDts < originalBeginDts) {
@@ -97,10 +98,10 @@ export class MediaSegmentInfoList {
         let insertIdx = 0;
 
         if (lastAppendIdx !== -1 && lastAppendIdx < list.length &&
-                                    msi.beginDts >= list[lastAppendIdx].endDts &&
+                                    msi.originalBeginDts >= list[lastAppendIdx].lastSample.originalDts &&
                                     ((lastAppendIdx === list.length - 1) ||
                                     (lastAppendIdx < list.length - 1 &&
-                                    msi.beginDts < list[lastAppendIdx + 1].beginDts))) {
+                                    msi.originalBeginDts < list[lastAppendIdx + 1].originalBeginDts))) {
             insertIdx = lastAppendIdx + 1;  // use cached location idx
         } else {
             if (list.length > 0) {
@@ -120,9 +121,9 @@ export class MediaSegmentInfoList {
         let mid = 0;
         let lbound = 0;
         let ubound = last;
-        
+
         let idx = 0;
-        
+
         if (originalDts < list[0].originalBeginDts) {
             idx = 0;
             lbound = ubound + 1;
@@ -142,7 +143,7 @@ export class MediaSegmentInfoList {
                 ubound = mid - 1;
             }
         }
- 
+
         this._list.splice(idx, this._list.length - idx);
     }
 
@@ -165,18 +166,14 @@ export class MediaSegmentInfoList {
     }
 
     getLastSyncPointBefore(originalBeginDts) {
-        let syncPoints = this.getLastSegmentBefore(originalBeginDts).syncPoints;
+        let segmentIdx = this._searchNearestSegmentBefore(originalBeginDts);
+        let syncPoints = this._list[segmentIdx].syncPoints;
+        while (syncPoints.length === 0 && segmentIdx > 0) {
+            segmentIdx--;
+            syncPoints = this._list[segmentIdx].syncPoints;
+        }
         if (syncPoints.length > 0) {
             return syncPoints[syncPoints.length - 1];
-        } else {
-            return null;
-        }
-    }
-
-    getFirstSegmentAfter(originalBeginDts) {
-        let idx = this._searchNearestSegmentAfter(originalBeginDts);
-        if (idx >= 0 && idx < this._list.length) {
-            return this._list[idx];
         } else {
             return null;
         }

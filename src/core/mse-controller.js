@@ -1,6 +1,5 @@
 import EventEmitter from 'events';
 import Log from '../utils/logger.js';
-import {SampleInfo, MediaSegmentInfo, MediaSegmentInfoList} from './media-segment-info.js';
 
 const State = {
     ERROR: -2,
@@ -64,9 +63,6 @@ class MSEController {
             video: [],
             audio: []
         };
-        this._segmentInfoLists = {
-            video: new MediaSegmentInfoList('video'),
-            audio: new MediaSegmentInfoList('audio')
         };
     }
 
@@ -90,7 +86,6 @@ class MSEController {
         this._sourceBuffers = null;
         this._pendingSegments = null;
         this._pendingRemoveRanges = null;
-        this._segmentInfoLists = null;
         this.e = null;
         this._emitter.removeAllListeners();
         this._emitter = null;
@@ -220,9 +215,6 @@ class MSEController {
                 let segment = pendingSegments[type].shift();
                 try {
                     this._sourceBuffers[type].appendBuffer(segment.data);
-                    if (segment.hasOwnProperty('info')) {
-                        this._segmentInfoLists[type].append(segment.info);
-                    }
                     this._isBufferFull = false;
                 } catch (error) {
                     this._pendingSegments[type].unshift(segment);

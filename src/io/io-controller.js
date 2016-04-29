@@ -12,7 +12,7 @@ class IOController {
         this.TAG = this.constructor.name;
 
         this._stashUsed = 0;
-        this._stashInitialSize = 1024 * 256;  // initial size: 256KB
+        this._stashInitialSize = 1024 * 384;  // initial size: 384KB
         this._stashSize = this._stashInitialSize;
         this._bufferSize = 1024 * 1024 * 3;  // initial size: 3MB
         this._stashBuffer = new ArrayBuffer(this._bufferSize);
@@ -172,18 +172,23 @@ class IOController {
             this._paused = false;
             let bytes = this._resumeFrom;
             this._resumeFrom = 0;
-            this._internalSeek(bytes, true);
+            this._internalSeek(bytes, true, false);
         }
     }
 
     seek(bytes) {
         this._paused = false;
-        this._internalSeek(bytes, true);
+        this._internalSeek(bytes, true, true);
     }
 
-    // When seeking request is from media seeking, unconsumed stash data should be dropped
-    // However, stash data shouldn't be dropped if seeking requested from http reconnection
-    _internalSeek(bytes, dropUnconsumed) {
+    /** 
+     * When seeking request is from media seeking, unconsumed stash data should be dropped
+     * However, stash data shouldn't be dropped if seeking requested from http reconnection
+     * 
+     * @dropUnconsumed: Ignore and discard all unconsumed data in stash buffer
+     * @doFlushRanges: Flush/Remove all buffered ranges after seekpoint
+     */
+    _internalSeek(bytes, dropUnconsumed, doFlushRanges) {
         if (this._loader.isWorking()) {
             this._loader.abort();
         }
@@ -201,6 +206,19 @@ class IOController {
         let requestRange = {from: bytes, to: -1};
         let bufferedArea = false;
         let insertIndex = 0;
+
+        if (doFlushRanges) {
+            for (let i = 0; i < ranges.length; i++) {
+                if (ranges[i].from >= bytes) {
+                    ranges.splice(i, ranges.length - i);
+                    break;
+                } else if (ranges[i].to >= bytes) {
+                    ranges[i].to = bytes - 1;
+                    ranges.splice(i + 1, ranges.length - i - 1);
+                    break;
+                }
+            }
+        }
 
         for (let i = 0; i < ranges.length; i++) {
             if (bytes >= ranges[i].from && bytes <= ranges[i].to) {
@@ -530,7 +548,7 @@ class IOController {
 
         // continue loading from appropriate position
         if (next.from !== -1) {
-            this._internalSeek(next.from, true);
+            this._internalSeek(next.from, true, false);
         }
     }
 
@@ -546,7 +564,7 @@ class IOController {
                 let current = this._currentRange;
                 let next = this._mergeRangesAndGetNext(current.from, current.to);
                 if (next.from !== -1) {
-                    this._internalSeek(next.from, false);
+                    this._internalSeek(next.from, false, false);
                 }
                 return;
             }

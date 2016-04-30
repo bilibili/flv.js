@@ -131,7 +131,9 @@ export class MediaSegmentInfoList {
 
         while (lbound <= ubound) {
             mid = lbound + Math.floor((ubound - lbound) / 2);
-            if (mid === last || (list[mid].lastSample.originalDts < originalDts && originalDts <= list[mid + 1].originalBeginDts)) {
+            if (mid === last) {  // no segments need to be remove
+                return;
+            } else if (list[mid].lastSample.originalDts < originalDts && originalDts <= list[mid + 1].originalBeginDts) {
                 idx = mid + 1;
                 break;
             } else if (list[mid].originalBeginDts <= originalDts && originalDts < list[mid].originalEndDts) {

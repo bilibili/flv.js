@@ -111,6 +111,7 @@ export class MediaSegmentInfoList {
 
         this._lastAppendLocation = insertIdx;
         this._list.splice(insertIdx, 0, msi);
+    }
 
     removeSegmentsAfter(originalDts) {
         let list = this._list;

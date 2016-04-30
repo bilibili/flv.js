@@ -192,9 +192,20 @@ class IOController {
         if (this._loader.isWorking()) {
             this._loader.abort();
         }
-        let remain = this._flushStashBuffer(dropUnconsumed);
-        if (remain) {
-            this._currentRange.to -= remain;
+
+        if (doFlushRanges && bytes <= this._stashByteStart + this._stashUsed) {
+            // current buffering position must be discard. Drop all stash data
+            if (this._stashUsed !== 0) {
+                this._currentRange.to = this._stashByteStart - 1;
+            }
+            this._stashUsed = 0;
+            this._stashByteStart = 0;
+        } else {
+            // dispatch & flush stash buffer before seek
+            let remain = this._flushStashBuffer(dropUnconsumed);
+            if (remain) {
+                this._currentRange.to -= remain;
+            }
         }
 
         this._loader.destroy();

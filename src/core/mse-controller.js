@@ -190,6 +190,9 @@ class MSEController {
                 let length = this._pendingSegments[type].length;
                 for (let i = 0; i < length; i++) {
                     let segment = this._pendingSegments[type][i];
+                    if (!segment.hasOwnProperty('info')) {
+                        continue;
+                    }
                     if (segment.info.beginDts >= removeStartMS) {
                         this._pendingSegments[type].splice(i, 1);
                         i--;
@@ -285,8 +288,7 @@ class MSEController {
         //this._updateBufferedRanges();
         if (this._hasPendingRemoveRanges()) {
             this._doRemoveRanges();
-        }
-        if (this._hasPendingSegments()) {
+        } else if (this._hasPendingSegments()) {
             this._doAppendSegments();
         }
     }

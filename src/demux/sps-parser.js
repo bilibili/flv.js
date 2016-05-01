@@ -47,7 +47,7 @@ class SPSParser {
 
             chroma_format_idc = gb.readUEG();
             if (chroma_format_idc === 3) {
-                this.readBits(1);  // separate_colour_plane_flag
+                gb.readBits(1);  // separate_colour_plane_flag
             }
             if (chroma_format_idc <= 3) {
                 chroma_format = chroma_format_table[chroma_format_idc];

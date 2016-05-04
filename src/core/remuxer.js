@@ -110,6 +110,14 @@ class Remuxer {
         }
     }
 
+    syncPlayback(seconds) {
+        if (this._worker) {
+            this._worker.postMessage({cmd: 'sync_playback', param: seconds});
+        } else {
+            this._controller.syncPlayback(seconds);
+        }
+    }
+
     _onInitSegment(type, initSegment) {
         new Promise(resolve => resolve()).then(() => {
             this._emitter.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);

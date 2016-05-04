@@ -57,6 +57,9 @@ let RemuxingWorker = function (self) {
             case 'resume':
                 controller.resume();
                 break;
+            case 'sync_playback':
+                controller.syncPlayback(e.data.param);
+                break;
             case 'logging_config':
                 LoggingControl.applyConfig(e.data.param);
                 break;

@@ -173,6 +173,7 @@ class FlvPlayer extends BasePlayer {
         if (directSeek) {  // buffered position
             this._requestSetTime = true;
             this._mediaElement.currentTime = seconds;
+            this._remuxer.syncPlayback(seconds);
         } else {
             if (this._progressCheckId !== 0) {
                 window.clearInterval(this._progressCheckId);
@@ -191,10 +192,16 @@ class FlvPlayer extends BasePlayer {
                 let target = this._mediaElement.currentTime;
                 this._seekpointRecord = null;
                 if (!this._isTimepointBuffered(target)) {
+                    if (this._progressCheckId !== 0) {
+                        window.clearTimeout(this._progressCheckId);
+                        this._progressCheckId = 0;
+                    }
                     // .currentTime is consists with .buffered timestamp
                     // Chrome/Edge use DTS, while FireFox/Safari use PTS
                     this._msectl.seek(target);
                     this._remuxer.seek(Math.floor(target * 1000));
+                } else {  // buffered range
+                    this._remuxer.syncPlayback(target);
                 }
             } else {
                 window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);
@@ -204,16 +211,19 @@ class FlvPlayer extends BasePlayer {
 
     _onvSeeking(e) {  // handle seeking request from browser's progress bar
         Log.v(this.TAG, 'onvSeeking');
+
+        let target = this._mediaElement.currentTime;
         if (this._requestSetTime) {
             this._requestSetTime = false;
             return;
         }
-        if (this._isTimepointBuffered(this._mediaElement.currentTime)) {
+        if (this._isTimepointBuffered(target)) {
+            this._remuxer.syncPlayback(target);
             return;
         }
 
         this._seekpointRecord = {
-            seekPoint: this._mediaElement.currentTime,
+            seekPoint: target,
             recordTime: self.performance.now()
         };
         window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);

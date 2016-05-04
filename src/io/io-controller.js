@@ -150,11 +150,19 @@ class IOController {
 
     abort() {
         this._loader.abort();
+        this._mergeRanges(this._currentRange.from, this._currentRange.to);
+
+        if (this._paused) {
+            this._paused = false;
+            this._resumeFrom = 0;
+        }
     }
 
     pause() {
         if (this.isWorking()) {
             this._loader.abort();
+            this._mergeRanges(this._currentRange.from, this._currentRange.to);
+
             if (this._stashUsed !== 0) {
                 this._resumeFrom = this._stashByteStart;
                 this._currentRange.to = this._stashByteStart - 1;
@@ -179,6 +187,31 @@ class IOController {
     seek(bytes) {
         this._paused = false;
         this._internalSeek(bytes, true, true);
+    }
+
+    getCurrentWorkingRange() {
+        return Object.assign({}, this._currentRange);
+    }
+
+    searchRangeContains(bytes) {
+        let ranges = this._progressRanges;
+
+        for (let i = 0; i < ranges.length; i++) {
+            let range = ranges[i];
+            if (range.from <= bytes && bytes < range.to) {
+                return range;
+            }
+        }
+        return null;
+    }
+
+    continueLoadRange(range) {
+        if (range != null) {
+            if (this._totalLength === null ||
+                    (this._totalLength !== null && range.to < this._totalLength - 1)) {
+                this._internalSeek(range.to + 1, true, true);
+            }
+        }
     }
 
     /**
@@ -231,6 +264,8 @@ class IOController {
             }
         }
 
+        this._mergeRanges(this._currentRange.from, this._currentRange.to);
+
         for (let i = 0; i < ranges.length; i++) {
             if (bytes >= ranges[i].from && bytes <= ranges[i].to) {
                 bufferedArea = true;
@@ -256,7 +291,7 @@ class IOController {
         this._currentRange = {from: requestRange.from, to: -1};
         ranges.splice(insertIndex, 0, this._currentRange);
 
-        Log.v(this.TAG, 'ranges after seek: ' + JSON.stringify(this._progressRanges));
+        Log.v(this.TAG, 'Ranges after seek: ' + JSON.stringify(this._progressRanges));
 
         this._speed = 0;
         this._speedCalc.reset();
@@ -360,7 +395,7 @@ class IOController {
         if (contentLength && this._fullRequestFlag) {
             this._totalLength = contentLength;
             this._fullRequestFlag = false;
-            Log.v(this.TAG, `Content-Length: ${contentLength}`);
+            Log.v(this.TAG, `Total-Length: ${contentLength}`);
         }
     }
 
@@ -494,10 +529,15 @@ class IOController {
         return 0;
     }
 
-    _mergeRangesAndGetNext(from, to) {
+    /**
+     * @return next load range
+     */
+    _mergeRanges(from, to) {
         let ranges = this._progressRanges;
         let length = ranges.length;
         let next = {from: -1, to: -1};
+
+        let backup = Object.assign({}, this._currentRange);
 
         // left endpoint merge
         for (let i = 0; i < length; i++) {
@@ -543,6 +583,23 @@ class IOController {
             }
         }
 
+        // correct this._currentRange
+        let corrected = false;
+        length = this._progressRanges.length;
+        for (let i = 0; i < length; i++) {
+            let range = this._progressRanges[i];
+            if (range.from <= backup.from && backup.to <= range.to
+                                          && !(range.from === backup.from && range.to === backup.to)) {
+                corrected = true;
+                this._currentRange = range;
+                break;
+            }
+        }
+
+        if (!corrected) {
+            this._currentRange = backup;
+        }
+
         return next;
     }
 
@@ -553,7 +610,7 @@ class IOController {
         Log.v(this.TAG, `Loader complete, from = ${from}, to = ${to}`);
         Log.v(this.TAG, JSON.stringify(this._progressRanges));
 
-        let next = this._mergeRangesAndGetNext(from, to);
+        let next = this._mergeRanges(from, to);
 
         Log.v(this.TAG, 'Adjusted ranges: ' + JSON.stringify(this._progressRanges));
 
@@ -573,7 +630,7 @@ class IOController {
                 // http reconnect
                 Log.w(this.TAG, 'Connection lost, trying reconnect...');
                 let current = this._currentRange;
-                let next = this._mergeRangesAndGetNext(current.from, current.to);
+                let next = this._mergeRanges(current.from, current.to);
                 if (next.from !== -1) {
                     this._internalSeek(next.from, false, false);
                 }

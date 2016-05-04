@@ -63,38 +63,57 @@ class MediaInfo {
             return null;
         }
 
-        let keyframeIdx = 0;
+        let table = this.keyframesIndex;
+        let keyframeIdx = this._search(table.times, milliseconds);
 
-        // binary search
-        let list = this.keyframesIndex.times;
+        return {
+            index: keyframeIdx,
+            milliseconds: table.times[keyframeIdx],
+            fileposition: table.filepositions[keyframeIdx]
+        };
+    }
+
+    getNearestKeyframeByFilePosition(fileposition) {
+        if (this.keyframesIndex == null) {
+            return null;
+        }
+
+        let table = this.keyframesIndex;
+        let idx = this._search(table.filepositions, fileposition);
+
+        return {
+            index: idx,
+            milliseconds: table.times[idx],
+            fileposition: table.filepositions[idx]
+        };
+    }
+
+    _search(list, value) {
+        let idx = 0;
+
         let last = list.length - 1;
         let mid = 0;
         let lbound = 0;
         let ubound = last;
 
-        if (milliseconds < list[0]) {
-            keyframeIdx = 0;
+        if (value < list[0]) {
+            idx = 0;
             lbound = ubound + 1;  // skip search
         }
 
         while (lbound <= ubound) {
             mid = lbound + Math.floor((ubound - lbound) / 2);
-            if (mid === last || (milliseconds >= list[mid] && milliseconds < list[mid + 1])) {
-                keyframeIdx = mid;
+            if (mid === last || (value >= list[mid] && value < list[mid + 1])) {
+                idx = mid;
                 break;
-            } else if (list[mid] < milliseconds) {
+            } else if (list[mid] < value) {
                 lbound = mid + 1;
             } else {
                 ubound = mid - 1;
             }
         }
 
-        let table = this.keyframesIndex;
-
-        return {
-            milliseconds: table.times[keyframeIdx],
-            fileposition: table.filepositions[keyframeIdx]
-        };
+        return idx;
     }
 
 }

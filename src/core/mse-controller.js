@@ -163,48 +163,26 @@ class MSEController {
     }
 
     seek(seconds) {
-        // drop pendingSegments after seekpoint & remove buffers after seekpoint
+        // remove all appended buffers
         for (let type in this._sourceBuffers) {
             if (!this._sourceBuffers[type]) {
                 continue;
             }
 
-            // search remove start position
             let sb = this._sourceBuffers[type];
-            let removeStart = -1;
-            let removeEnd = -1;
+            sb.abort();
+
             for (let i = 0; i < sb.buffered.length; i++) {
                 let start = sb.buffered.start(i);
                 let end = sb.buffered.end(i);
-                if (start > seconds && removeStart === -1) {
-                    removeStart = start;
-                }
-                if (i === sb.buffered.length - 1) {
-                    removeEnd = end;
-                }
+                this._pendingRemoveRanges[type].push({start, end});
             }
 
-            if (removeStart !== -1 && removeEnd > removeStart) {
-                // discard pending segments which has timestamp later than removeStart
-                let removeStartMS = Math.floor(removeStart * 1000);
-                let length = this._pendingSegments[type].length;
-                for (let i = 0; i < length; i++) {
-                    let segment = this._pendingSegments[type][i];
-                    if (!segment.hasOwnProperty('info')) {
-                        continue;
-                    }
-                    if (segment.info.beginDts >= removeStartMS) {
-                        this._pendingSegments[type].splice(i, 1);
-                        i--;
-                        length--;
-                    }
-                }
+            let ps = this._pendingSegments[type];
+            ps.splice(0, ps.length);
 
-                // remove ranges
-                this._pendingRemoveRanges[type].push({start: removeStart, end: removeEnd});
-                if (!sb.updating) {
-                    this._doRemoveRanges();
-                }
+            if (!sb.updating) {
+                this._doRemoveRanges();
             }
         }
     }
@@ -284,8 +262,6 @@ class MSEController {
 
     _onSourceBufferUpdateEnd() {
         Log.v(this.TAG, 'SourceBuffer UpdateEnd');
-        // TODO: collect and report buffered ranges
-        //this._updateBufferedRanges();
         if (this._hasPendingRemoveRanges()) {
             this._doRemoveRanges();
         } else if (this._hasPendingSegments()) {

@@ -83,8 +83,8 @@ class MP4Remuxer {
     }
 
     seek(originalDts) {
-        this._videoSegmentInfoList.removeSegmentsAfter(originalDts);
-        this._audioSegmentInfoList.removeSegmentsAfter(originalDts);
+        this._videoSegmentInfoList.clear();
+        this._audioSegmentInfoList.clear();
     }
 
     remux(audioTrack, videoTrack) {

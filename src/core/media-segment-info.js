@@ -55,6 +55,10 @@ export class MediaSegmentInfoList {
         return this._list.length === 0;
     }
 
+    clear() {
+        this._list = [];
+    }
+
     _searchNearestSegmentBefore(originalBeginDts) {
         let list = this._list;
         if (list.length === 0) {

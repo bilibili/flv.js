@@ -63,7 +63,6 @@ class MSEController {
             video: [],
             audio: []
         };
-        };
     }
 
     destroy() {

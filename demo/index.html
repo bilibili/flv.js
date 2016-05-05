@@ -56,8 +56,6 @@
             <button onclick="flv_stop()">Stop</button>
             <input style="width:100px" type="text" name="seekpoint"/>
             <button onclick="flv_seekto()">SeekTo</button>
-            <!--<button onclick="downloadMedia('video')">DumpVideo</button>
-            <button onclick="downloadMedia('audio')">DumpAudio</button>-->
         </div>
     </div>
 
@@ -96,12 +94,7 @@
 
         function flv_seekto() {
             var input = document.getElementsByName('seekpoint')[0];
-            player.seekTo(parseFloat(input.value));
-        }
-
-        function downloadMedia(type) {
-            var url = player._getDownloadURL(type);
-            window.open(url);
+            player.currentTime = parseFloat(input.value);
         }
 
         function getUrlParam(key, defaultValue) {
@@ -119,8 +112,6 @@
         var urlInputBox = document.getElementsByName('urlinput')[0];
         var url = decodeURIComponent(getUrlParam('src', urlInputBox.value));
         urlInputBox.value = url;
-
-        flv_prepare();
     </script>
     
 </body>

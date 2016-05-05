@@ -186,7 +186,11 @@ class IOController {
 
     seek(bytes) {
         this._paused = false;
-        this._internalSeek(bytes, true, true);
+        this._currentRange = {from: 0, to: -1};
+        this._progressRanges = [];
+        this._stashUsed = 0;
+        this._stashByteStart = 0;
+        this._internalSeek(bytes, true, false);
     }
 
     getCurrentWorkingRange() {

@@ -49,7 +49,6 @@ class RangeLoader extends BaseLoader {
             this._xhr.onprogress = null;
             this._xhr.onload = null;
             this._xhr.onerror = null;
-            this._xhr.ontimeout = null;
             this._xhr = null;
         }
         super.destroy();
@@ -95,8 +94,7 @@ class RangeLoader extends BaseLoader {
         xhr.onreadystatechange = this._onReadyStateChange.bind(this);
         xhr.onprogress = this._onProgress.bind(this);
         xhr.onload = this._onLoad.bind(this);
-        xhr.onerror = this._onError.bind(this);
-        xhr.ontimeout = this._onTimeout.bind(this);
+        xhr.onerror = this._onXhrError.bind(this);
 
         if (range.from !== 0 || range.to !== -1) {
             let param;
@@ -123,7 +121,6 @@ class RangeLoader extends BaseLoader {
             this._xhr.onprogress = null;
             this._xhr.onload = null;
             this._xhr.onerror = null;
-            this._xhr.ontimeout = null;
             this._xhr.abort();
             this._xhr = null;
         }
@@ -242,7 +239,7 @@ class RangeLoader extends BaseLoader {
         }
     }
 
-    _onError(e) {
+    _onXhrError(e) {
         this._status = LoaderStatus.kError;
         let type = 0;
         let info = null;
@@ -261,10 +258,6 @@ class RangeLoader extends BaseLoader {
         } else {
             throw info.msg;
         }
-    }
-
-    _onTimeout(e) {
-
     }
 
 }

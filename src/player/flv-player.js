@@ -167,13 +167,11 @@ class FlvPlayer extends BasePlayer {
     }
 
     _internalSeek(seconds) {
-        Log.v(this.TAG, 'internalSeek');
         let directSeek = this._isTimepointBuffered(seconds);
 
         if (directSeek) {  // buffered position
             this._requestSetTime = true;
             this._mediaElement.currentTime = seconds;
-            this._remuxer.syncPlayback(seconds);
         } else {
             if (this._progressCheckId !== 0) {
                 window.clearInterval(this._progressCheckId);
@@ -200,8 +198,6 @@ class FlvPlayer extends BasePlayer {
                     // Chrome/Edge use DTS, while FireFox/Safari use PTS
                     this._msectl.seek(target);
                     this._remuxer.seek(Math.floor(target * 1000));
-                } else {  // buffered range
-                    this._remuxer.syncPlayback(target);
                 }
             } else {
                 window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);
@@ -218,7 +214,6 @@ class FlvPlayer extends BasePlayer {
             return;
         }
         if (this._isTimepointBuffered(target)) {
-            this._remuxer.syncPlayback(target);
             return;
         }
 
@@ -230,7 +225,7 @@ class FlvPlayer extends BasePlayer {
     }
 
     _onvSeeked(e) {
-        Log.v(this.TAG, 'onvSeeked');
+        
     }
 
 }

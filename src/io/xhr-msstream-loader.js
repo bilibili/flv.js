@@ -23,6 +23,7 @@ class MSStreamLoader extends BaseLoader {
     constructor() {
         super('xhr-msstream-loader');
         this.TAG = this.constructor.name;
+        this._needStash = true;
 
         this._xhr = null;
         this._reader = null;  // MSStreamReader

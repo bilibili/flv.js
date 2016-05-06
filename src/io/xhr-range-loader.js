@@ -20,6 +20,7 @@ class RangeLoader extends BaseLoader {
     constructor() {
         super('xhr-range-loader');
         this.TAG = this.constructor.name;
+        this._needStash = false;
 
         this._chunkSizeKBList = [128, 256, 512, 768, 1024, 1536, 2048, 3072, 4096];
         this._currentChunkSizeKB = 256;
@@ -157,7 +158,6 @@ class RangeLoader extends BaseLoader {
                 this._internalAbort();
                 if (total != null & total !== 0) {
                     this._totalLength = total;
-                    // this._contentLength = total;
                 }
                 this._openSubRange();
                 return;

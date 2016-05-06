@@ -14,6 +14,8 @@ class FetchStreamLoader extends BaseLoader {
     constructor() {
         super('fetch-stream');
         this.TAG = this.constructor.name;
+        this._needStash = true;
+
         this._requestAbort = false;
         this._contentLength = null;
         this._receivedLength = 0;

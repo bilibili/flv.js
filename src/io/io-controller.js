@@ -111,14 +111,6 @@ class IOController {
         this._onError = callback;
     }
 
-    get stashBufferEnabled() {
-        return this._enableStash;
-    }
-
-    set stashBufferEnabled(enable) {
-        this._enableStash = enable;
-    }
-
     _selectLoader() {
         if (FetchStreamLoader.isSupported()) {
             this._loaderClass = FetchStreamLoader;
@@ -136,6 +128,7 @@ class IOController {
 
     _createLoader() {
         this._loader = new this._loaderClass();
+        this._enableStash = this._loader.needStashBuffer;
         this._loader.onContentLengthKnown = this._onContentLengthKnown.bind(this);
         this._loader.onDataArrival = this._onLoaderChunkArrival.bind(this);
         this._loader.onComplete = this._onLoaderComplete.bind(this);
@@ -390,7 +383,7 @@ class IOController {
             this._expandBuffer(bufferSize);
         }
         this._stashSize = stashSizeKB * 1024;
-        Log.v(this.TAG, `adjustStashSize: targetStashSize = ${stashSizeKB} KB`);
+        Log.v(this.TAG, `adjustStashSize: enableStash = ${this._enableStash}, targetStashSize = ${stashSizeKB} KB`);
     }
 
     _dispatchChunks(chunks, byteStart) {

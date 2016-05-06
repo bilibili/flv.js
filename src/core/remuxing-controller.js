@@ -26,7 +26,6 @@ export class RemuxingController {
         this._mediaInfo = null;
 
         this._ioctl = new IOController(url);
-        this._ioctl.stashBufferEnabled = true;
         this._ioctl.onError = this._onIOException.bind(this);
         this._ioctl.onDataArrival = this._onInitChunkArrival.bind(this);
         this._ioctl.onSeeked = () => {

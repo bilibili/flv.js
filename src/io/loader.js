@@ -25,6 +25,7 @@ export class BaseLoader {
     constructor(typeName) {
         this._type = typeName || 'undefined';
         this._status = LoaderStatus.kIdle;
+        this._needStash = false;
         // callbacks
         this._onContentLengthKnown = null;
         this._onDataArrival = null;
@@ -50,6 +51,10 @@ export class BaseLoader {
 
     get status() {
         return this._status;
+    }
+
+    get needStashBuffer() {
+        return this._needStash;
     }
 
     get onContentLengthKnown() {

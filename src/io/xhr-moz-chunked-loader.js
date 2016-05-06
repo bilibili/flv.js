@@ -20,6 +20,8 @@ class MozChunkedLoader extends BaseLoader {
     constructor() {
         super('xhr-moz-chunked-loader');
         this.TAG = this.constructor.name;
+        this._needStash = true;
+
         this._xhr = null;
         this._requestAbort = false;
         this._contentLength = null;

@@ -4,6 +4,7 @@ import SpeedCalculator from './speed-calculator.js';
 import FetchStreamLoader from './fetch-stream-loader.js';
 import MozChunkedLoader from './xhr-moz-chunked-loader.js';
 import MSStreamLoader from './xhr-msstream-loader.js';
+import RangeLoader from './xhr-range-loader.js';
 
 // Manage IO Loaders
 class IOController {
@@ -125,8 +126,11 @@ class IOController {
             this._loaderClass = MSStreamLoader;
         } else if (MozChunkedLoader.isSupported()) {
             this._loaderClass = MozChunkedLoader;
+        } else if (RangeLoader.isSupported()) {
+            Log.w(this.TAG, 'Your browser doesn\'t support streaming!');
+            this._loaderClass = RangeLoader;
         } else {
-            throw 'Your browser doesn\'t support streaming!';
+            throw 'Your browser doesn\'t support xhr with arraybuffer responseType!';
         }
     }
 

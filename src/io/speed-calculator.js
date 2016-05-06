@@ -47,7 +47,11 @@ class SpeedCalculator {
     }
 
     get lastSecondKBps() {
-        return this._lastSecondBytes / 1024;
+        if (this._lastSecondBytes !== 0) {
+            return this._lastSecondBytes / 1024;
+        } else {
+            return this.currentKBps;
+        }
     }
 
     get averageKBps() {

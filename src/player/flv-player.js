@@ -113,6 +113,7 @@ class FlvPlayer extends BasePlayer {
     }
 
     _onmseBufferFull() {
+        Log.v(this.TAG, 'MSE SourceBuffer is full, suspend transmuxing task');
         if (this._remuxer) {
             this._remuxer.pause();
 

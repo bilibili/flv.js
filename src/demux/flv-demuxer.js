@@ -197,8 +197,6 @@ class FlvDemuxer {
 
     // function parseChunks(chunk: ArrayBuffer, byteStart: number): number;
     parseChunks(chunk, byteStart) {
-        Log.v(this.TAG, 'FlvDemuxer: received chunk start = ' + byteStart + ', size = ' + chunk.byteLength);
-
         if (!this._onError || !this._onMediaInfo || !this._onTrackMetadata || !this._onDataAvailable) {
             throw 'Flv: onError & onMediaInfo & onTrackMetadata & onDataAvailable callback must be specified';
         }
@@ -440,8 +438,9 @@ class FlvDemuxer {
         let aacData = this._parseAACAudioData(arrayBuffer, dataOffset + 1, dataSize - 1);
 
         if (aacData.packetType === 0) {  // AAC sequence header (AudioSpecificConfig)
+            Log.v(this.TAG, 'Found AudioSpecificConfig');
             if (meta.config) {
-                Log.w(this.TAG, 'Found another AACSequenceHeader!');
+                Log.w(this.TAG, 'Found another AudioSpecificConfig!');
             }
             let misc = aacData.data;
             meta.audioSampleRate = misc.samplingRate;
@@ -450,7 +449,7 @@ class FlvDemuxer {
             meta.config = misc.config;
             // The decode result of an aac sample is 1024 PCM samples
             meta.refSampleDuration = Math.floor(1024 / meta.audioSampleRate * meta.timescale);
-            Log.v(this.TAG, 'Parsed AACSequenceHeader (AudioSpecificConfig)');
+            Log.v(this.TAG, 'Parsed AudioSpecificConfig');
 
             if (this._isInitialMetadataDispatched()) {
                 // Non-initial metadata, force dispatch (or flush) parsed frames to remuxer

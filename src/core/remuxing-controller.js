@@ -172,7 +172,7 @@ export class RemuxingController {
 
     _onRemuxerInitSegmentArrival(type, initSegment) {
         let is = initSegment;
-        Log.v(this.TAG, `Init Segment: ${type}, codec/container: ${is.codec}/${is.container}`);
+        Log.v(this.TAG, `Init Segment: ${type}, mimeType: ${is.container};codecs=${is.codec}`);
         this._emitter.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);
     }
 

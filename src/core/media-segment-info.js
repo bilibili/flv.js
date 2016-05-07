@@ -7,6 +7,7 @@ export class SampleInfo {
         this.duration = duration;
         this.originalDts = originalDts;
         this.isSyncPoint = isSync;
+        this.fileposition = null;
     }
 
 }
@@ -34,6 +35,65 @@ export class MediaSegmentInfo {
 
 }
 
+// Ordered list for recording video IDR frames, sorted by originalDts
+export class IDRSampleList {
+
+    constructor() {
+        this._list = [];
+    }
+
+    clear() {
+        this._list = [];
+    }
+
+    appendArray(syncPoints) {
+        let sp = syncPoints;
+        let list = this._list;
+
+        if (sp.length === 0) {
+            return;
+        }
+
+        if (list.length === 0 || sp[0].originalDts >= list[list.length - 1].originalDts) {
+            Array.prototype.push.apply(list, sp);
+        } else {
+            throw 'Unordered syncPoints to be append!';
+        }
+    }
+
+    getLastSyncPointBeforeDts(dts) {
+        if (this._list.length == 0) {
+            return null;
+        }
+
+        let list = this._list;
+        let idx = 0;
+        let last = list.length - 1;
+        let mid = 0;
+        let lbound = 0;
+        let ubound = last;
+
+        if (dts < list[0].dts) {
+            idx = 0;
+            lbound = ubound + 1;
+        }
+
+        while (lbound <= ubound) {
+            mid = lbound + Math.floor((ubound - lbound) / 2);
+            if (mid === last || (dts >= list[mid].dts && dts < list[mid + 1].dts)) {
+                idx = mid;
+                break;
+            } else if (list[mid].dts < dts) {
+                lbound = mid + 1;
+            } else {
+                ubound = mid - 1;
+            }
+        }
+        return this._list[idx];
+    }
+
+}
+
 // Data structure for recording information of media segments in single track.
 export class MediaSegmentInfoList {
 
@@ -57,6 +117,7 @@ export class MediaSegmentInfoList {
 
     clear() {
         this._list = [];
+        this._lastAppendLocation = -1;
     }
 
     _searchNearestSegmentBefore(originalBeginDts) {

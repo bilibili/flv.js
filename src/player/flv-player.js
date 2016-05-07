@@ -171,8 +171,9 @@ class FlvPlayer extends BasePlayer {
         let directSeek = this._isTimepointBuffered(seconds);
 
         if (directSeek) {  // buffered position
+            let idr = this._msectl.getNearestKeyframe(Math.floor(seconds * 1000));
             this._requestSetTime = true;
-            this._mediaElement.currentTime = seconds;
+            this._mediaElement.currentTime = idr.dts / 1000;
         } else {
             if (this._progressCheckId !== 0) {
                 window.clearInterval(this._progressCheckId);
@@ -215,6 +216,9 @@ class FlvPlayer extends BasePlayer {
             return;
         }
         if (this._isTimepointBuffered(target)) {
+            let idr = this._msectl.getNearestKeyframe(Math.floor(target * 1000));
+            this._requestSetTime = true;
+            this._mediaElement.currentTime = idr.dts / 1000;
             return;
         }
 

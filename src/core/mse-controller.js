@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
 import Log from '../utils/logger.js';
+import {SampleInfo, IDRSampleList} from './media-segment-info.js';
 
 const State = {
     ERROR: -2,
@@ -63,6 +64,7 @@ class MSEController {
             video: [],
             audio: []
         };
+        this._idrList = new IDRSampleList();
     }
 
     destroy() {
@@ -168,22 +170,33 @@ class MSEController {
                 continue;
             }
 
+            // abort current buffer append algorithm
             let sb = this._sourceBuffers[type];
             sb.abort();
 
+            // IDRList should be clear
+            this._idrList.clear();
+
+            // record ranges to be remove from SourceBuffer
             for (let i = 0; i < sb.buffered.length; i++) {
                 let start = sb.buffered.start(i);
                 let end = sb.buffered.end(i);
                 this._pendingRemoveRanges[type].push({start, end});
             }
 
+            // pending segments should be discard
             let ps = this._pendingSegments[type];
             ps.splice(0, ps.length);
 
+            // if sb is not updating, let's remove ranges now!
             if (!sb.updating) {
                 this._doRemoveRanges();
             }
         }
+    }
+
+    getNearestKeyframe(dts) {
+        return this._idrList.getLastSyncPointBeforeDts(dts);
     }
 
     _doRemoveRanges() {
@@ -212,6 +225,9 @@ class MSEController {
                 try {
                     this._sourceBuffers[type].appendBuffer(segment.data);
                     this._isBufferFull = false;
+                    if (type === 'video' && segment.hasOwnProperty('info')) {
+                        this._idrList.appendArray(segment.info.syncPoints);
+                    }
                 } catch (error) {
                     this._pendingSegments[type].unshift(segment);
                     if (error.code === 22) {  // QuotaExceededError

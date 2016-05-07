@@ -857,6 +857,9 @@ class FlvDemuxer {
                 cts: cts,
                 pts: (dts + cts)
             };
+            if (keyframe) {
+                avcSample.fileposition = tagPosition;
+            }
             track.samples.push(avcSample);
             track.length += length;
             track.nbNalu += units.length;

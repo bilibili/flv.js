@@ -49,8 +49,15 @@ class SpeedCalculator {
     get lastSecondKBps() {
         if (this._lastSecondBytes !== 0) {
             return this._lastSecondBytes / 1024;
-        } else {
-            return this.currentKBps;
+        } else {  // lastSecondBytes === 0
+            if (this._now() - this._lastCheckpoint >= 500) {
+                // if time interval since last checkpoint has exceeded 500ms
+                // the speed is nearly accurate
+                return this.currentKBps;
+            } else {
+                // We don't know
+                return 0;
+            }
         }
     }
 

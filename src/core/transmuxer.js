@@ -1,11 +1,11 @@
 import EventEmitter from 'events';
 import Log from '../utils/logger.js';
 import LoggingControl from '../utils/logging-control.js';
-import {RemuxingController, RemuxingEvents} from './remuxing-controller.js';
-import RemuxingWorker from './remuxing-worker.js';
+import {TransmuxingController, TransmuxingEvents} from './transmuxing-controller.js';
+import TransmuxingWorker from './transmuxing-worker.js';
 import MediaInfo from './media-info.js';
 
-class Remuxer {
+class Transmuxer {
 
     constructor(enableWorker, url) {
         this.TAG = this.constructor.name;
@@ -14,7 +14,7 @@ class Remuxer {
         if (enableWorker && typeof (Worker) !== 'undefined') {
             try {
                 let work = require('webworkify');
-                this._worker = work(RemuxingWorker);
+                this._worker = work(TransmuxingWorker);
                 this._workerDestroying = false;
                 this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
                 this._worker.postMessage({cmd: 'init', param: url});
@@ -24,21 +24,21 @@ class Remuxer {
                 LoggingControl.registerListener(this.e.onLoggingConfigChanged);
                 this._worker.postMessage({cmd: 'logging_config', param: LoggingControl.getConfig()});
             } catch (error) {
-                Log.e(this.TAG, 'Error while initialize remuxing worker, fallback to inline remuxing');
-                this._controller = new RemuxingController(url);
+                Log.e(this.TAG, 'Error while initialize transmuxing worker, fallback to inline transmuxing');
+                this._controller = new TransmuxingController(url);
             }
         } else {
-            this._controller = new RemuxingController(url);
+            this._controller = new TransmuxingController(url);
         }
 
         if (this._controller) {
             let ctl = this._controller;
-            ctl.on(RemuxingEvents.IO_ERROR, this._onIOError.bind(this));
-            ctl.on(RemuxingEvents.DEMUX_ERROR, this._onDemuxError.bind(this));
-            ctl.on(RemuxingEvents.INIT_SEGMENT, this._onInitSegment.bind(this));
-            ctl.on(RemuxingEvents.MEDIA_SEGMENT, this._onMediaSegment.bind(this));
-            ctl.on(RemuxingEvents.MEDIA_INFO, this._onMediaInfo.bind(this));
-            ctl.on(RemuxingEvents.RECOMMEND_SEEKPOINT, this._onRecommendSeekpoint.bind(this));
+            ctl.on(TransmuxingEvents.IO_ERROR, this._onIOError.bind(this));
+            ctl.on(TransmuxingEvents.DEMUX_ERROR, this._onDemuxError.bind(this));
+            ctl.on(TransmuxingEvents.INIT_SEGMENT, this._onInitSegment.bind(this));
+            ctl.on(TransmuxingEvents.MEDIA_SEGMENT, this._onMediaSegment.bind(this));
+            ctl.on(TransmuxingEvents.MEDIA_INFO, this._onMediaInfo.bind(this));
+            ctl.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, this._onRecommendSeekpoint.bind(this));
         }
     }
 
@@ -120,38 +120,37 @@ class Remuxer {
 
     _onInitSegment(type, initSegment) {
         new Promise(resolve => resolve()).then(() => {
-            this._emitter.emit(RemuxingEvents.INIT_SEGMENT, type, initSegment);
+            this._emitter.emit(TransmuxingEvents.INIT_SEGMENT, type, initSegment);
         });
     }
 
     _onMediaSegment(type, mediaSegment) {
         new Promise(resolve => resolve()).then(() => {
-            this._emitter.emit(RemuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
+            this._emitter.emit(TransmuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
         });
     }
 
     _onMediaInfo(mediaInfo) {
         new Promise(resolve => resolve()).then(() => {
-            this._emitter.emit(RemuxingEvents.MEDIA_INFO, mediaInfo);
+            this._emitter.emit(TransmuxingEvents.MEDIA_INFO, mediaInfo);
         });
     }
 
     _onIOError(type, info) {
         new Promise(resolve => resolve()).then(() => {
-            this._emitter.emit(RemuxingEvents.IO_ERROR, type, info);
+            this._emitter.emit(TransmuxingEvents.IO_ERROR, type, info);
         });
     }
 
     _onDemuxError(type, info) {
         new Promise(resolve => resolve()).then(() => {
-            this._emitter.emit(RemuxingEvents.DEMUX_ERROR, type, info);
+            this._emitter.emit(TransmuxingEvents.DEMUX_ERROR, type, info);
         });
     }
 
     _onRecommendSeekpoint(milliseconds) {
-        Log.v(this.TAG, 'onRecommendSeekpoint');
         new Promise(resolve => resolve()).then(() => {
-            this._emitter.emit(RemuxingEvents.RECOMMEND_SEEKPOINT, milliseconds);
+            this._emitter.emit(TransmuxingEvents.RECOMMEND_SEEKPOINT, milliseconds);
         });
     }
 
@@ -171,19 +170,19 @@ class Remuxer {
                 this._worker.terminate();
                 this._worker = null;
                 break;
-            case RemuxingEvents.INIT_SEGMENT:
-            case RemuxingEvents.MEDIA_SEGMENT:
+            case TransmuxingEvents.INIT_SEGMENT:
+            case TransmuxingEvents.MEDIA_SEGMENT:
                 this._emitter.emit(message.msg, data.type, data.data);
                 break;
-            case RemuxingEvents.MEDIA_INFO:
+            case TransmuxingEvents.MEDIA_INFO:
                 Object.setPrototypeOf(data, MediaInfo.prototype);
                 this._emitter.emit(message.msg, data);
                 break;
-            case RemuxingEvents.IO_ERROR:
-            case RemuxingEvents.DEMUX_ERROR:
+            case TransmuxingEvents.IO_ERROR:
+            case TransmuxingEvents.DEMUX_ERROR:
                 this._emitter.emit(message.msg, data.type, data.info);
                 break;
-            case RemuxingEvents.RECOMMEND_SEEKPOINT:
+            case TransmuxingEvents.RECOMMEND_SEEKPOINT:
                 this._emitter.emit(message.msg, data);
                 break;
             default:
@@ -193,4 +192,4 @@ class Remuxer {
 
 }
 
-export default Remuxer;
+export default Transmuxer;

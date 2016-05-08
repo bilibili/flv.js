@@ -1,7 +1,7 @@
 import Log from '../utils/logger.js';
 import LoggingControl from '../utils/logging-control.js';
 import Polyfill from '../utils/polyfill.js';
-import {RemuxingController, RemuxingEvents} from './remuxing-controller.js';
+import {TransmuxingController, TransmuxingEvents} from './transmuxing-controller.js';
 
 /* post message to worker:
    data: {
@@ -16,9 +16,9 @@ import {RemuxingController, RemuxingEvents} from './remuxing-controller.js';
    }
  */
 
-let RemuxingWorker = function (self) {
+let TransmuxingWorker = function (self) {
 
-    let TAG = 'RemuxingWorker';
+    let TAG = 'TransmuxingWorker';
     let controller = null;
 
     Polyfill.install();
@@ -27,13 +27,13 @@ let RemuxingWorker = function (self) {
         Log.v(TAG, 'worker onmessage: ' + e.data.cmd);
         switch (e.data.cmd) {
             case 'init':
-                controller = new RemuxingController(e.data.param);
-                controller.on(RemuxingEvents.IO_ERROR, onIOError.bind(this));
-                controller.on(RemuxingEvents.DEMUX_ERROR, onDemuxError.bind(this));
-                controller.on(RemuxingEvents.INIT_SEGMENT, onInitSegment.bind(this));
-                controller.on(RemuxingEvents.MEDIA_SEGMENT, onMediaSegment.bind(this));
-                controller.on(RemuxingEvents.MEDIA_INFO, onMediaInfo.bind(this));
-                controller.on(RemuxingEvents.RECOMMEND_SEEKPOINT, onRecommendSeekpoint.bind(this));
+                controller = new TransmuxingController(e.data.param);
+                controller.on(TransmuxingEvents.IO_ERROR, onIOError.bind(this));
+                controller.on(TransmuxingEvents.DEMUX_ERROR, onDemuxError.bind(this));
+                controller.on(TransmuxingEvents.INIT_SEGMENT, onInitSegment.bind(this));
+                controller.on(TransmuxingEvents.MEDIA_SEGMENT, onMediaSegment.bind(this));
+                controller.on(TransmuxingEvents.MEDIA_INFO, onMediaInfo.bind(this));
+                controller.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, onRecommendSeekpoint.bind(this));
                 break;
             case 'destroy':
                 if (controller) {
@@ -68,7 +68,7 @@ let RemuxingWorker = function (self) {
 
     function onInitSegment(type, initSegment) {
         let obj = {
-            msg: RemuxingEvents.INIT_SEGMENT,
+            msg: TransmuxingEvents.INIT_SEGMENT,
             data: {
                 type: type,
                 data: initSegment
@@ -79,7 +79,7 @@ let RemuxingWorker = function (self) {
 
     function onMediaSegment(type, mediaSegment) {
         let obj = {
-            msg: RemuxingEvents.MEDIA_SEGMENT,
+            msg: TransmuxingEvents.MEDIA_SEGMENT,
             data: {
                 type: type,
                 data: mediaSegment
@@ -90,7 +90,7 @@ let RemuxingWorker = function (self) {
 
     function onMediaInfo(mediaInfo) {
         let obj = {
-            msg: RemuxingEvents.MEDIA_INFO,
+            msg: TransmuxingEvents.MEDIA_INFO,
             data: mediaInfo
         };
         self.postMessage(obj);
@@ -98,7 +98,7 @@ let RemuxingWorker = function (self) {
 
     function onIOError(type, info) {
         self.postMessage({
-            msg: RemuxingEvents.IO_ERROR,
+            msg: TransmuxingEvents.IO_ERROR,
             data: {
                 type: type,
                 info: info
@@ -108,7 +108,7 @@ let RemuxingWorker = function (self) {
 
     function onDemuxError(type, info) {
         self.postMessage({
-            msg: RemuxingEvents.DEMUX_ERROR,
+            msg: TransmuxingEvents.DEMUX_ERROR,
             data: {
                 type: type,
                 info: info
@@ -118,11 +118,11 @@ let RemuxingWorker = function (self) {
 
     function onRecommendSeekpoint(milliseconds) {
         self.postMessage({
-            msg: RemuxingEvents.RECOMMEND_SEEKPOINT,
+            msg: TransmuxingEvents.RECOMMEND_SEEKPOINT,
             data: milliseconds
         });
     }
 
 };
 
-export default RemuxingWorker;
+export default TransmuxingWorker;

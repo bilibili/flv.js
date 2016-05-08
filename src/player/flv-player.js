@@ -1,6 +1,6 @@
 import Log from '../utils/logger.js';
 import BasePlayer from './base-player.js';
-import Remuxer from '../core/remuxer.js';
+import Transmuxer from '../core/transmuxer.js';
 import MSEController from '../core/mse-controller.js';
 
 class FlvPlayer extends BasePlayer {
@@ -23,17 +23,17 @@ class FlvPlayer extends BasePlayer {
         this._mediaElement = null;
         this._msectl = new MSEController();
 
-        this._remuxer = new Remuxer(false, this._mediaDataSource.url);  // TODO
-        this._remuxer.on('init_segment', (type, is) => {
+        this._transmuxer = new Transmuxer(false, this._mediaDataSource.url);  // TODO
+        this._transmuxer.on('init_segment', (type, is) => {
             this._msectl.appendInitSegment(is);
         });
-        this._remuxer.on('media_segment', (type, ms) => {
+        this._transmuxer.on('media_segment', (type, ms) => {
             this._msectl.appendMediaSegment(ms);
         });
-        this._remuxer.on('media_info', (mediaInfo) => {
+        this._transmuxer.on('media_info', (mediaInfo) => {
             Log.v(this.TAG, 'Received MediaInfo update!');
         });
-        this._remuxer.on('recommend_seekpoint', (milliseconds) => {
+        this._transmuxer.on('recommend_seekpoint', (milliseconds) => {
             Log.v(this.TAG, 'Recommended seekpoint: ' + milliseconds);
             if (this._mediaElement) {
                 this._requestSetTime = true;
@@ -54,8 +54,8 @@ class FlvPlayer extends BasePlayer {
         }
         this.e = null;
         this._mediaDataSource = null;
-        this._remuxer.destroy();
-        this._remuxer = null;
+        this._transmuxer.destroy();
+        this._transmuxer = null;
         this._msectl.destroy();
         this._msectl = null;
         super.destroy();
@@ -86,7 +86,7 @@ class FlvPlayer extends BasePlayer {
         if (!this._mediaElement) {
             throw 'HTMLMediaElement must be attached before prepare()!';
         }
-        this._remuxer.open();
+        this._transmuxer.open();
     }
 
     play() {
@@ -114,8 +114,8 @@ class FlvPlayer extends BasePlayer {
 
     _onmseBufferFull() {
         Log.v(this.TAG, 'MSE SourceBuffer is full, suspend transmuxing task');
-        if (this._remuxer) {
-            this._remuxer.pause();
+        if (this._transmuxer) {
+            this._transmuxer.pause();
 
             if (this._progressCheckId === 0) {
                 this._progressCheckId = window.setInterval(this._checkProgressAndResume.bind(this), 2000);
@@ -149,7 +149,7 @@ class FlvPlayer extends BasePlayer {
             window.clearInterval(this._progressCheckId);
             this._progressCheckId = 0;
             if (needResume) {
-                this._remuxer.resume();
+                this._transmuxer.resume();
             }
         }
     }
@@ -180,7 +180,7 @@ class FlvPlayer extends BasePlayer {
                 this._progressCheckId = 0;
             }
             this._msectl.seek(seconds);
-            this._remuxer.seek(Math.floor(seconds * 1000));  // in milliseconds
+            this._transmuxer.seek(Math.floor(seconds * 1000));  // in milliseconds
             // no need to set mediaElement.currentTime,
             // just wait for the recommend_seekpoint callback
         }
@@ -199,7 +199,7 @@ class FlvPlayer extends BasePlayer {
                     // .currentTime is consists with .buffered timestamp
                     // Chrome/Edge use DTS, while FireFox/Safari use PTS
                     this._msectl.seek(target);
-                    this._remuxer.seek(Math.floor(target * 1000));
+                    this._transmuxer.seek(Math.floor(target * 1000));
                 }
             } else {
                 window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);

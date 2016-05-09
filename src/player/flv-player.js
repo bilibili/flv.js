@@ -2,6 +2,7 @@ import Log from '../utils/logger.js';
 import BasePlayer from './base-player.js';
 import Transmuxer from '../core/transmuxer.js';
 import MSEController from '../core/mse-controller.js';
+import Browser from '../utils/browser.js';
 
 class FlvPlayer extends BasePlayer {
 
@@ -42,6 +43,11 @@ class FlvPlayer extends BasePlayer {
         });
 
         this._msectl.on(this._msectl.BUFFER_FULL, this._onmseBufferFull.bind(this));
+
+        let chromeNeedIDRFix = (Browser.chrome &&
+                               (Browser.version.major < 50 ||
+                               (Browser.version.major === 50 && Browser.version.build < 2454)));
+        this._alwaysSeekKeyframe = chromeNeedIDRFix || Browser.msedge || Browser.msie;
     }
 
     destroy() {
@@ -171,9 +177,13 @@ class FlvPlayer extends BasePlayer {
         let directSeek = this._isTimepointBuffered(seconds);
 
         if (directSeek) {  // buffered position
-            let idr = this._msectl.getNearestKeyframe(Math.floor(seconds * 1000));
-            this._requestSetTime = true;
-            this._mediaElement.currentTime = idr.dts / 1000;
+            if (!this._alwaysSeekKeyframe) {
+                this._mediaElement.currentTime = seconds;
+            } else {
+                let idr = this._msectl.getNearestKeyframe(Math.floor(seconds * 1000));
+                this._requestSetTime = true;
+                this._mediaElement.currentTime = idr.dts / 1000;
+            }
         } else {
             if (this._progressCheckId !== 0) {
                 window.clearInterval(this._progressCheckId);
@@ -216,9 +226,11 @@ class FlvPlayer extends BasePlayer {
             return;
         }
         if (this._isTimepointBuffered(target)) {
-            let idr = this._msectl.getNearestKeyframe(Math.floor(target * 1000));
-            this._requestSetTime = true;
-            this._mediaElement.currentTime = idr.dts / 1000;
+            if (this._alwaysSeekKeyframe) {
+                let idr = this._msectl.getNearestKeyframe(Math.floor(target * 1000));
+                this._requestSetTime = true;
+                this._mediaElement.currentTime = idr.dts / 1000;
+            }
             return;
         }
 

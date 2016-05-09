@@ -1,5 +1,6 @@
 import Log from '../utils/logger.js';
 import MP4 from './mp4-generator.js';
+import Browser from '../utils/browser.js';
 import {SampleInfo, MediaSegmentInfo, MediaSegmentInfoList} from '../core/media-segment-info.js';
 
 // Fragmented mp4 remuxer
@@ -24,7 +25,11 @@ class MP4Remuxer {
         this._onInitSegment = null;
         this._onMediaSegment = null;
 
-        this._isChrome = true; //(self.navigator.userAgent.toLowerCase().indexOf('chrome') > -1);
+        // Workaround for chrome < 50: Always force first sample as a Random Access Point in media segment
+        // see https://bugs.chromium.org/p/chromium/issues/detail?id=229412
+        this._forceFirstIDR = (Browser.chrome &&
+                              (Browser.version.major < 50 ||
+                              (Browser.version.major === 50 && Browser.version.build < 2454)));
     }
 
     destroy() {
@@ -398,8 +403,9 @@ class MP4Remuxer {
         track.samples = mp4Samples;
         track.sequenceNumber++;
 
-        // workaround for chrome: force first sample as a random access point
-        if (this._isChrome) {
+        // workaround for chrome < 50: force first sample as a random access point
+        // see https://bugs.chromium.org/p/chromium/issues/detail?id=229412
+        if (this._forceFirstIDR) {
             let flags = mp4Samples[0].flags;
             flags.dependsOn = 2;
             flags.isNonSync = 0;

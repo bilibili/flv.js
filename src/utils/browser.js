@@ -40,10 +40,18 @@ function detect() {
     let browser = {};
     if (matched.browser) {
         browser[matched.browser] = true;
+
+        let versionArray = matched.majorVersion.split('.');
         browser.version = {
             major: parseInt(matched.majorVersion, 10),
             string: matched.version
         };
+        if (versionArray.length > 1) {
+            browser.version.minor = parseInt(versionArray[1], 10);
+        }
+        if (versionArray.length > 2) {
+            browser.version.build = parseInt(versionArray[2], 10);
+        }
     }
 
     if (matched.platform) {

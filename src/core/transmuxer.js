@@ -7,7 +7,7 @@ import MediaInfo from './media-info.js';
 
 class Transmuxer {
 
-    constructor(enableWorker, url) {
+    constructor(enableWorker, mediaDataSource) {
         this.TAG = this.constructor.name;
         this._emitter = new EventEmitter();
 
@@ -17,7 +17,7 @@ class Transmuxer {
                 this._worker = work(TransmuxingWorker);
                 this._workerDestroying = false;
                 this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
-                this._worker.postMessage({cmd: 'init', param: url});
+                this._worker.postMessage({cmd: 'init', param: mediaDataSource});
                 this.e = {
                     onLoggingConfigChanged: this._onLoggingConfigChanged.bind(this)
                 };
@@ -25,10 +25,11 @@ class Transmuxer {
                 this._worker.postMessage({cmd: 'logging_config', param: LoggingControl.getConfig()});
             } catch (error) {
                 Log.e(this.TAG, 'Error while initialize transmuxing worker, fallback to inline transmuxing');
-                this._controller = new TransmuxingController(url);
+                this._worker = null;
+                this._controller = new TransmuxingController(mediaDataSource);
             }
         } else {
-            this._controller = new TransmuxingController(url);
+            this._controller = new TransmuxingController(mediaDataSource);
         }
 
         if (this._controller) {
@@ -70,7 +71,7 @@ class Transmuxer {
         return this._worker != null;
     }
 
-    open() {  // TODO: pass url during constructing or open()?
+    open() {  // TODO: pass mediaDataSource during constructing or open()?
         if (this._worker) {
             this._worker.postMessage({cmd: 'start'});
         } else {

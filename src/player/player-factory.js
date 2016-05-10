@@ -40,15 +40,11 @@ let exampleMediaDataSource = {
         {
             duration: 233,
             filesize: 450,
-            cors: true,
-            withCredentials: false,
             url: 'http://ws.acgvideo.com/23333-1.flv'
         },
         {
             duration: 444,
             filesize: 580,
-            cors: true,
-            withCredentials: false,
             url: 'http://ws.acgvideo.com/23333-2.flv'
         }
     ]

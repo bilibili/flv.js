@@ -17,7 +17,7 @@ export const TransmuxingEvents = {
 
 export class TransmuxingController {
 
-    constructor(url) {
+    constructor(mediaDataSource) {
         this.TAG = this.constructor.name;
         this._emitter = new EventEmitter();
 
@@ -25,7 +25,7 @@ export class TransmuxingController {
         this._remuxer = null;
         this._mediaInfo = null;
 
-        this._ioctl = new IOController(url);
+        this._ioctl = new IOController(mediaDataSource);
         this._ioctl.onError = this._onIOException.bind(this);
         this._ioctl.onDataArrival = this._onInitChunkArrival.bind(this);
         this._ioctl.onSeeked = () => {

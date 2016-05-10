@@ -24,7 +24,7 @@ class FlvPlayer extends BasePlayer {
         this._mediaElement = null;
         this._msectl = new MSEController();
 
-        this._transmuxer = new Transmuxer(false, this._mediaDataSource.url);  // TODO
+        this._transmuxer = new Transmuxer(false, this._mediaDataSource);
         this._transmuxer.on('init_segment', (type, is) => {
             this._msectl.appendInitSegment(is);
         });
@@ -218,8 +218,6 @@ class FlvPlayer extends BasePlayer {
     }
 
     _onvSeeking(e) {  // handle seeking request from browser's progress bar
-        Log.v(this.TAG, 'onvSeeking');
-
         let target = this._mediaElement.currentTime;
         if (this._requestSetTime) {
             this._requestSetTime = false;

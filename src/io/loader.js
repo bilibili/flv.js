@@ -106,7 +106,7 @@ export class BaseLoader {
     }
 
     // pure virtual
-    open(url, range) {
+    open(dataSource, range) {
         throw 'Unimplemented abstract function!';
     }
 

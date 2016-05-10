@@ -56,12 +56,12 @@ class MSStreamLoader extends BaseLoader {
         super.destroy();
     }
 
-    open(url, range) {
-        this._internalOpen(url, range, false);
+    open(dataSource, range) {
+        this._internalOpen(dataSource, range, false);
     }
 
-    _internalOpen(url, range, isSubrange) {
-        this._url = url;
+    _internalOpen(dataSource, range, isSubrange) {
+        this._dataSource = dataSource;
 
         if (!isSubrange) {
             this._totalRange = range;
@@ -75,10 +75,14 @@ class MSStreamLoader extends BaseLoader {
         reader.onerror = this._msrOnError.bind(this);
 
         let xhr = this._xhr = new XMLHttpRequest();
-        xhr.open('GET', url, true);
+        xhr.open('GET', dataSource.url, true);
         xhr.responseType = 'ms-stream';
         xhr.onreadystatechange = this._xhrOnReadyStateChange.bind(this);
         xhr.onerror = this._xhrOnError.bind(this);
+
+        if (dataSource.withCredentials) {
+            xhr.withCredentials = true;
+        }
 
         if (range.from !== 0 || range.to !== -1) {
             let param;
@@ -196,7 +200,7 @@ class MSStreamLoader extends BaseLoader {
                 from: this._totalRange.from + this._receivedLength,
                 to: -1
             };
-            this._internalOpen(this._url, range, true);
+            this._internalOpen(this._dataSource, range, true);
         }
     }
 

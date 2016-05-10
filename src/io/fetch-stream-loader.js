@@ -28,8 +28,8 @@ class FetchStreamLoader extends BaseLoader {
         super.destroy();
     }
 
-    open(url, range) {
-        this._url = url;
+    open(dataSource, range) {
+        this._dataSource = dataSource;
         this._range = range;
 
         let headers = new self.Headers();
@@ -51,8 +51,19 @@ class FetchStreamLoader extends BaseLoader {
             cache: 'default'
         };
 
+        // cors is enabled by default
+        if (dataSource.cors === false) {
+            // no-cors means 'disregard cors policy', which can only be used in ServiceWorker
+            params.mode = 'same-origin';
+        }
+
+        // withCredentials is disabled by default
+        if (dataSource.withCredentials) {
+            params.credentials = 'include';
+        }
+
         this._status = LoaderStatus.kConnecting;
-        self.fetch(this._url, params).then((res) => {
+        self.fetch(dataSource.url, params).then((res) => {
             if (this._requestAbort) {
                 this._requestAbort = false;
                 this._status = LoaderStatus.kIdle;

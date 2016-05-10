@@ -54,15 +54,15 @@ class RangeLoader extends BaseLoader {
         super.destroy();
     }
 
-    open(url, range) {
-        this._url = url;
+    open(dataSource, range) {
+        this._dataSource = dataSource;
         this._range = range;
         this._status = LoaderStatus.kConnecting;
 
         if (!this._totalLengthReceived) {
             // We need total filesize
             this._waitForTotalLength = true;
-            this._internalOpen(this._url, {from: 0, to: -1});
+            this._internalOpen(this._dataSource, {from: 0, to: -1});
         } else {
             // We have filesize, start loading
             this._openSubRange();
@@ -81,20 +81,24 @@ class RangeLoader extends BaseLoader {
         }
 
         this._currentRequestRange = {from, to};
-        this._internalOpen(this._url, this._currentRequestRange);
+        this._internalOpen(this._dataSource, this._currentRequestRange);
     }
 
-    _internalOpen(url, range) {
+    _internalOpen(dataSource, range) {
         this._lastTimeLoaded = 0;
 
         let xhr = this._xhr = new XMLHttpRequest();
 
-        xhr.open('GET', url, true);
+        xhr.open('GET', dataSource.url, true);
         xhr.responseType = 'arraybuffer';
         xhr.onreadystatechange = this._onReadyStateChange.bind(this);
         xhr.onprogress = this._onProgress.bind(this);
         xhr.onload = this._onLoad.bind(this);
         xhr.onerror = this._onXhrError.bind(this);
+
+        if (dataSource.withCredentials && xhr['withCredentials']) {
+            xhr.withCredentials = true;
+        }
 
         if (range.from !== 0 || range.to !== -1) {
             let param;

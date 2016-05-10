@@ -42,18 +42,25 @@ class MozChunkedLoader extends BaseLoader {
         super.destroy();
     }
 
-    open(url, range) {
-        this._url = url;
+    open(dataSource, range) {
+        this._dataSource = dataSource;
         this._range = range;
 
         let xhr = this._xhr = new XMLHttpRequest();
 
-        xhr.open('GET', url, true);
+        xhr.open('GET', dataSource.url, true);
         xhr.responseType = 'moz-chunked-arraybuffer';
         xhr.onreadystatechange = this._onReadyStateChange.bind(this);
         xhr.onprogress = this._onProgress.bind(this);
         xhr.onloadend = this._onLoadEnd.bind(this);
         xhr.onerror = this._onXhrError.bind(this);
+
+        // cors is auto detected and enabled by xhr
+
+        // withCredentials is disabled by default
+        if (dataSource.withCredentials && xhr['withCredentials']) {
+            xhr.withCredentials = true;
+        }
 
         if (range.from !== 0 || range.to !== -1) {
             let param;

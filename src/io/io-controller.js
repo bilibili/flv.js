@@ -6,11 +6,23 @@ import MozChunkedLoader from './xhr-moz-chunked-loader.js';
 import MSStreamLoader from './xhr-msstream-loader.js';
 import RangeLoader from './xhr-range-loader.js';
 
+/**
+ * DataSource: {
+ *     url: string,
+ *     filesize: number,
+ *     cors: boolean,
+ *     withCredentials: boolean
+ * }
+ * 
+ */
+
 // Manage IO Loaders
 class IOController {
 
-    constructor(url) {
+    constructor(dataSource, extraData) {
         this.TAG = this.constructor.name;
+
+        this._extraData = extraData;
 
         this._stashUsed = 0;
         this._stashInitialSize = 1024 * 384;  // initial size: 384KB
@@ -22,8 +34,9 @@ class IOController {
 
         this._loader = null;
         this._loaderClass = null;
-        this._url = url;
-        this._totalLength = null;
+        this._dataSource = dataSource;
+        this._refTotalLength = dataSource.filesize ? dataSource.filesize : null;
+        this._totalLength = this._refTotalLength;
         this._fullRequestFlag = false;
         this._currentRange = null;
         this._progressRanges = [];
@@ -37,6 +50,7 @@ class IOController {
         this._onDataArrival = null;
         this._onSeeked = null;
         this._onError = null;
+        this._onComplete = null;
 
         this._selectLoader();
         this._createLoader();
@@ -49,7 +63,7 @@ class IOController {
         this._loader.destroy();
         this._loader = null;
         this._loaderClass = null;
-        this._url = null;
+        this._dataSource = null;
         this._stashBuffer = null;
         this._stashUsed = this._stashSize = this._bufferSize = this._stashByteStart = 0;
         this._enableStash = false;
@@ -60,6 +74,9 @@ class IOController {
         this._onDataArrival = null;
         this._onSeeked = null;
         this._onError = null;
+        this._onComplete = null;
+
+        this._extraData = null;
     }
 
     isWorking() {
@@ -72,6 +89,14 @@ class IOController {
 
     get status() {
         return this._loader.status;
+    }
+
+    get extraData() {
+        return this._extraData;
+    }
+
+    set extraData(data) {
+        this._extraData = data;
     }
 
     // prototype: function onDataArrival(chunks: ArrayBuffer, byteStart: number): number
@@ -111,6 +136,16 @@ class IOController {
         this._onError = callback;
     }
 
+    get onComplete() {
+        return this._onComplete;
+    }
+
+    set onComplete(callback) {
+        if (typeof callback !== 'function')
+            throw 'onComplete must be a callback function!';
+        this._onComplete = callback;
+    }
+
     _selectLoader() {
         if (FetchStreamLoader.isSupported()) {
             this._loaderClass = FetchStreamLoader;
@@ -142,7 +177,7 @@ class IOController {
         this._progressRanges.push(this._currentRange);
         this._speedCalc.reset();
         this._fullRequestFlag = true;
-        this._loader.open(this._url, {from: 0, to: -1});
+        this._loader.open(this._dataSource, {from: 0, to: -1});
     }
 
     abort() {
@@ -298,7 +333,7 @@ class IOController {
         this._speedCalc.reset();
         this._stashSize = this._stashInitialSize;
         this._createLoader();
-        this._loader.open(this._url, requestRange);
+        this._loader.open(this._dataSource, requestRange);
 
         if (this._onSeeked) {
             this._onSeeked();
@@ -310,7 +345,7 @@ class IOController {
             throw 'Url must be a non-empty string!';
         }
 
-        this._url = url;
+        this._dataSource.url = url;
 
         // TODO: reconnect with new url
     }
@@ -618,6 +653,10 @@ class IOController {
         // continue loading from appropriate position
         if (next.from !== -1) {
             this._internalSeek(next.from, true, false);
+        } else {
+            if (this._onComplete) {
+                this._onComplete(this._extraData);
+            }
         }
     }
 

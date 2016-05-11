@@ -1,6 +1,6 @@
 import Log from '../utils/logger.js';
 import {LoaderStatus, LoaderError} from './loader.js';
-import SpeedCalculator from './speed-calculator.js';
+import SpeedSampler from './speed-sampler.js';
 import FetchStreamLoader from './fetch-stream-loader.js';
 import MozChunkedLoader from './xhr-moz-chunked-loader.js';
 import MSStreamLoader from './xhr-msstream-loader.js';
@@ -41,7 +41,7 @@ class IOController {
         this._currentRange = null;
         this._progressRanges = [];
         this._speed = 0;
-        this._speedCalc = new SpeedCalculator();
+        this._speedSampler = new SpeedSampler();
         this._speedNormalizeList = [64, 128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096];
 
         this._paused = false;
@@ -69,7 +69,7 @@ class IOController {
         this._enableStash = false;
         this._currentRange = null;
         this._progressRanges = null;
-        this._speedCalc = null;
+        this._speedSampler = null;
 
         this._onDataArrival = null;
         this._onSeeked = null;
@@ -175,7 +175,7 @@ class IOController {
         this._currentRange = {from: 0, to: -1};
         this._progressRanges = [];
         this._progressRanges.push(this._currentRange);
-        this._speedCalc.reset();
+        this._speedSampler.reset();
         this._fullRequestFlag = true;
         this._loader.open(this._dataSource, {from: 0, to: -1});
     }
@@ -330,7 +330,7 @@ class IOController {
         Log.v(this.TAG, 'Ranges after seek: ' + JSON.stringify(this._progressRanges));
 
         this._speed = 0;
-        this._speedCalc.reset();
+        this._speedSampler.reset();
         this._stashSize = this._stashInitialSize;
         this._createLoader();
         this._loader.open(this._dataSource, requestRange);
@@ -443,10 +443,10 @@ class IOController {
             return;
         }
 
-        this._speedCalc.addBytes(chunk.byteLength);
+        this._speedSampler.addBytes(chunk.byteLength);
 
         // adjust stash buffer size according to network speed dynamically
-        let KBps = this._speedCalc.lastSecondKBps;
+        let KBps = this._speedSampler.lastSecondKBps;
         if (KBps !== 0) {
             let normalized = this._normalizeSpeed(KBps);
             if (this._speed !== normalized) {

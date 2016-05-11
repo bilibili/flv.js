@@ -1,6 +1,6 @@
 // Utility class to calculate realtime network I/O speed
 
-class SpeedCalculator {
+class SpeedSampler {
 
     constructor() {
         // milliseconds
@@ -68,4 +68,4 @@ class SpeedCalculator {
 
 }
 
-export default SpeedCalculator;
+export default SpeedSampler;

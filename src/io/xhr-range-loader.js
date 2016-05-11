@@ -1,5 +1,5 @@
 import Log from '../utils/logger.js';
-import SpeedCalculator from './speed-calculator.js';
+import SpeedSampler from './speed-sampler.js';
 import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
 
 // Universal IO Loader, implemented by adding Range header in xhr's request header
@@ -27,7 +27,7 @@ class RangeLoader extends BaseLoader {
         this._currentSpeed = 0;
 
         this._xhr = null;
-        this._speedCalc = new SpeedCalculator();
+        this._speedSampler = new SpeedSampler();
 
         this._requestAbort = false;
         this._waitForTotalLength = false;
@@ -175,7 +175,7 @@ class RangeLoader extends BaseLoader {
 
         let delta = e.loaded - this._lastTimeLoaded;
         this._lastTimeLoaded = e.loaded;
-        this._speedCalc.addBytes(delta);
+        this._speedSampler.addBytes(delta);
     }
 
     _normalizeSpeed(input) {
@@ -208,7 +208,7 @@ class RangeLoader extends BaseLoader {
         }
 
         this._lastTimeLoaded = 0;
-        let KBps = this._speedCalc.lastSecondKBps;
+        let KBps = this._speedSampler.lastSecondKBps;
         if (KBps !== 0) {
             let normalized = this._normalizeSpeed(KBps);
             if (this._currentSpeed !== normalized) {

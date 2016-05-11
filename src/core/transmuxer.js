@@ -112,37 +112,37 @@ class Transmuxer {
     }
 
     _onInitSegment(type, initSegment) {
-        new Promise(resolve => resolve()).then(() => {
+        Promise.resolve().then(() => {
             this._emitter.emit(TransmuxingEvents.INIT_SEGMENT, type, initSegment);
         });
     }
 
     _onMediaSegment(type, mediaSegment) {
-        new Promise(resolve => resolve()).then(() => {
+        Promise.resolve().then(() => {
             this._emitter.emit(TransmuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
         });
     }
 
     _onMediaInfo(mediaInfo) {
-        new Promise(resolve => resolve()).then(() => {
+        Promise.resolve().then(() => {
             this._emitter.emit(TransmuxingEvents.MEDIA_INFO, mediaInfo);
         });
     }
 
     _onIOError(type, info) {
-        new Promise(resolve => resolve()).then(() => {
+        Promise.resolve().then(() => {
             this._emitter.emit(TransmuxingEvents.IO_ERROR, type, info);
         });
     }
 
     _onDemuxError(type, info) {
-        new Promise(resolve => resolve()).then(() => {
+        Promise.resolve().then(() => {
             this._emitter.emit(TransmuxingEvents.DEMUX_ERROR, type, info);
         });
     }
 
     _onRecommendSeekpoint(milliseconds) {
-        new Promise(resolve => resolve()).then(() => {
+        Promise.resolve().then(() => {
             this._emitter.emit(TransmuxingEvents.RECOMMEND_SEEKPOINT, milliseconds);
         });
     }

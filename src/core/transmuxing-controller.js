@@ -102,32 +102,6 @@ export class TransmuxingController {
         this._emitter.emit(TransmuxingEvents.RECOMMEND_SEEKPOINT, position.milliseconds);
     }
 
-    syncPlayback(seconds) {
-        Log.v(this.TAG, 'SyncPlayback: ' + seconds);
-
-        let milliseconds = Math.floor(seconds * 1000);
-        let previousKeyframe = this._mediaInfo.getNearestKeyframe(milliseconds);
-        let range = this._ioctl.searchRangeContains(previousKeyframe.fileposition);
-        if (range == null) {
-            return;
-        }
-
-        let current = this._ioctl.getCurrentWorkingRange();
-        Log.v(this.TAG, 'Previous-keyframe contained range: ' + JSON.stringify(range));
-        Log.v(this.TAG, 'Current working range: ' + JSON.stringify(current));
-
-        if (current.from > range.to + 1) {
-            let lastKeyframeInRange = this._mediaInfo.getNearestKeyframeByFilePosition(range.to);
-            let nextKeyframeIdx = lastKeyframeInRange.index + 1;
-            if (nextKeyframeIdx < this._mediaInfo.keyframesIndex.times.length) {
-                Log.v(this.TAG, 'Need continue loading from: ' + (range.to + 1));
-                let nextKeyframeTime = this._mediaInfo.keyframesIndex.times[nextKeyframeIdx];
-                this._remuxer.seek(nextKeyframeTime);
-                this._ioctl.continueLoadRange(range);
-            }
-        }
-    }
-
     _onInitChunkArrival(data, byteStart) {
         let probeData = null;
 

@@ -198,7 +198,7 @@ class FlvPlayer extends BasePlayer {
 
     _checkAndApplyUnbufferedSeekpoint() {
         if (this._seekpointRecord) {
-            if (this._seekpointRecord.recordTime <= self.performance.now() - 250) {
+            if (this._seekpointRecord.recordTime <= self.performance.now() - 200) {
                 let target = this._mediaElement.currentTime;
                 this._seekpointRecord = null;
                 if (!this._isTimepointBuffered(target)) {

@@ -171,13 +171,18 @@ class IOController {
         Log.v(this.TAG, 'Created loader: ' + this._loader.type);  // FIXME
     }
 
-    open() {
+    open(optionalFrom) {
         this._currentRange = {from: 0, to: -1};
+        if (optionalFrom) {
+            this._currentRange.from = optionalFrom;
+        }
+
         this._progressRanges = [];
         this._progressRanges.push(this._currentRange);
         this._speedSampler.reset();
         this._fullRequestFlag = true;
-        this._loader.open(this._dataSource, {from: 0, to: -1});
+
+        this._loader.open(this._dataSource, Object.assign({}, this._currentRange));
     }
 
     abort() {
@@ -212,6 +217,8 @@ class IOController {
             this._paused = false;
             let bytes = this._resumeFrom;
             this._resumeFrom = 0;
+            this._currentRange = {from: 0, to: -1};
+            this._progressRanges = [];
             this._internalSeek(bytes, true, false);
         }
     }

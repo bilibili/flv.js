@@ -23,6 +23,7 @@ class MediaInfo {
         this.sarDen = null;
 
         this.metadata = null;
+        this.segments = null;  // MediaInfo[]
         this.hasKeyframesIndex = null;
         this.keyframesIndex = null;
     }
@@ -70,21 +71,6 @@ class MediaInfo {
             index: keyframeIdx,
             milliseconds: table.times[keyframeIdx],
             fileposition: table.filepositions[keyframeIdx]
-        };
-    }
-
-    getNearestKeyframeByFilePosition(fileposition) {
-        if (this.keyframesIndex == null) {
-            return null;
-        }
-
-        let table = this.keyframesIndex;
-        let idx = this._search(table.filepositions, fileposition);
-
-        return {
-            index: idx,
-            milliseconds: table.times[idx],
-            fileposition: table.filepositions[idx]
         };
     }
 

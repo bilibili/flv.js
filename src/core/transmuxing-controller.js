@@ -31,6 +31,14 @@ export class TransmuxingController {
             }];
         }
 
+        // fill in default IO params if not exists
+        if (typeof mediaDataSource.cors !== 'boolean') {
+            mediaDataSource.cors = true;
+        }
+        if (typeof mediaDataSource.withCredentials !== 'boolean') {
+            mediaDataSource.withCredentials = false;
+        }
+
         this._mediaDataSource = mediaDataSource;
         this._currentSegmentIndex = 0;
         let totalDuration = 0;
@@ -44,7 +52,7 @@ export class TransmuxingController {
             segment.withCredentials = mediaDataSource.withCredentials;
         });
 
-        if (this._mediaDataSource.duration !== totalDuration) {
+        if (!isNaN(totalDuration) && this._mediaDataSource.duration !== totalDuration) {
             this._mediaDataSource.duration = totalDuration;
         }
 
@@ -214,7 +222,9 @@ export class TransmuxingController {
             }
 
             let mds = this._mediaDataSource;
-            this._demuxer.overridedDuration = mds.duration;
+            if (mds.duration != undefined && !isNaN(mds.duration)) {
+                this._demuxer.overridedDuration = mds.duration;
+            }
             this._demuxer.timestampBase = mds.segments[this._currentSegmentIndex].timestampBase;
 
             this._demuxer.onError = this._onDemuxException.bind(this);

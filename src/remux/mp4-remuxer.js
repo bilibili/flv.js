@@ -35,7 +35,9 @@ class MP4Remuxer {
     destroy() {
         this._audioMeta = null;
         this._videoMeta = null;
+        this._audioSegmentInfoList.clear();
         this._audioSegmentInfoList = null;
+        this._videoSegmentInfoList.clear();
         this._videoSegmentInfoList = null;
         this._onInitSegment = null;
         this._onMediaSegment = null;

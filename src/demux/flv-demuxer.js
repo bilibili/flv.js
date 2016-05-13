@@ -54,7 +54,7 @@ class FlvDemuxer {
         this._videoMetadata = null;
 
         this._naluLengthSize = 4;
-        this._timestampBase = 0;
+        this._timestampBase = 0;  // int32, in milliseconds
         this._timescale = 1000;
         this._duration = 0;  // int32, in milliseconds
         this._durationOverrided = false;
@@ -76,6 +76,13 @@ class FlvDemuxer {
     }
 
     destroy() {
+        this._mediaInfo = null;
+        this._metadata = null;
+        this._audioMetadata = null;
+        this._videoMetadata = null;
+        this._videoTrack = null;
+        this._audioTrack = null;
+
         this._onError = null;
         this._onMediaInfo = null;
         this._onTrackMetadata = null;
@@ -161,6 +168,7 @@ class FlvDemuxer {
         this._onDataAvailable = callback;
     }
 
+    // timestamp base for output samples, must be in milliseconds
     get timestampBase() {
         return this._timestampBase;
     }
@@ -178,9 +186,6 @@ class FlvDemuxer {
         this._durationOverrided = true;
         this._duration = duration;
         this._mediaInfo.duration = duration;
-        if (this._mediaInfo.isComplete()) {
-            this._onMediaInfo(this._mediaInfo);
-        }
     }
 
     _isInitialMetadataDispatched() {
@@ -291,9 +296,8 @@ class FlvDemuxer {
         let scriptData = AMF.parseScriptData(arrayBuffer, dataOffset, dataSize);
 
         if (scriptData.hasOwnProperty('onMetaData')) {
-            Log.v(this.TAG, 'Found onMetaData');
             if (this._metadata) {
-                Log.w(this.TAG, 'Detected multiple onMetaData tag');
+                Log.w(this.TAG, 'Found another onMetaData tag!');
             }
             this._metadata = scriptData;
             let onMetaData = this._metadata.onMetaData;
@@ -355,6 +359,7 @@ class FlvDemuxer {
             }
             this._dispatch = false;
             this._mediaInfo.metadata = onMetaData;
+            Log.v(this.TAG, 'Parsed onMetaData');
             if (this._mediaInfo.isComplete()) {
                 this._onMediaInfo(this._mediaInfo);
             }
@@ -365,7 +370,7 @@ class FlvDemuxer {
         let times = [];
 
         keyframes.times.forEach((time) => {
-            times.push(Math.floor(time * 1000));
+            times.push(this._timestampBase + Math.floor(time * 1000));
         });
 
         return {
@@ -438,7 +443,6 @@ class FlvDemuxer {
         let aacData = this._parseAACAudioData(arrayBuffer, dataOffset + 1, dataSize - 1);
 
         if (aacData.packetType === 0) {  // AAC sequence header (AudioSpecificConfig)
-            Log.v(this.TAG, 'Found AudioSpecificConfig');
             if (meta.config) {
                 Log.w(this.TAG, 'Found another AudioSpecificConfig!');
             }
@@ -479,7 +483,7 @@ class FlvDemuxer {
             }
             return;
         } else if (aacData.packetType === 1) {  // AAC raw frame data
-            let dts = tagTimestamp;
+            let dts = this._timestampBase + tagTimestamp;
             let aacSample = {unit: aacData.data, dts: dts, pts: dts};
             track.samples.push(aacSample);
             track.length += aacData.data.length;
@@ -647,7 +651,6 @@ class FlvDemuxer {
         let cts = v.getUint32(0, !le) & 0x00FFFFFF;
 
         if (packetType === 0) {  // AVCDecoderConfigurationRecord
-            Log.v(this.TAG, 'Found AVCDecoderConfigurationRecord');
             this._parseAVCDecoderConfigurationRecord(arrayBuffer, dataOffset + 4, dataSize - 4);
         } else if (packetType === 1) {  // One or more Nalus
             this._parseAVCVideoData(arrayBuffer, dataOffset + 4, dataSize - 4, tagTimestamp, cts, tagPosition);
@@ -808,7 +811,7 @@ class FlvDemuxer {
         this._onTrackMetadata('video', meta);
     }
 
-    _parseAVCVideoData(arrayBuffer, dataOffset, dataSize, dts, cts, tagPosition) {
+    _parseAVCVideoData(arrayBuffer, dataOffset, dataSize, tagTimestamp, cts, tagPosition) {
         let le = this._littleEndian;
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
 
@@ -816,6 +819,7 @@ class FlvDemuxer {
 
         let offset = 0;
         const lengthSize = this._naluLengthSize;
+        let dts = this._timestampBase + tagTimestamp;
         let keyframe = false;
 
         while (offset < dataSize) {

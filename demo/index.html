@@ -50,7 +50,7 @@
         </video>
         <br>
         <div class="controls">
-            <button onclick="flv_prepare()">Prepare</button>
+            <button onclick="flv_load()">Load</button>
             <button onclick="flv_start()">Start</button>
             <button onclick="flv_pause()">Pause</button>
             <button onclick="flv_stop()">Stop</button>
@@ -62,22 +62,21 @@
     <script src="../dist/flv.js"></script>
     
     <script>
-        function flv_prepare() {
-            console.log('isSupported: ' + flvjs.PlayerFactory.isSupported());
+        function flv_load() {
             var urlinput = document.getElementsByName('urlinput')[0];
             var mediaDataSource = {
                 type: 'flv',
                 url: urlinput.value
-            }
+            };
             var element = document.getElementsByName('videoElement')[0];
             if (typeof player !== 'undefined') {
-                player.detachMediaElement(element);
+                player.detachMediaElement();
                 player.destroy();
                 player = null;
             }
             player = flvjs.PlayerFactory.createPlayer(mediaDataSource);
             player.attachMediaElement(element);
-            player.prepare();
+            player.load();
         }
 
         function flv_start() {

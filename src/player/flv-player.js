@@ -88,7 +88,7 @@ class FlvPlayer extends BasePlayer {
         }
     }
 
-    prepare() {
+    load() {
         if (!this._mediaElement) {
             throw 'HTMLMediaElement must be attached before prepare()!';
         }

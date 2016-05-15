@@ -168,7 +168,7 @@ class IOController {
         this._loader.onDataArrival = this._onLoaderChunkArrival.bind(this);
         this._loader.onComplete = this._onLoaderComplete.bind(this);
         this._loader.onError = this._onLoaderError.bind(this);
-        Log.v(this.TAG, 'Created loader: ' + this._loader.type);  // FIXME
+        Log.v(this.TAG, 'Created loader: ' + this._loader.type);
     }
 
     open(optionalFrom) {
@@ -287,8 +287,6 @@ class IOController {
         this._loader.destroy();
         this._loader = null;
 
-        Log.v(this.TAG, 'Ranges before seek: ' + JSON.stringify(this._progressRanges));
-
         let ranges = this._progressRanges;
         let requestRange = {from: bytes, to: -1};
         let bufferedArea = false;
@@ -333,8 +331,6 @@ class IOController {
 
         this._currentRange = {from: requestRange.from, to: -1};
         ranges.splice(insertIndex, 0, this._currentRange);
-
-        Log.v(this.TAG, 'Ranges after seek: ' + JSON.stringify(this._progressRanges));
 
         this._speed = 0;
         this._speedSampler.reset();
@@ -425,11 +421,9 @@ class IOController {
             this._expandBuffer(bufferSize);
         }
         this._stashSize = stashSizeKB * 1024;
-        Log.v(this.TAG, `adjustStashSize: enableStash = ${this._enableStash}, targetStashSize = ${stashSizeKB} KB`);
     }
 
     _dispatchChunks(chunks, byteStart) {
-        Log.v(this.TAG, `_dispatchChunks: chunkSize = ${chunks.byteLength}, byteStart = ${byteStart}`);
         this._currentRange.to = byteStart + chunks.byteLength - 1;
         return this._onDataArrival(chunks, byteStart);
     }
@@ -650,12 +644,7 @@ class IOController {
         // Force-flush stash buffer, and drop unconsumed data
         this._flushStashBuffer(true);
 
-        Log.v(this.TAG, `Loader complete, from = ${from}, to = ${to}`);
-        Log.v(this.TAG, JSON.stringify(this._progressRanges));
-
         let next = this._mergeRanges(from, to);
-
-        Log.v(this.TAG, 'Adjusted ranges: ' + JSON.stringify(this._progressRanges));
 
         // continue loading from appropriate position
         if (next.from !== -1) {

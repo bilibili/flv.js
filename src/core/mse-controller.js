@@ -156,7 +156,7 @@ class MSEController {
         let mimeType = `${is.container};codecs=${is.codec}`;
         let firstInitSegment = false;
 
-        Log.v(this.TAG, 'Received Initialization Segment, mimetype: ' + mimeType);
+        Log.v(this.TAG, 'Received Initialization Segment, mimeType: ' + mimeType);
         if (mimeType !== this._mimeTypes[is.type]) {
             if (!this._mimeTypes[is.type]) {  // empty, first chance create sourcebuffer
                 firstInitSegment = true;
@@ -170,7 +170,7 @@ class MSEController {
                     return;
                 }
             } else {
-                Log.v(this.TAG, `Notice: ${is.type} mimetype changed, origin: ${this._mimeTypes[is.type]}, target: ${mimeType}`);
+                Log.v(this.TAG, `Notice: ${is.type} mimeType changed, origin: ${this._mimeTypes[is.type]}, target: ${mimeType}`);
             }
             this._mimeTypes[is.type] = mimeType;
         }
@@ -281,7 +281,6 @@ class MSEController {
     }
 
     _onSourceOpen() {
-        Log.v(this.TAG, 'MediaSource SourceOpen');
         this._mediaSource.removeEventListener('sourceopen', this.e.onSourceOpen);
         // deferred sourcebuffer creation / initialization
         if (this._pendingSourceBufferInit.length > 0) {
@@ -295,12 +294,10 @@ class MSEController {
 
     _onSourceEnded() {
         // fired on endOfStream
-        Log.v(this.TAG, 'MediaSource SourceEnded');
     }
 
     _onSourceClose() {
         // fired on detaching from media element
-        Log.v(this.TAG, 'MediaSource SourceClose');
         if (this._mediaSource && this.e != null) {
             this._mediaSource.removeEventListener('sourceopen', this.e.onSourceOpen);
             this._mediaSource.removeEventListener('sourceended', this.e.onSourceEnded);
@@ -319,7 +316,6 @@ class MSEController {
     }
 
     _onSourceBufferUpdateEnd() {
-        Log.v(this.TAG, 'SourceBuffer UpdateEnd');
         if (this._hasPendingRemoveRanges()) {
             this._doRemoveRanges();
         } else if (this._hasPendingSegments()) {

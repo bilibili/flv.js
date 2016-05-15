@@ -374,7 +374,6 @@ class IOController {
 
         this._stashBuffer = newBuffer;
         this._bufferSize = bufferNewSize;
-        Log.v(this.TAG, `expandBuffer: targetBufferSize = ${this._bufferSize}`);
     }
 
     _normalizeSpeed(input) {

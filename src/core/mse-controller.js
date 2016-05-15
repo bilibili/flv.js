@@ -38,16 +38,13 @@ class MSEController {
         this.e.onSourceBufferError = this._onSourceBufferError.bind(this);
         this.e.onSourceBufferUpdateEnd = this._onSourceBufferUpdateEnd.bind(this);
 
-        let ms = this._mediaSource = new window.MediaSource();
-        ms.addEventListener('sourceopen', this.e.onSourceOpen);
-        ms.addEventListener('sourceended', this.e.onSourceEnded);
-        ms.addEventListener('sourceclose', this.e.onSourceClose);
-
+        this._mediaSource = null;
         this._mediaSourceObjectURL = null;
         this._mediaElement = null;
 
         this._isBufferFull = false;
 
+        this._pendingSourceBufferInit = [];
         this._mimeTypes = {
             video: null,
             audio: null
@@ -68,25 +65,9 @@ class MSEController {
     }
 
     destroy() {
-        if (this._mediaSource) {
-            let ms = this._mediaSource;
-            if (ms.readyState === 'open') {
-                try {
-                    ms.endOfStream();
-                } catch (error) {
-                    Log.e(this.TAG, error.message);
-                }
-            }
-            ms.removeEventListener('sourceopen', this.e.onSourceOpen);
-            ms.removeEventListener('sourceended', this.e.onSourceEnded);
-            ms.removeEventListener('sourceclose', this.e.onSourceClose);
-        }
-        if (this._mediaElement) {
+        if (this._mediaElement || this._mediaSource) {
             this.detachMediaElement();
         }
-        this._sourceBuffers = null;
-        this._pendingSegments = null;
-        this._pendingRemoveRanges = null;
         this.e = null;
         this._emitter.removeAllListeners();
         this._emitter = null;
@@ -101,21 +82,76 @@ class MSEController {
     }
 
     attachMediaElement(mediaElement) {
+        if (this._mediaSource) {
+            throw 'MediaSource has been attached to an HTMLMediaElement!';
+        }
+        let ms = this._mediaSource = new window.MediaSource();
+        ms.addEventListener('sourceopen', this.e.onSourceOpen);
+        ms.addEventListener('sourceended', this.e.onSourceEnded);
+        ms.addEventListener('sourceclose', this.e.onSourceClose);
+
         this._mediaElement = mediaElement;
         this._mediaSourceObjectURL = window.URL.createObjectURL(this._mediaSource);
         mediaElement.src = this._mediaSourceObjectURL;
     }
 
     detachMediaElement() {
-        this._mediaElement.src = '';
-        this._mediaElement = null;
+        if (this._mediaSource) {
+            let ms = this._mediaSource;
+            for (let type in this._sourceBuffers) {
+                // pending segmends should be discard
+                let ps = this._pendingSegments[type];
+                ps.splice(0, ps.length);
+                this._pendingSegments[type] = null;
+                this._pendingRemoveRanges[type] = null;
+
+                // remove all sourcebuffers
+                let sb = this._sourceBuffers[type];
+                if (sb) {
+                    sb.abort();
+                    ms.removeSourceBuffer(sb);
+                    sb.removeEventListener('error', this.e.onSourceBufferError);
+                    sb.removeEventListener('updateend', this.e.onSourceBufferUpdateEnd);
+                    this._mimeTypes[type] = null;
+                    this._sourceBuffers[type] = null;
+                }
+            }
+            if (ms.readyState === 'open') {
+                try {
+                    ms.endOfStream();
+                } catch (error) {
+                    Log.e(this.TAG, error.message);
+                }
+            }
+            ms.removeEventListener('sourceopen', this.e.onSourceOpen);
+            ms.removeEventListener('sourceended', this.e.onSourceEnded);
+            ms.removeEventListener('sourceclose', this.e.onSourceClose);
+            this._pendingSourceBufferInit = [];
+            this._isBufferFull = false;
+            this._idrList.clear();
+            this._mediaSource = null;
+        }
+
+        if (this._mediaElement) {
+            this._mediaElement.src = '';
+            this._mediaElement = null;
+        }
         if (this._mediaSourceObjectURL) {
             window.URL.revokeObjectURL(this._mediaSourceObjectURL);
             this._mediaSourceObjectURL = null;
         }
     }
 
-    appendInitSegment(initSegment) {
+    appendInitSegment(initSegment, deferred) {
+        if (!this._mediaSource || this._mediaSource.readyState !== 'open') {
+            // sourcebuffer creation requires mediaSource.readyState === 'open'
+            // so we defer the sourcebuffer creation, until sourceopen event triggered
+            this._pendingSourceBufferInit.push(initSegment);
+            // make sure that this InitSegment is in the front of pending segments queue
+            this._pendingSegments[initSegment.type].push(initSegment);
+            return;
+        }
+
         let is = initSegment;
         let mimeType = `${is.container};codecs=${is.codec}`;
         let firstInitSegment = false;
@@ -125,7 +161,6 @@ class MSEController {
             if (!this._mimeTypes[is.type]) {  // empty, first chance create sourcebuffer
                 firstInitSegment = true;
                 try {
-                    // TODO: MediaSource readyState checking
                     let sb = this._sourceBuffers[is.type] = this._mediaSource.addSourceBuffer(mimeType);
                     sb.addEventListener('error', this.e.onSourceBufferError);
                     sb.addEventListener('updateend', this.e.onSourceBufferUpdateEnd);
@@ -140,7 +175,10 @@ class MSEController {
             this._mimeTypes[is.type] = mimeType;
         }
 
-        this._pendingSegments[is.type].push(is);
+        if (!deferred) {
+            // deferred means this InitSegment has been pushed to pendingSegments queue
+            this._pendingSegments[is.type].push(is);
+        }
         if (!firstInitSegment) {  // append immediately only if init segment in subsequence
             if (this._sourceBuffers[is.type] && !this._sourceBuffers[is.type].updating) {
                 this._doAppendSegments();
@@ -150,15 +188,10 @@ class MSEController {
 
     appendMediaSegment(mediaSegment) {
         let ms = mediaSegment;
-        let sb = this._sourceBuffers[ms.type];
-
-        if (!sb) {
-            // TODO: trigger error callback
-            throw 'MSEController: No matching source buffer, maybe init segment missing!';
-        }
-
         this._pendingSegments[ms.type].push(ms);
-        if (!sb.updating) {
+
+        let sb = this._sourceBuffers[ms.type];
+        if (sb && !sb.updating) {
             this._doAppendSegments();
         }
     }
@@ -250,13 +283,23 @@ class MSEController {
     _onSourceOpen() {
         Log.v(this.TAG, 'MediaSource SourceOpen');
         this._mediaSource.removeEventListener('sourceopen', this.e.onSourceOpen);
+        // deferred sourcebuffer creation / initialization
+        if (this._pendingSourceBufferInit.length > 0) {
+            let pendings = this._pendingSourceBufferInit;
+            while (pendings.length) {
+                let segment = pendings.shift();
+                this.appendInitSegment(segment, true);
+            }
+        }
     }
 
     _onSourceEnded() {
+        // fired on endOfStream
         Log.v(this.TAG, 'MediaSource SourceEnded');
     }
 
     _onSourceClose() {
+        // fired on detaching from media element
         Log.v(this.TAG, 'MediaSource SourceClose');
         if (this._mediaSource && this.e != null) {
             this._mediaSource.removeEventListener('sourceopen', this.e.onSourceOpen);

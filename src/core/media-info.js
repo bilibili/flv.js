@@ -8,8 +8,8 @@ class MediaInfo {
         this.hasVideo = null;
         this.audioCodec = null;
         this.videoCodec = null;
-        this.audioBitrate = null;
-        this.videoBitrate = null;
+        this.audioDataRate = null;
+        this.videoDataRate = null;
 
         this.audioSampleRate = null;
         this.audioChannelCount = null;
@@ -24,6 +24,7 @@ class MediaInfo {
 
         this.metadata = null;
         this.segments = null;  // MediaInfo[]
+        this.segmentCount = null;
         this.hasKeyframesIndex = null;
         this.keyframesIndex = null;
     }

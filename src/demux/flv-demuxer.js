@@ -311,10 +311,10 @@ class FlvDemuxer {
                 this._mediaInfo.hasVideo = this._hasVideo;
             }
             if (typeof onMetaData.audiodatarate === 'number') {  // audiodatarate
-                this._mediaInfo.audioBitrate = onMetaData.audiodatarate;
+                this._mediaInfo.audioDataRate = onMetaData.audiodatarate;
             }
             if (typeof onMetaData.videodatarate === 'number') {  // videodatarate
-                this._mediaInfo.videoBitrate = onMetaData.videodatarate;
+                this._mediaInfo.videoDataRate = onMetaData.videodatarate;
             }
             if (typeof onMetaData.width === 'number') {  // width
                 this._mediaInfo.width = onMetaData.width;

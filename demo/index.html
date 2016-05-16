@@ -44,7 +44,7 @@
 <body>
     
     <div class="mainContainer">
-        <input name="urlinput" class="urlInput" type="text" value="http://127.0.0.1/flv/mj2_18.flv"/>
+        <input name="urlinput" class="urlInput" type="text" value="http://127.0.0.1/flv/7182741.json"/>
         <video name="videoElement" class="centeredVideo" controls autoplay width="1024" height="576">
             Your browser is too old which doesn't support HTML5 video.
         </video>
@@ -63,20 +63,26 @@
     
     <script>
         function flv_load() {
+            console.log('isSupported: ' + flvjs.PlayerFactory.isSupported());
             var urlinput = document.getElementsByName('urlinput')[0];
-            var mediaDataSource = {
-                type: 'flv',
-                url: urlinput.value
-            };
-            var element = document.getElementsByName('videoElement')[0];
-            if (typeof player !== 'undefined') {
-                player.detachMediaElement();
-                player.destroy();
-                player = null;
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', urlinput.value, true);
+            xhr.onload = function (e) {
+                var mediaDataSource = JSON.parse(xhr.response);
+
+                var element = document.getElementsByName('videoElement')[0];
+                if (typeof player !== 'undefined') {
+                    player.unload();
+                    player.detachMediaElement();
+                    player.destroy();
+                    player = null;
+                }
+                player = flvjs.PlayerFactory.createPlayer(mediaDataSource);
+                player.attachMediaElement(element);
+                player.load();
             }
-            player = flvjs.PlayerFactory.createPlayer(mediaDataSource);
-            player.attachMediaElement(element);
-            player.load();
+            xhr.send();
         }
 
         function flv_start() {
@@ -111,6 +117,10 @@
         var urlInputBox = document.getElementsByName('urlinput')[0];
         var url = decodeURIComponent(getUrlParam('src', urlInputBox.value));
         urlInputBox.value = url;
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            flv_load();
+        });
     </script>
     
 </body>

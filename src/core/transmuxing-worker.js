@@ -24,7 +24,6 @@ let TransmuxingWorker = function (self) {
     Polyfill.install();
 
     self.addEventListener('message', function (e) {
-        Log.v(TAG, 'worker onmessage: ' + e.data.cmd);
         switch (e.data.cmd) {
             case 'init':
                 controller = new TransmuxingController(e.data.param);

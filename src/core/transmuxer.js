@@ -156,7 +156,7 @@ class Transmuxer {
     _onWorkerMessage(e) {
         let message = e.data;
         let data = message.data;
-        Log.v(this.TAG, 'onWorkerMessage: ' + message.msg);
+
         switch (message.msg) {
             case 'destroyed':
                 this._workerDestroying = false;

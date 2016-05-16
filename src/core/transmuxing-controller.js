@@ -173,7 +173,7 @@ export class TransmuxingController {
 
             if (targetSegmentInfo == undefined) {
                 // target segment hasn't been loaded. We need metadata then seek to expected time 
-                Log.v(this.TAG, 'Target segment hasn\'t be loaded. We need metadata then seek to expected time');
+                Log.v(this.TAG, 'Target segment hasn\'t been loaded. We need metadata then seek to expected time');
                 this._pendingSeekTime = milliseconds;
                 this._internalAbort();
                 this._remuxer.seek();
@@ -249,8 +249,6 @@ export class TransmuxingController {
     }
 
     _onMediaInfo(mediaInfo) {
-        Log.v(this.TAG, 'onMediaInfo: ' + JSON.stringify(mediaInfo));
-
         if (this._mediaInfo == null) {
             // Store first segment's mediainfo as global mediaInfo
             this._mediaInfo = Object.assign({}, mediaInfo);
@@ -287,7 +285,7 @@ export class TransmuxingController {
         let nextSegmentIndex = segmentIndex + 1;
 
         if (nextSegmentIndex < this._mediaDataSource.segments.length) {
-            Log.v(this.TAG, 'Continue load next segment, idx = ' + nextSegmentIndex);
+            Log.v(this.TAG, 'Continue load next segment, index = ' + nextSegmentIndex);
             this._internalAbort();
             this._loadSegment(nextSegmentIndex);
         }
@@ -305,14 +303,12 @@ export class TransmuxingController {
 
     _onRemuxerInitSegmentArrival(type, initSegment) {
         let is = initSegment;
-        Log.v(this.TAG, `Init Segment: ${type}, mimeType: ${is.container};codecs=${is.codec}`);
         this._emitter.emit(TransmuxingEvents.INIT_SEGMENT, type, initSegment);
     }
 
     _onRemuxerMediaSegmentArrival(type, mediaSegment) {
         let ms = mediaSegment;
         let info = ms.info;
-        Log.v(this.TAG, `Media Segment: ${type}, beginDts = ${info.beginDts}, beginPts = ${info.beginPts}, endDts = ${info.endDts}, endPts = ${info.endPts}`);
         this._emitter.emit(TransmuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
     }
 

@@ -186,7 +186,6 @@ class IOController {
         this._loader.onDataArrival = this._onLoaderChunkArrival.bind(this);
         this._loader.onComplete = this._onLoaderComplete.bind(this);
         this._loader.onError = this._onLoaderError.bind(this);
-        Log.v(this.TAG, 'Created loader: ' + this._loader.type);
     }
 
     open(optionalFrom) {
@@ -449,7 +448,6 @@ class IOController {
         if (contentLength && this._fullRequestFlag) {
             this._totalLength = contentLength;
             this._fullRequestFlag = false;
-            Log.v(this.TAG, `Total-Length: ${contentLength}`);
         }
     }
 

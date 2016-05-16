@@ -12,7 +12,7 @@ class FetchStreamLoader extends BaseLoader {
     }
 
     constructor() {
-        super('fetch-stream');
+        super('fetch-stream-loader');
         this.TAG = this.constructor.name;
         this._needStash = true;
 

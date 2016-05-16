@@ -29,7 +29,7 @@ class MP4Remuxer {
         // see https://bugs.chromium.org/p/chromium/issues/detail?id=229412
         this._forceFirstIDR = (Browser.chrome &&
                               (Browser.version.major < 50 ||
-                              (Browser.version.major === 50 && Browser.version.build < 2454)));
+                              (Browser.version.major === 50 && Browser.version.build < 2454))) ? true : false;
     }
 
     destroy() {

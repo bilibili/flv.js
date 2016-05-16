@@ -10,44 +10,27 @@ class FlvPlayer extends BasePlayer {
         super('FlvPlayer');
         this.TAG = this.constructor.name;
 
+        if (mediaDataSource.type.toLowerCase() !== 'flv') {
+            throw 'FlvPlayer requires an flv MediaDataSource input!';
+        }
+
         this.e = {};
         this.e.onvSeeking = this._onvSeeking.bind(this);
-        this.e.onvSeeked = this._onvSeeked.bind(this);
 
         this._pendingSeekTime = null;  // in seconds
         this._requestSetTime = false;
         this._seekpointRecord = null;
-
         this._progressCheckId = 0;
 
         this._mediaDataSource = mediaDataSource;
         this._mediaElement = null;
-        this._msectl = new MSEController();
-
-        this._transmuxer = new Transmuxer(false, this._mediaDataSource);
-        this._transmuxer.on('init_segment', (type, is) => {
-            this._msectl.appendInitSegment(is);
-        });
-        this._transmuxer.on('media_segment', (type, ms) => {
-            this._msectl.appendMediaSegment(ms);
-        });
-        this._transmuxer.on('media_info', (mediaInfo) => {
-            Log.v(this.TAG, 'Received MediaInfo update!');
-        });
-        this._transmuxer.on('recommend_seekpoint', (milliseconds) => {
-            Log.v(this.TAG, 'Recommended seekpoint: ' + milliseconds);
-            if (this._mediaElement) {
-                this._requestSetTime = true;
-                this._mediaElement.currentTime = milliseconds / 1000;
-            }
-        });
-
-        this._msectl.on(this._msectl.BUFFER_FULL, this._onmseBufferFull.bind(this));
+        this._msectl = null;
+        this._transmuxer = null;
 
         let chromeNeedIDRFix = (Browser.chrome &&
                                (Browser.version.major < 50 ||
                                (Browser.version.major === 50 && Browser.version.build < 2454)));
-        this._alwaysSeekKeyframe = chromeNeedIDRFix || Browser.msedge || Browser.msie;
+        this._alwaysSeekKeyframe = (chromeNeedIDRFix || Browser.msedge || Browser.msie) ? true : false;
     }
 
     destroy() {
@@ -55,23 +38,24 @@ class FlvPlayer extends BasePlayer {
             window.clearInterval(this._progressCheckId);
             this._progressCheckId = 0;
         }
+        if (this._transmuxer) {
+            this.unload();
+        }
         if (this._mediaElement) {
             this.detachMediaElement();
         }
         this.e = null;
         this._mediaDataSource = null;
-        this._transmuxer.destroy();
-        this._transmuxer = null;
-        this._msectl.destroy();
-        this._msectl = null;
         super.destroy();
     }
 
     attachMediaElement(mediaElement) {
         this._mediaElement = mediaElement;
-        this._msectl.attachMediaElement(mediaElement);
         mediaElement.addEventListener('seeking', this.e.onvSeeking);
-        mediaElement.addEventListener('seeked', this.e.onvSeeked);
+
+        this._msectl = new MSEController();
+        this._msectl.attachMediaElement(mediaElement);
+        this._msectl.on('buffer_full', this._onmseBufferFull.bind(this));
 
         if (this._pendingSeekTime != null) {
             mediaElement.currentTime = this._pendingSeekTime;
@@ -83,16 +67,50 @@ class FlvPlayer extends BasePlayer {
         if (this._mediaElement) {
             this._msectl.detachMediaElement();
             this._mediaElement.removeEventListener('seeking', this.e.onvSeeking);
-            this._mediaElement.removeEventListener('seeked', this.e.onvSeeked);
             this._mediaElement = null;
+        }
+        if (this._msectl) {
+            this._msectl.destroy();
+            this._msectl = null;
         }
     }
 
     load() {
         if (!this._mediaElement) {
-            throw 'HTMLMediaElement must be attached before prepare()!';
+            throw 'HTMLMediaElement must be attached before load()!';
         }
+
+        this._transmuxer = new Transmuxer(true, this._mediaDataSource);
+        this._transmuxer.on('init_segment', (type, is) => {
+            this._msectl.appendInitSegment(is);
+        });
+        this._transmuxer.on('media_segment', (type, ms) => {
+            this._msectl.appendMediaSegment(ms);
+        });
+        this._transmuxer.on('media_info', (mediaInfo) => {
+            // empty
+        });
+        this._transmuxer.on('recommend_seekpoint', (milliseconds) => {
+            if (this._mediaElement) {
+                this._requestSetTime = true;
+                this._mediaElement.currentTime = milliseconds / 1000;
+            }
+        });
+
         this._transmuxer.open();
+    }
+
+    unload() {
+        if (this._mediaElement) {
+            this._mediaElement.pause();
+            this._requestSetTime = true;
+            this._mediaElement.currentTime = 0;
+        }
+        if (this._transmuxer) {
+            this._transmuxer.close();
+            this._transmuxer.destroy();
+            this._transmuxer = null;
+        }
     }
 
     play() {
@@ -101,6 +119,10 @@ class FlvPlayer extends BasePlayer {
 
     pause() {
         this._mediaElement.pause();
+    }
+
+    get buffered() {
+        return this._mediaElement.buffered;
     }
 
     get currentTime() {
@@ -112,6 +134,10 @@ class FlvPlayer extends BasePlayer {
 
     set currentTime(seconds) {
         if (this._mediaElement) {
+            if (this._mediaElement.currentTime == seconds) {
+                // set the same currentTime may cause unexpected pause event in IE11
+                return;
+            }
             this._internalSeek(seconds);
         } else {
             this._pendingSeekTime = seconds;
@@ -149,12 +175,11 @@ class FlvPlayer extends BasePlayer {
             }
         }
 
-        Log.v(this.TAG, `needResume: ${needResume}, current: ${currentTime}, right: ${to}`);
-
         if (needResume || !inBufferedRange) {
             window.clearInterval(this._progressCheckId);
             this._progressCheckId = 0;
             if (needResume) {
+                Log.v(this.TAG, 'Continue loading from paused position');
                 this._transmuxer.resume();
             }
         }
@@ -237,10 +262,6 @@ class FlvPlayer extends BasePlayer {
             recordTime: self.performance.now()
         };
         window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);
-    }
-
-    _onvSeeked(e) {
-        
     }
 
 }

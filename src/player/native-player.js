@@ -6,6 +6,9 @@ class NativePlayer extends BasePlayer {
     constructor(mediaDataSource) {
         super('NativePlayer');
 
+        if (mediaDataSource.type.toLowerCase() === 'flv') {
+            throw 'NativePlayer does\'t support flv MediaDataSource input!';
+        }
         if (mediaDataSource.hasOwnProperty('segments')) {
             throw `NativePlayer(${mediaDataSource.type}) doesn't support multipart playback!`;
         }
@@ -37,9 +40,17 @@ class NativePlayer extends BasePlayer {
 
     load() {
         if (!this._mediaElement) {
-            throw 'HTMLMediaElement must be attached before prepare()!';
+            throw 'HTMLMediaElement must be attached before load()!';
         }
         this._mediaElement.src = this._mediaDataSource.url;
+        this._mediaElement.preload = 'auto';
+        this._mediaElement.load();
+    }
+
+    unload() {
+        if (this._mediaElement) {
+            this._mediaElement.src = '';
+        }
     }
 
     play() {
@@ -48,6 +59,10 @@ class NativePlayer extends BasePlayer {
 
     pause() {
         this._mediaElement.pause();
+    }
+
+    get buffered() {
+        return this._mediaElement.buffered;
     }
 
     get currentTime() {

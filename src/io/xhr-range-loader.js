@@ -25,6 +25,7 @@ class RangeLoader extends BaseLoader {
         this._chunkSizeKBList = [128, 256, 512, 768, 1024, 1536, 2048, 3072, 4096];
         this._currentChunkSizeKB = 256;
         this._currentSpeed = 0;
+        this._currentSpeedNormalized = 0;
 
         this._xhr = null;
         this._speedSampler = new SpeedSampler();
@@ -52,6 +53,10 @@ class RangeLoader extends BaseLoader {
             this._xhr = null;
         }
         super.destroy();
+    }
+
+    get currentSpeed() {
+        return this._currentSpeed;
     }
 
     open(dataSource, range) {
@@ -210,9 +215,10 @@ class RangeLoader extends BaseLoader {
         this._lastTimeLoaded = 0;
         let KBps = this._speedSampler.lastSecondKBps;
         if (KBps !== 0) {
+            this._currentSpeed = KBps;
             let normalized = this._normalizeSpeed(KBps);
-            if (this._currentSpeed !== normalized) {
-                this._currentSpeed = normalized;
+            if (this._currentSpeedNormalized !== normalized) {
+                this._currentSpeedNormalized = normalized;
                 this._currentChunkSizeKB = normalized;
             }
         }

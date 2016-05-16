@@ -41,6 +41,7 @@ class IOController {
         this._currentRange = null;
         this._progressRanges = [];
         this._speed = 0;
+        this._speedNormalized = 0;
         this._speedSampler = new SpeedSampler();
         this._speedNormalizeList = [64, 128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096];
 
@@ -144,6 +145,23 @@ class IOController {
         if (typeof callback !== 'function')
             throw 'onComplete must be a callback function!';
         this._onComplete = callback;
+    }
+
+    get currentUrl() {
+        return this._dataSource.url;
+    }
+
+    // in KB/s
+    get currentSpeed() {
+        if (this._loaderClass === RangeLoader) {
+            // this._speed is inaccuracy if loader is RangeLoader
+            return this._loader.currentSpeed;
+        }
+        return this._speed;
+    }
+
+    get loaderType() {
+        return this._loader.type;
     }
 
     _selectLoader() {
@@ -448,9 +466,10 @@ class IOController {
         // adjust stash buffer size according to network speed dynamically
         let KBps = this._speedSampler.lastSecondKBps;
         if (KBps !== 0) {
+            this._speed = KBps;
             let normalized = this._normalizeSpeed(KBps);
-            if (this._speed !== normalized) {
-                this._speed = normalized;
+            if (this._speedNormalized !== normalized) {
+                this._speedNormalized = normalized;
                 this._adjustStashSize(normalized);
             }
         }

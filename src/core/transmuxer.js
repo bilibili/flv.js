@@ -129,6 +129,12 @@ class Transmuxer {
         });
     }
 
+    _onStatisticsInfo(statisticsInfo) {
+        Promise.resolve().then(() => {
+            this._emitter.emit(TransmuxingEvents.STATISTICS_INFO, statisticsInfo);
+        });
+    }
+
     _onIOError(type, info) {
         Promise.resolve().then(() => {
             this._emitter.emit(TransmuxingEvents.IO_ERROR, type, info);
@@ -169,6 +175,9 @@ class Transmuxer {
                 break;
             case TransmuxingEvents.MEDIA_INFO:
                 Object.setPrototypeOf(data, MediaInfo.prototype);
+                this._emitter.emit(message.msg, data);
+                break;
+            case TransmuxingEvents.STATISTICS_INFO:
                 this._emitter.emit(message.msg, data);
                 break;
             case TransmuxingEvents.IO_ERROR:

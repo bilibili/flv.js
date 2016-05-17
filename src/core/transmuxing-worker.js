@@ -32,6 +32,7 @@ let TransmuxingWorker = function (self) {
                 controller.on(TransmuxingEvents.INIT_SEGMENT, onInitSegment.bind(this));
                 controller.on(TransmuxingEvents.MEDIA_SEGMENT, onMediaSegment.bind(this));
                 controller.on(TransmuxingEvents.MEDIA_INFO, onMediaInfo.bind(this));
+                controller.on(TransmuxingEvents.STATISTICS_INFO, onStatisticsInfo.bind(this));
                 controller.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, onRecommendSeekpoint.bind(this));
                 break;
             case 'destroy':
@@ -88,6 +89,14 @@ let TransmuxingWorker = function (self) {
         let obj = {
             msg: TransmuxingEvents.MEDIA_INFO,
             data: mediaInfo
+        };
+        self.postMessage(obj);
+    }
+
+    function onStatisticsInfo(statInfo) {
+        let obj = {
+            msg: TransmuxingEvents.STATISTICS_INFO,
+            data: statInfo
         };
         self.postMessage(obj);
     }

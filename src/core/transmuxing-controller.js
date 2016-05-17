@@ -12,6 +12,7 @@ export const TransmuxingEvents = {
     INIT_SEGMENT: 'init_segment',
     MEDIA_SEGMENT: 'media_segment',
     MEDIA_INFO: 'media_info',
+    STATISTICS_INFO: 'statistics_info',
     RECOMMEND_SEEKPOINT: 'recommend_seekpoint'
 };
 
@@ -139,8 +140,6 @@ export class TransmuxingController {
     }
 
     seek(milliseconds) {
-        Log.v(this.TAG, 'Request seek time: ' + milliseconds);
-
         if (this._mediaInfo == null) {
             return;
         }
@@ -152,7 +151,6 @@ export class TransmuxingController {
 
         if (targetSegmentIndex === this._currentSegmentIndex) {
             // intra-segment seeking
-            Log.v(this.TAG, 'Intra-segment seeking, segment index: ' + targetSegmentIndex);
             let segmentInfo = this._mediaInfo.segments[targetSegmentIndex];
 
             if (segmentInfo == undefined) {
@@ -161,19 +159,16 @@ export class TransmuxingController {
                 this._pendingSeekTime = milliseconds;
             } else {
                 let keyframe = segmentInfo.getNearestKeyframe(milliseconds);
-                Log.v(this.TAG, 'Nearest keyframe time: ' + keyframe.milliseconds);
                 this._remuxer.seek(keyframe.milliseconds);
                 this._ioctl.seek(keyframe.fileposition);
                 this._emitter.emit(TransmuxingEvents.RECOMMEND_SEEKPOINT, keyframe.milliseconds);
             }
         } else {
             // cross-segment seeking
-            Log.v(this.TAG, 'Cross-segment seeking, target segment index: ' + targetSegmentIndex);
             let targetSegmentInfo = this._mediaInfo.segments[targetSegmentIndex];
 
             if (targetSegmentInfo == undefined) {
                 // target segment hasn't been loaded. We need metadata then seek to expected time 
-                Log.v(this.TAG, 'Target segment hasn\'t been loaded. We need metadata then seek to expected time');
                 this._pendingSeekTime = milliseconds;
                 this._internalAbort();
                 this._remuxer.seek();
@@ -182,9 +177,7 @@ export class TransmuxingController {
                 // Here we wait for the metadata loaded, then seek to expected position
             } else {
                 // We have target segment's metadata, direct seek to target position
-                Log.v(this.TAG, 'We have metadata, direct seek to target position');
                 let keyframe = targetSegmentInfo.getNearestKeyframe(milliseconds);
-                Log.v(this.TAG, 'Nearest keyframe time: ' + keyframe.milliseconds);
                 this._internalAbort();
                 this._remuxer.seek(milliseconds);
                 this._remuxer.insertDiscontinuity();
@@ -213,11 +206,9 @@ export class TransmuxingController {
 
         if ((probeData = FlvDemuxer.probe(data)).match) {
             // Always create new FlvDemuxer
-            Log.v(this.TAG, 'Create FlvDemuxer');
             this._demuxer = new FlvDemuxer(probeData);
 
             if (!this._remuxer) {
-                Log.v(this.TAG, 'Create MP4Remuxer');
                 this._remuxer = new MP4Remuxer();
             }
 
@@ -252,9 +243,15 @@ export class TransmuxingController {
         if (this._mediaInfo == null) {
             // Store first segment's mediainfo as global mediaInfo
             this._mediaInfo = Object.assign({}, mediaInfo);
-            this._mediaInfo.keyframeIndex = null;
+            this._mediaInfo.keyframesIndex = null;
             this._mediaInfo.segments = [];
+            this._mediaInfo.segmentCount = this._mediaDataSource.segments.length;
             Object.setPrototypeOf(this._mediaInfo, MediaInfo.prototype);
+
+            let exportInfo = Object.assign({}, this._mediaInfo);
+            delete exportInfo.segments;
+            delete exportInfo.keyframesIndex;
+            this._emitter.emit(TransmuxingEvents.MEDIA_INFO, exportInfo);
         }
 
         if (this._mediaInfo.segments[this._currentSegmentIndex] == undefined) {
@@ -271,8 +268,6 @@ export class TransmuxingController {
                 this.seek(target);
             });
         }
-
-        this._emitter.emit(TransmuxingEvents.MEDIA_INFO, this._mediaInfo);
     }
 
     _onIOSeeked() {
@@ -280,12 +275,10 @@ export class TransmuxingController {
     }
 
     _onIOComplete(extraData) {
-        Log.v(this.TAG, 'IOController complete, segment index = ' + extraData);
         let segmentIndex = extraData;
         let nextSegmentIndex = segmentIndex + 1;
 
         if (nextSegmentIndex < this._mediaDataSource.segments.length) {
-            Log.v(this.TAG, 'Continue load next segment, index = ' + nextSegmentIndex);
             this._internalAbort();
             this._loadSegment(nextSegmentIndex);
         }
@@ -310,6 +303,20 @@ export class TransmuxingController {
         let ms = mediaSegment;
         let info = ms.info;
         this._emitter.emit(TransmuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
+        if (type === 'video') {
+            this._reportStatisticsInfo();
+        }
+    }
+
+    _reportStatisticsInfo() {
+        let info = {};
+        info.url = this._ioctl.currentUrl;
+        info.speed = this._ioctl.currentSpeed;
+        info.loaderType = this._ioctl.loaderType;
+        info.currentSegmentIndex = this._currentSegmentIndex;
+        info.totalSegmentCount = this._mediaDataSource.segments.length;
+
+        this._emitter.emit(TransmuxingEvents.STATISTICS_INFO, info);
     }
 
 }

@@ -1,14 +1,15 @@
+import EventEmitter from 'events';
 import Log from '../utils/logger.js';
-import BasePlayer from './base-player.js';
 import Transmuxer from '../core/transmuxer.js';
 import MSEController from '../core/mse-controller.js';
 import Browser from '../utils/browser.js';
 
-class FlvPlayer extends BasePlayer {
+class FlvPlayer {
 
     constructor(mediaDataSource) {
-        super('FlvPlayer');
         this.TAG = this.constructor.name;
+        this._type = 'FlvPlayer';
+        this._emitter = new EventEmitter();
 
         if (mediaDataSource.type.toLowerCase() !== 'flv') {
             throw 'FlvPlayer requires an flv MediaDataSource input!';
@@ -26,6 +27,9 @@ class FlvPlayer extends BasePlayer {
         this._mediaElement = null;
         this._msectl = null;
         this._transmuxer = null;
+
+        this._mediaInfo = null;
+        this._statisticsInfo = null;
 
         let chromeNeedIDRFix = (Browser.chrome &&
                                (Browser.version.major < 50 ||
@@ -46,7 +50,30 @@ class FlvPlayer extends BasePlayer {
         }
         this.e = null;
         this._mediaDataSource = null;
-        super.destroy();
+
+        this._emitter.removeAllListeners();
+        this._emitter = null;
+    }
+
+    on(event, listener) {
+        if (event === 'media_info') {
+            if (this._mediaInfo != null) {
+                Promise.resolve().then(() => {
+                    this._emitter.emit('media_info', this.mediaInfo);
+                });
+            }
+        } else if (event === 'statistics_info') {
+            if (this._statisticsInfo != null) {
+                Promise.resolve().then(() => {
+                    this._emitter.emit('statistics_info', this.statisticsInfo);
+                });
+            }
+        }
+        this._emitter.addListener(event, listener);
+    }
+
+    off(event, listener) {
+        this._emitter.removeListener(event, listener);
     }
 
     attachMediaElement(mediaElement) {
@@ -88,7 +115,12 @@ class FlvPlayer extends BasePlayer {
             this._msectl.appendMediaSegment(ms);
         });
         this._transmuxer.on('media_info', (mediaInfo) => {
-            // empty
+            this._mediaInfo = mediaInfo;
+            this._emitter.emit('media_info', mediaInfo);
+        });
+        this._transmuxer.on('statistics_info', (statInfo) => {
+            this._statisticsInfo = this._fillStatisticsInfo(statInfo);
+            this._emitter.emit('statistics_info', statInfo);
         });
         this._transmuxer.on('recommend_seekpoint', (milliseconds) => {
             if (this._mediaElement) {
@@ -121,8 +153,16 @@ class FlvPlayer extends BasePlayer {
         this._mediaElement.pause();
     }
 
+    get type() {
+        return this._type;
+    }
+
     get buffered() {
         return this._mediaElement.buffered;
+    }
+
+    get duration() {
+        return this._mediaElement.duration;
     }
 
     get currentTime() {
@@ -134,14 +174,45 @@ class FlvPlayer extends BasePlayer {
 
     set currentTime(seconds) {
         if (this._mediaElement) {
-            if (this._mediaElement.currentTime == seconds) {
-                // set the same currentTime may cause unexpected pause event in IE11
-                return;
-            }
             this._internalSeek(seconds);
         } else {
             this._pendingSeekTime = seconds;
         }
+    }
+
+    get mediaInfo() {
+        return Object.assign({}, this._mediaInfo);
+    }
+
+    get statisticsInfo() {
+        this._statisticsInfo = this._fillStatisticsInfo(this._statisticsInfo);
+        return Object.assign({}, this._statisticsInfo);
+    }
+
+    _fillStatisticsInfo(statInfo) {
+        statInfo.playerType = this._type;
+
+        let hasQualityInfo = true;
+        let decoded = 0;
+        let dropped = 0;
+
+        if (this._mediaElement.getVideoPlaybackQuality) {
+            let quality = this._mediaElement.getVideoPlaybackQuality();
+            decoded = quality.totalVideoFrames;
+            dropped = quality.droppedVideoFrames;
+        } else if (this._mediaElement.webkitDecodedFrameCount != undefined) {
+            decoded = this._mediaElement.webkitDecodedFrameCount;
+            dropped = this._mediaElement.webkitDroppedFrameCount;
+        } else {
+            hasQualityInfo = false;
+        }
+
+        if (hasQualityInfo) {
+            statInfo.decodedFrames = decoded;
+            statInfo.droppedFrames = dropped;
+        }
+
+        return statInfo;
     }
 
     _onmseBufferFull() {

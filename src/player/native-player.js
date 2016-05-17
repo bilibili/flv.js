@@ -113,6 +113,14 @@ class NativePlayer {
         return this._mediaElement.duration;
     }
 
+    get volume() {
+        return this._mediaElement.volume;
+    }
+
+    set volume(value) {
+        this._mediaElement.volume = value;
+    }
+
     get currentTime() {
         if (this._mediaElement) {
             return this._mediaElement.currentTime;

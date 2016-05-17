@@ -165,6 +165,14 @@ class FlvPlayer {
         return this._mediaElement.duration;
     }
 
+    get volume() {
+        return this._mediaElement.volume;
+    }
+
+    set volume(value) {
+        this._mediaElement.volume = value;
+    }
+
     get currentTime() {
         if (this._mediaElement) {
             return this._mediaElement.currentTime;
@@ -185,6 +193,9 @@ class FlvPlayer {
     }
 
     get statisticsInfo() {
+        if (this._statisticsInfo == null) {
+            this._statisticsInfo = {};
+        }
         this._statisticsInfo = this._fillStatisticsInfo(this._statisticsInfo);
         return Object.assign({}, this._statisticsInfo);
     }

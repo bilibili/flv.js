@@ -121,6 +121,14 @@ class NativePlayer {
         this._mediaElement.volume = value;
     }
 
+    get muted() {
+        return this._mediaElement.muted;
+    }
+
+    set muted(muted) {
+        this._mediaElement.muted = muted;
+    }
+
     get currentTime() {
         if (this._mediaElement) {
             return this._mediaElement.currentTime;

@@ -63,7 +63,7 @@
     
     <script>
         function flv_load() {
-            console.log('isSupported: ' + flvjs.PlayerFactory.isSupported());
+            console.log('isSupported: ' + flvjs.isSupported());
             var urlinput = document.getElementsByName('urlinput')[0];
 
             var xhr = new XMLHttpRequest();
@@ -78,7 +78,7 @@
                     player.destroy();
                     player = null;
                 }
-                player = flvjs.PlayerFactory.createPlayer(mediaDataSource);
+                player = flvjs.createPlayer(mediaDataSource);
                 player.attachMediaElement(element);
                 player.load();
             }

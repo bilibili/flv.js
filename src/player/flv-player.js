@@ -3,6 +3,7 @@ import Log from '../utils/logger.js';
 import Transmuxer from '../core/transmuxer.js';
 import MSEController from '../core/mse-controller.js';
 import Browser from '../utils/browser.js';
+import {InvalidArgumentException, IllegalStateException} from '../utils/exception.js';
 
 class FlvPlayer {
 
@@ -12,7 +13,7 @@ class FlvPlayer {
         this._emitter = new EventEmitter();
 
         if (mediaDataSource.type.toLowerCase() !== 'flv') {
-            throw 'FlvPlayer requires an flv MediaDataSource input!';
+            throw new InvalidArgumentException('FlvPlayer requires an flv MediaDataSource input!');
         }
 
         this.e = {};
@@ -104,7 +105,7 @@ class FlvPlayer {
 
     load() {
         if (!this._mediaElement) {
-            throw 'HTMLMediaElement must be attached before load()!';
+            throw new IllegalStateException('HTMLMediaElement must be attached before load()!');
         }
 
         this._transmuxer = new Transmuxer(true, this._mediaDataSource);

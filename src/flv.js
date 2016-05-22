@@ -1,5 +1,6 @@
 import Polyfill from './utils/polyfill.js';
 import Features from './core/features.js';
+import {InvalidArgumentException} from './utils/exception.js';
 import FlvPlayer from './player/flv-player.js';
 import NativePlayer from './player/native-player.js';
 import LoggingControl from './utils/logging-control.js';
@@ -14,11 +15,11 @@ Polyfill.install();
 function createPlayer(mediaDataSource) {
     let mds = mediaDataSource;
     if (mds == null || typeof mds !== 'object') {
-        throw 'MediaDataSource must be an javascript object!';
+        throw new InvalidArgumentException('MediaDataSource must be an javascript object!');
     }
 
     if (!mds.hasOwnProperty('type')) {
-        throw 'MediaDataSource must has type field to indicate video file type!';
+        throw new InvalidArgumentException('MediaDataSource must has type field to indicate video file type!');
     }
 
     switch (mds.type) {

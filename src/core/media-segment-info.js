@@ -1,3 +1,5 @@
+import {InvalidArgumentException} from '../utils/exception.js';
+
 // Represents an media sample (audio / video)
 export class SampleInfo {
 
@@ -57,7 +59,7 @@ export class IDRSampleList {
         if (list.length === 0 || sp[0].originalDts >= list[list.length - 1].originalDts) {
             Array.prototype.push.apply(list, sp);
         } else {
-            throw 'Unordered syncPoints to be append!';
+            throw new InvalidArgumentException('Unordered syncPoints to be append!');
         }
     }
 

@@ -1,3 +1,5 @@
+import {IllegalStateException, InvalidArgumentException} from '../utils/exception.js';
+
 // Exponential-Golomb buffer decoder
 
 class ExpGolomb {
@@ -20,7 +22,7 @@ class ExpGolomb {
     _fillCurrentWord() {
         let buffer_bytes_left = this._total_bytes - this._buffer_index;
         if (buffer_bytes_left <= 0)
-            throw 'ExpGolomb: _fillCurrentWord() but no bytes available';
+            throw new IllegalStateException('ExpGolomb: _fillCurrentWord() but no bytes available');
 
         let bytes_read = Math.min(4, buffer_bytes_left);
         let word = new Uint8Array(4);
@@ -33,7 +35,7 @@ class ExpGolomb {
 
     readBits(bits) {
         if (bits > 32)
-            throw 'ExpGolomb: readBits() bits exceeded max 32bits!';
+            throw new InvalidArgumentException('ExpGolomb: readBits() bits exceeded max 32bits!');
 
         if (bits <= this._current_word_bits_left) {
             let result = this._current_word >>> (32 - bits);

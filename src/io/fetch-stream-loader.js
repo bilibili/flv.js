@@ -1,5 +1,6 @@
 import Log from '../utils/logger.js';
 import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
+import {RuntimeException} from '../utils/exception.js';
 
 class FetchStreamLoader extends BaseLoader {
 
@@ -85,7 +86,7 @@ class FetchStreamLoader extends BaseLoader {
                 if (this._onError) {
                     this._onError(LoaderError.kHttpStatusCodeInvalid, {code: res.status, msg: res.statusText});
                 } else {
-                    throw 'FetchStreamLoader: Http code invalid, ' + res.status + ' ' + res.statusText;
+                    throw new RuntimeException('FetchStreamLoader: Http code invalid, ' + res.status + ' ' + res.statusText);
                 }
             }
         }).catch((e) => {
@@ -146,7 +147,7 @@ class FetchStreamLoader extends BaseLoader {
             if (this._onError) {
                 this._onError(type, info);
             } else {
-                throw info.msg;
+                throw new RuntimeException(info.msg);
             }
         });
     }

@@ -1,3 +1,5 @@
+import {NotImplementedException} from '../utils/exception.js';
+
 export const LoaderStatus = {
     kIdle: 0,
     kConnecting: 1,
@@ -62,10 +64,6 @@ export class BaseLoader {
     }
 
     set onContentLengthKnown(callback) {
-        if (typeof callback !== 'function') {
-            throw 'onContentLengthKnown must be a callback function!';
-        }
-
         this._onContentLengthKnown = callback;
     }
 
@@ -74,10 +72,6 @@ export class BaseLoader {
     }
 
     set onDataArrival(callback) {
-        if (typeof callback !== 'function') {
-            throw 'onDataArrival must be a callback function!';
-        }
-
         this._onDataArrival = callback;
     }
 
@@ -86,10 +80,6 @@ export class BaseLoader {
     }
 
     set onError(callback) {
-        if (typeof callback !== 'function') {
-            throw 'onError must be a callback function!';
-        }
-
         this._onError = callback;
     }
 
@@ -98,20 +88,16 @@ export class BaseLoader {
     }
 
     set onComplete(callback) {
-        if (typeof callback !== 'function') {
-            throw 'onComplete must be a callback function!';
-        }
-
         this._onComplete = callback;
     }
 
     // pure virtual
     open(dataSource, range) {
-        throw 'Unimplemented abstract function!';
+        throw new NotImplementedException('Unimplemented abstract function!');
     }
 
     abort() {
-        throw 'Unimplemented abstract function!';
+        throw new NotImplementedException('Unimplemented abstract function!');
     }
 
 

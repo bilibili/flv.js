@@ -1,5 +1,6 @@
 import Log from '../utils/logger.js';
 import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
+import {RuntimeException} from '../utils/exception.js';
 
 // For IE11/Edge browser by microsoft which supports `xhr.responseType = 'ms-stream'`
 class MSStreamLoader extends BaseLoader {
@@ -149,7 +150,7 @@ class MSStreamLoader extends BaseLoader {
                 if (this._onError) {
                     this._onError(LoaderError.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
                 } else {
-                    throw 'MSStreamLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText;
+                    throw new RuntimeException('MSStreamLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText);
                 }
             }
         }
@@ -163,7 +164,7 @@ class MSStreamLoader extends BaseLoader {
         if (this._onError) {
             this._onError(type, info);
         } else {
-            throw info.msg;
+            throw new RuntimeException(info.msg);
         }
     }
 
@@ -227,7 +228,7 @@ class MSStreamLoader extends BaseLoader {
         if (this._onError) {
             this._onError(type, info);
         } else {
-            throw info.msg;
+            throw new RuntimeException(info.msg);
         }
     }
 }

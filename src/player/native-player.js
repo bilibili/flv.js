@@ -1,4 +1,5 @@
 import EventEmitter from 'events';
+import {InvalidArgumentException, IllegalStateException} from '../utils/exception.js';
 
 // Player wrapper for browser's native player (HTMLVideoElement) without MediaSource src. 
 class NativePlayer {
@@ -9,10 +10,10 @@ class NativePlayer {
         this._emitter = new EventEmitter();
 
         if (mediaDataSource.type.toLowerCase() === 'flv') {
-            throw 'NativePlayer does\'t support flv MediaDataSource input!';
+            throw new InvalidArgumentException('NativePlayer does\'t support flv MediaDataSource input!');
         }
         if (mediaDataSource.hasOwnProperty('segments')) {
-            throw `NativePlayer(${mediaDataSource.type}) doesn't support multipart playback!`;
+            throw new InvalidArgumentException(`NativePlayer(${mediaDataSource.type}) doesn't support multipart playback!`);
         }
 
         this.e = {};
@@ -77,7 +78,7 @@ class NativePlayer {
 
     load() {
         if (!this._mediaElement) {
-            throw 'HTMLMediaElement must be attached before load()!';
+            throw new IllegalStateException('HTMLMediaElement must be attached before load()!');
         }
         this._mediaElement.src = this._mediaDataSource.url;
         this._mediaElement.preload = 'auto';

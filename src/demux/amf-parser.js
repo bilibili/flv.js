@@ -1,5 +1,6 @@
 import Log from '../utils/logger.js';
 import decodeUTF8 from '../utils/utf8-conv.js';
+import {IllegalStateException} from '../utils/exception.js';
 
 let le = (function () {
     let buf = new ArrayBuffer(2);
@@ -18,7 +19,7 @@ class AMF {
 
             data[name.data] = value.data;
         } catch (e) {
-            Log.e('AMF', e);
+            Log.e('AMF', e.toString());
         }
 
         return data;
@@ -26,7 +27,7 @@ class AMF {
 
     static parseObject(arrayBuffer, dataOffset, dataSize) {
         if (dataSize < 3) {
-            throw 'Data not enough when parse ScriptDataObject';
+            throw new IllegalStateException('Data not enough when parse ScriptDataObject');
         }
         let name = AMF.parseString(arrayBuffer, dataOffset, dataSize);
         let value = AMF.parseValue(arrayBuffer, dataOffset + name.size, dataSize - name.size);
@@ -48,7 +49,7 @@ class AMF {
 
     static parseString(arrayBuffer, dataOffset, dataSize) {
         if (dataSize < 2) {
-            throw 'Data not enough when parse String';
+            throw new IllegalStateException('Data not enough when parse String');
         }
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
         let length = v.getUint16(0, !le);
@@ -68,7 +69,7 @@ class AMF {
 
     static parseLongString(arrayBuffer, dataOffset, dataSize) {
         if (dataSize < 4) {
-            throw 'Data not enough when parse LongString';
+            throw new IllegalStateException('Data not enough when parse LongString');
         }
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
         let length = v.getUint32(0, !le);
@@ -88,7 +89,7 @@ class AMF {
 
     static parseDate(arrayBuffer, dataOffset, dataSize) {
         if (dataSize < 10) {
-            throw 'Data size invalid when parse Date';
+            throw new IllegalStateException('Data size invalid when parse Date');
         }
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
         let timestamp = v.getFloat64(0, !le);
@@ -103,7 +104,7 @@ class AMF {
 
     static parseValue(arrayBuffer, dataOffset, dataSize) {
         if (dataSize < 1) {
-            throw 'Data not enough when parse Value';
+            throw new IllegalStateException('Data not enough when parse Value');
         }
 
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
@@ -209,7 +210,7 @@ class AMF {
                     Log.w('AMF', 'Unsupported AMF value type ' + type);
             }
         } catch (e) {
-            Log.e('AMF', e);
+            Log.e('AMF', e.toString());
         }
 
         return {

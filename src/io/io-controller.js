@@ -5,6 +5,7 @@ import FetchStreamLoader from './fetch-stream-loader.js';
 import MozChunkedLoader from './xhr-moz-chunked-loader.js';
 import MSStreamLoader from './xhr-msstream-loader.js';
 import RangeLoader from './xhr-range-loader.js';
+import {RuntimeException, IllegalStateException, InvalidArgumentException} from '../utils/exception.js';
 
 /**
  * DataSource: {
@@ -106,10 +107,6 @@ class IOController {
     }
 
     set onDataArrival(callback) {
-        if (typeof callback !== 'function') {
-            throw 'onDataArrival must be a callback function!';
-        }
-
         this._onDataArrival = callback;
     }
 
@@ -119,8 +116,6 @@ class IOController {
     }
 
     set onSeeked(callback) {
-        if (typeof callback !== 'function')
-            throw 'onSeeked must be a callback function!';
         this._onSeeked = callback;
     }
 
@@ -130,10 +125,6 @@ class IOController {
     }
 
     set onError(callback) {
-        if (typeof callback !== 'function') {
-            throw 'onError must be a callback function!';
-        }
-
         this._onError = callback;
     }
 
@@ -142,8 +133,6 @@ class IOController {
     }
 
     set onComplete(callback) {
-        if (typeof callback !== 'function')
-            throw 'onComplete must be a callback function!';
         this._onComplete = callback;
     }
 
@@ -175,7 +164,7 @@ class IOController {
             Log.w(this.TAG, 'Your browser doesn\'t support streaming!');
             this._loaderClass = RangeLoader;
         } else {
-            throw 'Your browser doesn\'t support xhr with arraybuffer responseType!';
+            throw new RuntimeException('Your browser doesn\'t support xhr with arraybuffer responseType!');
         }
     }
 
@@ -362,7 +351,7 @@ class IOController {
 
     updateUrl(url) {
         if (!url || typeof url !== 'string' || url.length === 0) {
-            throw 'Url must be a non-empty string!';
+            throw new InvalidArgumentException('Url must be a non-empty string!');
         }
 
         this._dataSource.url = url;
@@ -453,7 +442,7 @@ class IOController {
 
     _onLoaderChunkArrival(chunk, byteStart, receivedLength) {
         if (!this._onDataArrival) {
-            throw 'IOController: No existing consumer (onDataArrival) callback!';
+            throw new IllegalStateException('IOController: No existing consumer (onDataArrival) callback!');
         }
         if (this._paused) {
             return;
@@ -697,7 +686,7 @@ class IOController {
         if (this._onError) {
             this._onError(type, data);
         } else {
-            throw 'IOException: ' + data.msg;
+            throw new RuntimeException('IOException: ' + data.msg);
         }
     }
 

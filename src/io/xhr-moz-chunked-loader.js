@@ -1,5 +1,6 @@
 import Log from '../utils/logger.js';
 import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
+import {RuntimeException} from '../utils/exception.js';
 
 // For FireFox browser which supports `xhr.responseType = 'moz-chunked-arraybuffer'`
 class MozChunkedLoader extends BaseLoader {
@@ -93,7 +94,7 @@ class MozChunkedLoader extends BaseLoader {
                 if (this._onError) {
                     this._onError(LoaderError.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
                 } else {
-                    throw 'MozChunkedLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText;
+                    throw new RuntimeException('MozChunkedLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText);
                 }
             } else {
                 this._status = LoaderStatus.kBuffering;
@@ -150,7 +151,7 @@ class MozChunkedLoader extends BaseLoader {
         if (this._onError) {
             this._onError(type, info);
         } else {
-            throw info.msg;
+            throw new RuntimeException(info.msg);
         }
     }
 

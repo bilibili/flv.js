@@ -2,6 +2,8 @@ import Log from '../utils/logger.js';
 import MP4 from './mp4-generator.js';
 import Browser from '../utils/browser.js';
 import {SampleInfo, MediaSegmentInfo, MediaSegmentInfoList} from '../core/media-segment-info.js';
+import {IllegalStateException} from '../utils/exception.js';
+
 
 // Fragmented mp4 remuxer
 class MP4Remuxer {
@@ -62,8 +64,6 @@ class MP4Remuxer {
     }
 
     set onInitSegment(callback) {
-        if (typeof callback !== 'function')
-            throw 'onInitSegment must be a callback function!';
         this._onInitSegment = callback;
     }
 
@@ -80,8 +80,6 @@ class MP4Remuxer {
     }
 
     set onMediaSegment(callback) {
-        if (typeof callback !== 'function')
-            throw 'onMediaSegment must be a callback function!';
         this._onMediaSegment = callback;
     }
 
@@ -96,7 +94,7 @@ class MP4Remuxer {
 
     remux(audioTrack, videoTrack) {
         if (!this._onMediaSegment) {
-            throw 'MP4Remuxer: onMediaSegment callback must be specificed!';
+            throw new IllegalStateException('MP4Remuxer: onMediaSegment callback must be specificed!');
         }
         this._remuxAudio(audioTrack);
         this._remuxVideo(videoTrack);
@@ -117,7 +115,7 @@ class MP4Remuxer {
 
         // dispatch metabox (Initialization Segment)
         if (!this._onInitSegment) {
-            throw 'MP4Remuxer: onInitSegment callback must be specified!';
+            throw new IllegalStateException('MP4Remuxer: onInitSegment callback must be specified!');
         }
         this._onInitSegment(type, {
             type: type,

@@ -1,6 +1,7 @@
 import Log from '../utils/logger.js';
 import SpeedSampler from './speed-sampler.js';
 import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
+import {RuntimeException} from '../utils/exception.js';
 
 // Universal IO Loader, implemented by adding Range header in xhr's request header
 class RangeLoader extends BaseLoader {
@@ -149,7 +150,7 @@ class RangeLoader extends BaseLoader {
                 if (this._onError) {
                     this._onError(LoaderError.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
                 } else {
-                    throw 'RangeLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText;
+                    throw new RuntimeException('RangeLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText);
                 }
             }
         }
@@ -266,7 +267,7 @@ class RangeLoader extends BaseLoader {
         if (this._onError) {
             this._onError(type, info);
         } else {
-            throw info.msg;
+            throw new RuntimeException(info.msg);
         }
     }
 

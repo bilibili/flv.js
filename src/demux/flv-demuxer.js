@@ -4,6 +4,7 @@ import BSearch from '../utils/bsearch.js';
 import SPSParser from './sps-parser.js';
 import {DemuxerError} from './demuxer.js';
 import MediaInfo from '../core/media-info.js';
+import {IllegalStateException} from '../utils/exception.js';
 
 function Swap16(src) {
     return (((src >>> 8) & 0xFF) |
@@ -130,8 +131,6 @@ class FlvDemuxer {
     }
 
     set onTrackMetadata(callback) {
-        if (typeof callback !== 'function')
-            throw 'onTrackMetadata must be a callback function!';
         this._onTrackMetadata = callback;
     }
 
@@ -141,8 +140,6 @@ class FlvDemuxer {
     }
 
     set onMediaInfo(callback) {
-        if (typeof callback !== 'function')
-            throw 'onMediaInfo must be a callback function!';
         this._onMediaInfo = callback;
     }
 
@@ -152,8 +149,6 @@ class FlvDemuxer {
     }
 
     set onError(callback) {
-        if (typeof callback !== 'function')
-            throw 'onError must be a callback function';
         this._onError = callback;
     }
 
@@ -163,8 +158,6 @@ class FlvDemuxer {
     }
 
     set onDataAvailable(callback) {
-        if (typeof callback !== 'function')
-            throw 'onDataAvailable must be a callback function!';
         this._onDataAvailable = callback;
     }
 
@@ -203,7 +196,7 @@ class FlvDemuxer {
     // function parseChunks(chunk: ArrayBuffer, byteStart: number): number;
     parseChunks(chunk, byteStart) {
         if (!this._onError || !this._onMediaInfo || !this._onTrackMetadata || !this._onDataAvailable) {
-            throw 'Flv: onError & onMediaInfo & onTrackMetadata & onDataAvailable callback must be specified';
+            throw new IllegalStateException('Flv: onError & onMediaInfo & onTrackMetadata & onDataAvailable callback must be specified');
         }
 
         let offset = 0;

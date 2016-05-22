@@ -1,6 +1,7 @@
 import EventEmitter from 'events';
 import Log from '../utils/logger.js';
 import {SampleInfo, IDRSampleList} from './media-segment-info.js';
+import {IllegalStateException} from '../utils/exception.js';
 
 const State = {
     ERROR: -2,
@@ -83,7 +84,7 @@ class MSEController {
 
     attachMediaElement(mediaElement) {
         if (this._mediaSource) {
-            throw 'MediaSource has been attached to an HTMLMediaElement!';
+            throw new IllegalStateException('MediaSource has been attached to an HTMLMediaElement!');
         }
         let ms = this._mediaSource = new window.MediaSource();
         ms.addEventListener('sourceopen', this.e.onSourceOpen);

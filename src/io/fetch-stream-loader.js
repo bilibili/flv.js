@@ -6,7 +6,7 @@ class FetchStreamLoader extends BaseLoader {
 
     static isSupported() {
         try {
-            return (self.fetch && self.ReadableByteStream);
+            return (self.fetch && self.ReadableStream);
         } catch (e) {
             return false;
         }

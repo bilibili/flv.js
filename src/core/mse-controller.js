@@ -3,26 +3,9 @@ import Log from '../utils/logger.js';
 import {SampleInfo, IDRSampleList} from './media-segment-info.js';
 import {IllegalStateException} from '../utils/exception.js';
 
-const State = {
-    ERROR: -2,
-    STARTING: -1,
-    IDLE: 0,
-    KEY_LOADING: 1,
-    FRAG_LOADING: 2,
-    WAITING_LEVEL: 3,
-    PARSING: 4,
-    PARSED: 5,
-    APPENDING: 6,
-    BUFFER_FLUSHING: 7
-};
-
-// Media Source Extension controller
+// Media Source Extensions controller
 // Events: error, buffer_full, buffer_flushed
 class MSEController {
-
-    static isSupported() {
-        return window.MediaSource && window.MediaSource.isTypeSupported('video/mp4; codecs="avc1.42E01E,mp4a.40.2"');
-    }
 
     constructor() {
         this.TAG = this.constructor.name;
@@ -32,12 +15,13 @@ class MSEController {
         this.BUFFER_FULL = 'buffer_full';
         this.BUFFER_FLUSHED = 'buffer_flushed';
 
-        this.e = {};
-        this.e.onSourceOpen = this._onSourceOpen.bind(this);
-        this.e.onSourceEnded = this._onSourceEnded.bind(this);
-        this.e.onSourceClose = this._onSourceClose.bind(this);
-        this.e.onSourceBufferError = this._onSourceBufferError.bind(this);
-        this.e.onSourceBufferUpdateEnd = this._onSourceBufferUpdateEnd.bind(this);
+        this.e = {
+            onSourceOpen: this._onSourceOpen.bind(this),
+            onSourceEnded: this._onSourceEnded.bind(this),
+            onSourceClose: this._onSourceClose.bind(this),
+            onSourceBufferError: this._onSourceBufferError.bind(this),
+            onSourceBufferUpdateEnd: this._onSourceBufferUpdateEnd.bind(this)
+        };
 
         this._mediaSource = null;
         this._mediaSourceObjectURL = null;

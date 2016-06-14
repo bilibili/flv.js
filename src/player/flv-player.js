@@ -16,8 +16,10 @@ class FlvPlayer {
             throw new InvalidArgumentException('FlvPlayer requires an flv MediaDataSource input!');
         }
 
-        this.e = {};
-        this.e.onvSeeking = this._onvSeeking.bind(this);
+        this.e = {
+            onvSeeking: this._onvSeeking.bind(this),
+            onvTimeUpdate: this._onvTimeUpdate.bind(this)
+        };
 
         this._pendingSeekTime = null;  // in seconds
         this._requestSetTime = false;
@@ -80,6 +82,7 @@ class FlvPlayer {
     attachMediaElement(mediaElement) {
         this._mediaElement = mediaElement;
         mediaElement.addEventListener('seeking', this.e.onvSeeking);
+        mediaElement.addEventListener('timeupdate', this.e.onvTimeUpdate);
 
         this._msectl = new MSEController();
         this._msectl.attachMediaElement(mediaElement);
@@ -95,6 +98,7 @@ class FlvPlayer {
         if (this._mediaElement) {
             this._msectl.detachMediaElement();
             this._mediaElement.removeEventListener('seeking', this.e.onvSeeking);
+            this._mediaElement.removeEventListener('timeupdate', this.e.onvTimeUpdate);
             this._mediaElement = null;
         }
         if (this._msectl) {
@@ -237,6 +241,12 @@ class FlvPlayer {
 
     _onmseBufferFull() {
         Log.v(this.TAG, 'MSE SourceBuffer is full, suspend transmuxing task');
+        if (this._progressCheckId === 0) {
+            this._suspendTransmuxer();
+        }
+    }
+
+    _suspendTransmuxer() {
         if (this._transmuxer) {
             this._transmuxer.pause();
 
@@ -259,7 +269,7 @@ class FlvPlayer {
             to = buffered.end(i);
             if (currentTime >= from && currentTime < to) {
                 inBufferedRange = true;
-                if (currentTime >= to - 20) {
+                if (currentTime >= to - 30) {
                     needResume = true;
                 }
                 break;
@@ -353,6 +363,28 @@ class FlvPlayer {
             recordTime: self.performance.now()
         };
         window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);
+    }
+
+    _onvTimeUpdate(e) {
+        let buffered = this._mediaElement.buffered;
+        let currentTime = this._mediaElement.currentTime;
+        let currentRangeStart = 0;
+        let currentRangeEnd = 0;
+
+        for (let i = 0; i < buffered.length; i++) {
+            let start = buffered.start(i);
+            let end = buffered.end(i);
+            if (start <= currentTime && currentTime < end) {
+                currentRangeStart = start;
+                currentRangeEnd = end;
+                break;
+            }
+        }
+
+        if (currentRangeEnd >= currentTime + 3 * 60 && this._progressCheckId === 0) {  // 3 min
+            Log.v(this.TAG, 'Maximum buffering duration exceeded, suspend transmuxing task');
+            this._suspendTransmuxer();
+        }
     }
 
 }

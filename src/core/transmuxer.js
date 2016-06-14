@@ -71,7 +71,7 @@ class Transmuxer {
         return this._worker != null;
     }
 
-    open() {  // TODO: pass mediaDataSource during constructing or open()?
+    open() {
         if (this._worker) {
             this._worker.postMessage({cmd: 'start'});
         } else {

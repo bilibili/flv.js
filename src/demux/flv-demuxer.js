@@ -49,7 +49,6 @@ class FlvDemuxer {
         this._mediaInfo = new MediaInfo();
         this._mediaInfo.hasAudio = this._hasAudio;
         this._mediaInfo.hasVideo = this._hasVideo;
-        this._needBuildKeyframes = true;
         this._metadata = null;
         this._audioMetadata = null;
         this._videoMetadata = null;
@@ -337,18 +336,11 @@ class FlvDemuxer {
             }
             if (typeof onMetaData.keyframes === 'object') {  // keyframes
                 this._mediaInfo.hasKeyframesIndex = true;
-                this._needBuildKeyframes = false;
                 let keyframes = onMetaData.keyframes;
                 this._mediaInfo.keyframesIndex = this._parseKeyframesIndex(keyframes);
                 onMetaData.keyframes = null;  // keyframes has been extracted, remove it
             } else {
                 this._mediaInfo.hasKeyframesIndex = false;
-                if (this._needBuildKeyframes) {
-                    this._mediaInfo.keyframesIndex = {
-                        times: [],
-                        filepositions: []
-                    };
-                }
             }
             this._dispatch = false;
             this._mediaInfo.metadata = onMetaData;
@@ -832,11 +824,6 @@ class FlvDemuxer {
 
             if (unitType === 5) {  // IDR
                 keyframe = true;
-                if (this._needBuildKeyframes) {
-                    let table = this._mediaInfo.keyframesIndex;
-                    let idx = BSearch.insert(table.filepositions, tagPosition);
-                    table.times.splice(idx, 0, dts);
-                }
             }
 
             let data = new Uint8Array(arrayBuffer, dataOffset + offset, lengthSize + naluSize);

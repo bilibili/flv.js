@@ -434,6 +434,9 @@ class FlvDemuxer {
         }
 
         let aacData = this._parseAACAudioData(arrayBuffer, dataOffset + 1, dataSize - 1);
+        if (aacData == undefined) {
+            return;
+        }
 
         if (aacData.packetType === 0) {  // AAC sequence header (AudioSpecificConfig)
             if (meta.config) {

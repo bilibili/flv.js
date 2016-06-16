@@ -33,7 +33,7 @@ class SPSParser {
         gb.readUEG();  // seq_parameter_set_id
 
         let profile_string = 'Baseline';
-        let chroma_format_idc = 0;
+        let chroma_format_idc = 1;
         let chroma_format = 420;
         let chroma_format_table = [0, 420, 422, 444];
         let bit_depth = 8;

@@ -78,7 +78,7 @@
                     player.destroy();
                     player = null;
                 }
-                player = flvjs.createPlayer(mediaDataSource);
+                player = flvjs.createPlayer(mediaDataSource, {enableWorker: false});
                 player.attachMediaElement(element);
                 player.load();
             }

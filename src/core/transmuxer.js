@@ -7,17 +7,17 @@ import MediaInfo from './media-info.js';
 
 class Transmuxer {
 
-    constructor(enableWorker, mediaDataSource) {
+    constructor(mediaDataSource, config) {
         this.TAG = this.constructor.name;
         this._emitter = new EventEmitter();
 
-        if (enableWorker && typeof (Worker) !== 'undefined') {
+        if (config.enableWorker && typeof (Worker) !== 'undefined') {
             try {
                 let work = require('webworkify');
                 this._worker = work(TransmuxingWorker);
                 this._workerDestroying = false;
                 this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
-                this._worker.postMessage({cmd: 'init', param: mediaDataSource});
+                this._worker.postMessage({cmd: 'init', param: [mediaDataSource, config]});
                 this.e = {
                     onLoggingConfigChanged: this._onLoggingConfigChanged.bind(this)
                 };
@@ -26,10 +26,10 @@ class Transmuxer {
             } catch (error) {
                 Log.e(this.TAG, 'Error while initialize transmuxing worker, fallback to inline transmuxing');
                 this._worker = null;
-                this._controller = new TransmuxingController(mediaDataSource);
+                this._controller = new TransmuxingController(mediaDataSource, config);
             }
         } else {
-            this._controller = new TransmuxingController(mediaDataSource);
+            this._controller = new TransmuxingController(mediaDataSource, config);
         }
 
         if (this._controller) {
@@ -39,6 +39,7 @@ class Transmuxer {
             ctl.on(TransmuxingEvents.INIT_SEGMENT, this._onInitSegment.bind(this));
             ctl.on(TransmuxingEvents.MEDIA_SEGMENT, this._onMediaSegment.bind(this));
             ctl.on(TransmuxingEvents.MEDIA_INFO, this._onMediaInfo.bind(this));
+            ctl.on(TransmuxingEvents.STATISTICS_INFO, this._onStatisticsInfo.bind(this));
             ctl.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, this._onRecommendSeekpoint.bind(this));
         }
     }

@@ -19,9 +19,11 @@ export const TransmuxingEvents = {
 // Transmuxing (IO, Demuxing, Remuxing) controller, with multipart support
 export class TransmuxingController {
 
-    constructor(mediaDataSource) {
+    constructor(mediaDataSource, config) {
         this.TAG = this.constructor.name;
         this._emitter = new EventEmitter();
+
+        this._config = config;
 
         // treat single part media as multipart media, which has only one segment
         if (!mediaDataSource.segments) {
@@ -206,10 +208,10 @@ export class TransmuxingController {
 
         if ((probeData = FlvDemuxer.probe(data)).match) {
             // Always create new FlvDemuxer
-            this._demuxer = new FlvDemuxer(probeData);
+            this._demuxer = new FlvDemuxer(probeData, this._config);
 
             if (!this._remuxer) {
-                this._remuxer = new MP4Remuxer();
+                this._remuxer = new MP4Remuxer(this._config);
             }
 
             let mds = this._mediaDataSource;

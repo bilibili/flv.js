@@ -3,17 +3,27 @@ import Log from '../utils/logger.js';
 import Transmuxer from '../core/transmuxer.js';
 import MSEController from '../core/mse-controller.js';
 import Browser from '../utils/browser.js';
+import {createDefaultConfig} from '../config.js';
 import {InvalidArgumentException, IllegalStateException} from '../utils/exception.js';
 
 class FlvPlayer {
 
-    constructor(mediaDataSource) {
+    constructor(mediaDataSource, config) {
         this.TAG = this.constructor.name;
         this._type = 'FlvPlayer';
         this._emitter = new EventEmitter();
 
+        this._config = createDefaultConfig();
+        if (typeof config === 'object') {
+            Object.assign(this._config, config);
+        }
+
         if (mediaDataSource.type.toLowerCase() !== 'flv') {
             throw new InvalidArgumentException('FlvPlayer requires an flv MediaDataSource input!');
+        }
+
+        if (mediaDataSource.isLive === true) {
+            this._config.isLive = true;
         }
 
         this.e = {
@@ -82,7 +92,9 @@ class FlvPlayer {
     attachMediaElement(mediaElement) {
         this._mediaElement = mediaElement;
         mediaElement.addEventListener('seeking', this.e.onvSeeking);
-        mediaElement.addEventListener('timeupdate', this.e.onvTimeUpdate);
+        if (this._config.lazyLoad) {
+            mediaElement.addEventListener('timeupdate', this.e.onvTimeUpdate);
+        }
 
         this._msectl = new MSEController();
         this._msectl.attachMediaElement(mediaElement);
@@ -98,7 +110,9 @@ class FlvPlayer {
         if (this._mediaElement) {
             this._msectl.detachMediaElement();
             this._mediaElement.removeEventListener('seeking', this.e.onvSeeking);
-            this._mediaElement.removeEventListener('timeupdate', this.e.onvTimeUpdate);
+            if (this._config.lazyLoad) {
+                this._mediaElement.removeEventListener('timeupdate', this.e.onvTimeUpdate);
+            }
             this._mediaElement = null;
         }
         if (this._msectl) {
@@ -112,7 +126,7 @@ class FlvPlayer {
             throw new IllegalStateException('HTMLMediaElement must be attached before load()!');
         }
 
-        this._transmuxer = new Transmuxer(true, this._mediaDataSource);
+        this._transmuxer = new Transmuxer(this._mediaDataSource, this._config);
         this._transmuxer.on('init_segment', (type, is) => {
             this._msectl.appendInitSegment(is);
         });
@@ -366,6 +380,10 @@ class FlvPlayer {
     }
 
     _onvTimeUpdate(e) {
+        if (!this._config.lazyLoad) {
+            return;
+        }
+
         let buffered = this._mediaElement.buffered;
         let currentTime = this._mediaElement.currentTime;
         let currentRangeStart = 0;
@@ -381,7 +399,7 @@ class FlvPlayer {
             }
         }
 
-        if (currentRangeEnd >= currentTime + 3 * 60 && this._progressCheckId === 0) {  // 3 min
+        if (currentRangeEnd >= currentTime + this._config.lazyLoadMaxDuration && this._progressCheckId === 0) {  // 3 min
             Log.v(this.TAG, 'Maximum buffering duration exceeded, suspend transmuxing task');
             this._suspendTransmuxer();
         }

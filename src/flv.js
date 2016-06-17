@@ -12,7 +12,7 @@ Polyfill.install();
 
 
 // factory method
-function createPlayer(mediaDataSource) {
+function createPlayer(mediaDataSource, optionalConfig) {
     let mds = mediaDataSource;
     if (mds == null || typeof mds !== 'object') {
         throw new InvalidArgumentException('MediaDataSource must be an javascript object!');
@@ -24,9 +24,9 @@ function createPlayer(mediaDataSource) {
 
     switch (mds.type) {
         case 'flv':
-            return new FlvPlayer(mds);
+            return new FlvPlayer(mds, optionalConfig);
         default:
-            return new NativePlayer(mds);
+            return new NativePlayer(mds, optionalConfig);
     }
 }
 

@@ -28,8 +28,10 @@ function ReadBig32(array, index) {
 
 class FlvDemuxer {
 
-    constructor(probeData) {
+    constructor(probeData, config) {
         this.TAG = this.constructor.name;
+
+        this._config = config;
 
         this._onError = null;
         this._onMediaInfo = null;

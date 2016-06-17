@@ -8,8 +8,11 @@ import {IllegalStateException} from '../utils/exception.js';
 // Fragmented mp4 remuxer
 class MP4Remuxer {
 
-    constructor() {
+    constructor(config) {
         this.TAG = this.constructor.name;
+
+        this._config = config;
+        this._isLive = (config.isLive === true) ? true : false;
 
         this._dtsBase = -1;
         this._dtsBaseInited = false;
@@ -242,7 +245,9 @@ class MP4Remuxer {
                                          latest.duration,
                                          latest.originalDts,
                                          false);
-        this._audioSegmentInfoList.append(info);
+        if (!this._isLive) {
+            this._audioSegmentInfoList.append(info);
+        }
 
         track.samples = mp4Samples;
         track.sequenceNumber++;
@@ -398,7 +403,9 @@ class MP4Remuxer {
                                          latest.duration,
                                          latest.originalDts,
                                          latest.isKeyframe);
-        this._videoSegmentInfoList.append(info);
+        if (!this._isLive) {
+            this._videoSegmentInfoList.append(info);
+        }
 
         track.samples = mp4Samples;
         track.sequenceNumber++;

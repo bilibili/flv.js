@@ -21,9 +21,11 @@ class MSStreamLoader extends BaseLoader {
         }
     }
 
-    constructor() {
+    constructor(seekHandler) {
         super('xhr-msstream-loader');
         this.TAG = this.constructor.name;
+
+        this._seekHandler = seekHandler;
         this._needStash = true;
 
         this._xhr = null;
@@ -70,13 +72,15 @@ class MSStreamLoader extends BaseLoader {
             this._currentRange = range;
         }
 
+        let seekConfig = this._seekHandler.getConfig(dataSource.url, range);
+
         let reader = this._reader = new self.MSStreamReader();
         reader.onprogress = this._msrOnProgress.bind(this);
         reader.onload = this._msrOnLoad.bind(this);
         reader.onerror = this._msrOnError.bind(this);
 
         let xhr = this._xhr = new XMLHttpRequest();
-        xhr.open('GET', dataSource.url, true);
+        xhr.open('GET', seekConfig.url, true);
         xhr.responseType = 'ms-stream';
         xhr.onreadystatechange = this._xhrOnReadyStateChange.bind(this);
         xhr.onerror = this._xhrOnError.bind(this);
@@ -85,14 +89,14 @@ class MSStreamLoader extends BaseLoader {
             xhr.withCredentials = true;
         }
 
-        if (range.from !== 0 || range.to !== -1) {
-            let param;
-            if (range.to !== -1) {
-                param = `bytes=${range.from.toString()}-${range.to.toString()}`;
-            } else {
-                param = `bytes=${range.from.toString()}-`;
+        if (typeof seekConfig.headers === 'object') {
+            let headers = seekConfig.headers;
+
+            for (let key in headers) {
+                if (headers.hasOwnProperty(key)) {
+                    xhr.setRequestHeader(key, headers[key]);
+                }
             }
-            xhr.setRequestHeader('Range', param);
         }
 
         if (this._isReconnecting) {

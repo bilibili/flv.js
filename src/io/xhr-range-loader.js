@@ -18,9 +18,11 @@ class RangeLoader extends BaseLoader {
         }
     }
 
-    constructor() {
+    constructor(seekHandler) {
         super('xhr-range-loader');
         this.TAG = this.constructor.name;
+
+        this._seekHandler = seekHandler;
         this._needStash = false;
 
         this._chunkSizeKBList = [128, 256, 512, 768, 1024, 1536, 2048, 3072, 4096];
@@ -93,9 +95,10 @@ class RangeLoader extends BaseLoader {
     _internalOpen(dataSource, range) {
         this._lastTimeLoaded = 0;
 
-        let xhr = this._xhr = new XMLHttpRequest();
+        let seekConfig = this._seekHandler.getConfig(dataSource.url, range);
 
-        xhr.open('GET', dataSource.url, true);
+        let xhr = this._xhr = new XMLHttpRequest();
+        xhr.open('GET', seekConfig.url, true);
         xhr.responseType = 'arraybuffer';
         xhr.onreadystatechange = this._onReadyStateChange.bind(this);
         xhr.onprogress = this._onProgress.bind(this);
@@ -106,14 +109,14 @@ class RangeLoader extends BaseLoader {
             xhr.withCredentials = true;
         }
 
-        if (range.from !== 0 || range.to !== -1) {
-            let param;
-            if (range.to !== -1) {
-                param = `bytes=${range.from.toString()}-${range.to.toString()}`;
-            } else {
-                param = `bytes=${range.from.toString()}-`;
+        if (typeof seekConfig.headers === 'object') {
+            let headers = seekConfig.headers;
+
+            for (let key in headers) {
+                if (headers.hasOwnProperty(key)) {
+                    xhr.setRequestHeader(key, headers[key]);
+                }
             }
-            xhr.setRequestHeader('Range', param);
         }
 
         xhr.send();

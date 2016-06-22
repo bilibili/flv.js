@@ -18,9 +18,11 @@ class MozChunkedLoader extends BaseLoader {
         }
     }
 
-    constructor() {
+    constructor(seekHandler) {
         super('xhr-moz-chunked-loader');
         this.TAG = this.constructor.name;
+
+        this._seekHandler = seekHandler;
         this._needStash = true;
 
         this._xhr = null;
@@ -47,9 +49,10 @@ class MozChunkedLoader extends BaseLoader {
         this._dataSource = dataSource;
         this._range = range;
 
-        let xhr = this._xhr = new XMLHttpRequest();
+        let seekConfig = this._seekHandler.getConfig(dataSource.url, range);
 
-        xhr.open('GET', dataSource.url, true);
+        let xhr = this._xhr = new XMLHttpRequest();
+        xhr.open('GET', seekConfig.url, true);
         xhr.responseType = 'moz-chunked-arraybuffer';
         xhr.onreadystatechange = this._onReadyStateChange.bind(this);
         xhr.onprogress = this._onProgress.bind(this);
@@ -63,14 +66,14 @@ class MozChunkedLoader extends BaseLoader {
             xhr.withCredentials = true;
         }
 
-        if (range.from !== 0 || range.to !== -1) {
-            let param;
-            if (range.to !== -1) {
-                param = 'bytes=' + range.from.toString() + '-' + range.to.toString();
-            } else {
-                param = 'bytes=' + range.from.toString() + '-';
+        if (typeof seekConfig.headers === 'object') {
+            let headers = seekConfig.headers;
+
+            for (let key in headers) {
+                if (headers.hasOwnProperty(key)) {
+                    xhr.setRequestHeader(key, headers[key]);
+                }
             }
-            xhr.setRequestHeader('Range', param);
         }
 
         this._status = LoaderStatus.kConnecting;

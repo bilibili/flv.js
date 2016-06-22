@@ -5,6 +5,8 @@ import FetchStreamLoader from './fetch-stream-loader.js';
 import MozChunkedLoader from './xhr-moz-chunked-loader.js';
 import MSStreamLoader from './xhr-msstream-loader.js';
 import RangeLoader from './xhr-range-loader.js';
+import RangeSeekHandler from './range-seek-handler.js';
+import ParamSeekHandler from './param-seek-handler.js';
 import {RuntimeException, IllegalStateException, InvalidArgumentException} from '../utils/exception.js';
 
 /**
@@ -20,9 +22,10 @@ import {RuntimeException, IllegalStateException, InvalidArgumentException} from 
 // Manage IO Loaders
 class IOController {
 
-    constructor(dataSource, extraData) {
+    constructor(dataSource, config, extraData) {
         this.TAG = this.constructor.name;
 
+        this._config = config;
         this._extraData = extraData;
 
         this._stashUsed = 0;
@@ -35,6 +38,7 @@ class IOController {
 
         this._loader = null;
         this._loaderClass = null;
+        this._seekHandler = null;
         this._dataSource = dataSource;
         this._refTotalLength = dataSource.filesize ? dataSource.filesize : null;
         this._totalLength = this._refTotalLength;
@@ -54,6 +58,7 @@ class IOController {
         this._onError = null;
         this._onComplete = null;
 
+        this._selectSeekHandler();
         this._selectLoader();
         this._createLoader();
     }
@@ -153,6 +158,26 @@ class IOController {
         return this._loader.type;
     }
 
+    _selectSeekHandler() {
+        let config = this._config;
+
+        if (config.seekType === 'range') {
+            this._seekHandler = new RangeSeekHandler();
+        } else if (config.seekType === 'param') {
+            let paramStart = config.seekParamStart || 'bstart';
+            let paramEnd = config.seekParamEnd || 'bend';
+
+            this._seekHandler = new ParamSeekHandler(paramStart, paramEnd);
+        } else if (config.seekType === 'custom') {
+            if (typeof config.customSeekHandler !== 'function') {
+                throw new InvalidArgumentException('Custom seekType specified in config but invalid customSeekHandler!');
+            }
+            this._seekHandler = new config.customSeekHandler();
+        } else {
+            throw new InvalidArgumentException(`Invalid seekType in config: ${config.seekType}`);
+        }
+    }
+
     _selectLoader() {
         if (FetchStreamLoader.isSupported()) {
             this._loaderClass = FetchStreamLoader;
@@ -169,7 +194,7 @@ class IOController {
     }
 
     _createLoader() {
-        this._loader = new this._loaderClass();
+        this._loader = new this._loaderClass(this._seekHandler);
         this._enableStash = this._loader.needStashBuffer;
         this._loader.onContentLengthKnown = this._onContentLengthKnown.bind(this);
         this._loader.onDataArrival = this._onLoaderChunkArrival.bind(this);

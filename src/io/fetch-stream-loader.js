@@ -12,9 +12,11 @@ class FetchStreamLoader extends BaseLoader {
         }
     }
 
-    constructor() {
+    constructor(seekHandler) {
         super('fetch-stream-loader');
         this.TAG = this.constructor.name;
+
+        this._seekHandler = seekHandler;
         this._needStash = true;
 
         this._requestAbort = false;
@@ -33,18 +35,20 @@ class FetchStreamLoader extends BaseLoader {
         this._dataSource = dataSource;
         this._range = range;
 
+        let seekConfig = this._seekHandler.getConfig(dataSource.url, range);
+
         let headers = new self.Headers();
 
-        if (range.from !== 0 || range.to !== -1) {
-            let param;
-            if (range.to !== -1) {
-                param = 'bytes=' + range.from.toString() + '-' + range.to.toString();
-            } else {
-                param = 'bytes=' + range.from.toString() + '-';
+        if (typeof seekConfig.headers === 'object') {
+            let configHeaders = seekConfig.headers;
+            for (let key in configHeaders) {
+                if (configHeaders.hasOwnProperty(key)) {
+                    headers.append(key, configHeaders[key]);
+                }
             }
-            headers.append('Range', param);
         }
 
+        let url = seekConfig.url;
         let params = {
             method: 'GET',
             headers: headers,
@@ -64,7 +68,7 @@ class FetchStreamLoader extends BaseLoader {
         }
 
         this._status = LoaderStatus.kConnecting;
-        self.fetch(dataSource.url, params).then((res) => {
+        self.fetch(url, params).then((res) => {
             if (this._requestAbort) {
                 this._requestAbort = false;
                 this._status = LoaderStatus.kIdle;

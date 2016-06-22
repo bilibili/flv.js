@@ -399,7 +399,7 @@ class FlvPlayer {
             }
         }
 
-        if (currentRangeEnd >= currentTime + this._config.lazyLoadMaxDuration && this._progressCheckId === 0) {  // 3 min
+        if (currentRangeEnd >= currentTime + this._config.lazyLoadMaxDuration && this._progressCheckId === 0) {
             Log.v(this.TAG, 'Maximum buffering duration exceeded, suspend transmuxing task');
             this._suspendTransmuxer();
         }

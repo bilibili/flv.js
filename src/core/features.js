@@ -1,4 +1,5 @@
 import IOController from '../io/io-controller.js';
+import {createDefaultConfig} from '../config.js';
 
 class Features {
 
@@ -8,14 +9,14 @@ class Features {
     }
 
     static supportNetworkStreamIO() {
-        let ioctl = new IOController({});
+        let ioctl = new IOController({}, createDefaultConfig());
         let loaderType = ioctl.loaderType;
         ioctl.destroy();
         return loaderType == 'fetch-stream-loader' || loaderType == 'xhr-moz-chunked-loader';
     }
 
     static getNetworkLoaderTypeName() {
-        let ioctl = new IOController({});
+        let ioctl = new IOController({}, createDefaultConfig());
         let loaderType = ioctl.loaderType;
         ioctl.destroy();
         return loaderType;

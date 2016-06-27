@@ -1,7 +1,7 @@
 {
   "name": "flv.js",
   "version": "0.0.1",
-  "description": "MSE-based FLV implementation",
+  "description": "HTML5 FLV Player",
   "main": "src/flv.js",
   "scripts": {
     "dev": "gulp watch",

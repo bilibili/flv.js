@@ -29,10 +29,11 @@ class SPSParser {
         gb.readByte();
         let profile_idc = gb.readByte();  // profile_idc
         gb.readByte();  // constraint_set_flags[5] + reserved_zero[3]
-        gb.readByte();  // level_idc
+        let level_idc = gb.readByte();  // level_idc
         gb.readUEG();  // seq_parameter_set_id
 
-        let profile_string = 'Baseline';
+        let profile_string = SPSParser.getProfileString(profile_idc);
+        let level_string = SPSParser.getLevelString(level_idc);
         let chroma_format_idc = 1;
         let chroma_format = 420;
         let chroma_format_table = [0, 420, 422, 444];
@@ -42,8 +43,6 @@ class SPSParser {
             profile_idc === 244 || profile_idc === 44 || profile_idc === 83 ||
             profile_idc === 86 || profile_idc === 118 || profile_idc === 128 ||
             profile_idc === 138 || profile_idc === 144) {
-
-            profile_string = SPSParser.getProfileString(profile_idc);
 
             chroma_format_idc = gb.readUEG();
             if (chroma_format_idc === 3) {
@@ -179,6 +178,7 @@ class SPSParser {
 
         return {
             profile_string: profile_string,  // baseline, high, high10, ...
+            level_string: level_string,  // 3, 3.1, 4, 4.1, 5, 5.1, ...
             bit_depth: bit_depth,  // 8bit, 10bit, ...
             chroma_format: chroma_format,  // 4:2:0, 4:2:2, ...
             chroma_format_string: SPSParser.getChromaFormatString(chroma_format),
@@ -221,6 +221,12 @@ class SPSParser {
 
     static getProfileString(profile_idc) {
         switch (profile_idc) {
+            case 66:
+                return 'Baseline';
+            case 77:
+                return 'Main';
+            case 88:
+                return 'Extended';
             case 100:
                 return 'High';
             case 110:
@@ -232,6 +238,10 @@ class SPSParser {
             default:
                 return 'Unknown';
         }
+    }
+
+    static getLevelString(level_idc) {
+        return (level_idc / 10).toFixed(1);
     }
 
     static getChromaFormatString(chroma) {

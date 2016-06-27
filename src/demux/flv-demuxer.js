@@ -716,6 +716,7 @@ class FlvDemuxer {
             meta.height = config.codec_size.height;
 
             meta.profile = config.profile_string;
+            meta.level = config.level_string;
             meta.bitDepth = config.bit_depth;
             meta.chromaFormat = config.chroma_format;
             meta.sarRatio = config.sar_ratio;
@@ -747,6 +748,7 @@ class FlvDemuxer {
             mi.height = meta.height;
             mi.fps = meta.frameRate.fps;
             mi.profile = meta.profile;
+            mi.level = meta.level;
             mi.chromaFormat = config.chroma_format_string;
             mi.sarNum = meta.sarRatio.width;
             mi.sarDen = meta.sarRatio.height;

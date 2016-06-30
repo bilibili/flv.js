@@ -28,8 +28,12 @@ class IOController {
         this._config = config;
         this._extraData = extraData;
 
-        this._stashUsed = 0;
         this._stashInitialSize = 1024 * 384;  // initial size: 384KB
+        if (config.isLive === true) {
+            this._stashInitialSize = 1024 * 512;  // Live initial size: 512KB
+        }
+
+        this._stashUsed = 0;
         this._stashSize = this._stashInitialSize;
         this._bufferSize = 1024 * 1024 * 3;  // initial size: 3MB
         this._stashBuffer = new ArrayBuffer(this._bufferSize);

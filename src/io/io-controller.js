@@ -38,7 +38,10 @@ class IOController {
         this._bufferSize = 1024 * 1024 * 3;  // initial size: 3MB
         this._stashBuffer = new ArrayBuffer(this._bufferSize);
         this._stashByteStart = 0;
-        this._enableStash = false;
+        this._enableStash = true;
+        if (config.enableStashBuffer === false) {
+            this._enableStash = false;
+        }
 
         this._loader = null;
         this._loaderClass = null;
@@ -77,7 +80,6 @@ class IOController {
         this._dataSource = null;
         this._stashBuffer = null;
         this._stashUsed = this._stashSize = this._bufferSize = this._stashByteStart = 0;
-        this._enableStash = false;
         this._currentRange = null;
         this._progressRanges = null;
         this._speedSampler = null;
@@ -199,7 +201,9 @@ class IOController {
 
     _createLoader() {
         this._loader = new this._loaderClass(this._seekHandler);
-        this._enableStash = this._loader.needStashBuffer;
+        if (this._loader.needStashBuffer === false) {
+            this._enableStash = false;
+        }
         this._loader.onContentLengthKnown = this._onContentLengthKnown.bind(this);
         this._loader.onDataArrival = this._onLoaderChunkArrival.bind(this);
         this._loader.onComplete = this._onLoaderComplete.bind(this);

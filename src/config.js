@@ -1,5 +1,6 @@
 export const defaultConfig = {
     enableWorker: true,
+    enableStashBuffer: true,
 
     isLive: false,
 

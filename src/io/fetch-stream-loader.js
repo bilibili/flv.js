@@ -2,6 +2,12 @@ import Log from '../utils/logger.js';
 import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
 import {RuntimeException} from '../utils/exception.js';
 
+/* fetch + stream IO loader. Currently working on chrome 43+.
+ * fetch provides a better alternative http API to XMLHttpRequest
+ *
+ * fetch spec   https://fetch.spec.whatwg.org/
+ * stream spec  https://streams.spec.whatwg.org/
+ */
 class FetchStreamLoader extends BaseLoader {
 
     static isSupported() {

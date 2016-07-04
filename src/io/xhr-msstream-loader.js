@@ -2,7 +2,14 @@ import Log from '../utils/logger.js';
 import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
 import {RuntimeException} from '../utils/exception.js';
 
-// For IE11/Edge browser by microsoft which supports `xhr.responseType = 'ms-stream'`
+/* For IE11/Edge browser by microsoft which supports `xhr.responseType = 'ms-stream'`
+ * Notice that ms-stream API sucks. The buffer is always expanding along with downloading.
+ *
+ * We need to abort the xhr if buffer size exceeded limit size (e.g. 16 MiB), then do reconnect.
+ * in order to release previous ArrayBuffer to avoid memory leak
+ *
+ * Otherwise, the ArrayBuffer will increase to a terrible size that equals final file size.
+ */
 class MSStreamLoader extends BaseLoader {
 
     static isSupported() {

@@ -46,7 +46,7 @@ class FlvPlayer {
 
         let chromeNeedIDRFix = (Browser.chrome &&
                                (Browser.version.major < 50 ||
-                               (Browser.version.major === 50 && Browser.version.build < 2454)));
+                               (Browser.version.major === 50 && Browser.version.build < 2661)));
         this._alwaysSeekKeyframe = (chromeNeedIDRFix || Browser.msedge || Browser.msie) ? true : false;
     }
 

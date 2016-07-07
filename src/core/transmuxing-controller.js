@@ -4,20 +4,11 @@ import MediaInfo from './media-info.js';
 import FlvDemuxer from '../demux/flv-demuxer.js';
 import MP4Remuxer from '../remux/mp4-remuxer.js';
 import IOController from '../io/io-controller.js';
+import TransmuxingEvents from './transmuxing-events.js';
 import {LoaderStatus, LoaderError} from '../io/loader.js';
 
-export const TransmuxingEvents = {
-    IO_ERROR: 'io_error',
-    DEMUX_ERROR: 'demux_error',
-    INIT_SEGMENT: 'init_segment',
-    MEDIA_SEGMENT: 'media_segment',
-    MEDIA_INFO: 'media_info',
-    STATISTICS_INFO: 'statistics_info',
-    RECOMMEND_SEEKPOINT: 'recommend_seekpoint'
-};
-
 // Transmuxing (IO, Demuxing, Remuxing) controller, with multipart support
-export class TransmuxingController {
+class TransmuxingController {
 
     constructor(mediaDataSource, config) {
         this.TAG = this.constructor.name;
@@ -322,3 +313,5 @@ export class TransmuxingController {
     }
 
 }
+
+export default TransmuxingController;

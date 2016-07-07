@@ -1,19 +1,16 @@
 import EventEmitter from 'events';
 import Log from '../utils/logger.js';
+import MSEEvents from './mse-events.js';
 import {SampleInfo, IDRSampleList} from './media-segment-info.js';
 import {IllegalStateException} from '../utils/exception.js';
 
 // Media Source Extensions controller
-// Events: error, buffer_full, buffer_flushed
 class MSEController {
 
     constructor() {
         this.TAG = this.constructor.name;
 
         this._emitter = new EventEmitter();
-        this.ERROR = 'error';
-        this.BUFFER_FULL = 'buffer_full';
-        this.BUFFER_FLUSHED = 'buffer_flushed';
 
         this.e = {
             onSourceOpen: this._onSourceOpen.bind(this),
@@ -151,7 +148,7 @@ class MSEController {
                     sb.addEventListener('updateend', this.e.onSourceBufferUpdateEnd);
                 } catch (error) {
                     Log.e(this.TAG, error.message);
-                    this._emitter.emit(this.ERROR, {code: error.code, msg: error.message});
+                    this._emitter.emit(MSEEvents.ERROR, {code: error.code, msg: error.message});
                     return;
                 }
             } else {
@@ -251,7 +248,7 @@ class MSEController {
                     if (error.code === 22) {  // QuotaExceededError
                         // report buffer full, abort network IO
                         if (!this._isBufferFull) {
-                            this._emitter.emit(this.BUFFER_FULL);
+                            this._emitter.emit(MSEEvents.BUFFER_FULL);
                         }
                         this._isBufferFull = true;
                     } else {

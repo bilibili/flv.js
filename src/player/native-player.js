@@ -1,4 +1,5 @@
 import EventEmitter from 'events';
+import PlayerEvents from './player-events.js';
 import {InvalidArgumentException, IllegalStateException} from '../utils/exception.js';
 
 // Player wrapper for browser's native player (HTMLVideoElement) without MediaSource src. 
@@ -38,16 +39,16 @@ class NativePlayer {
     }
 
     on(event, listener) {
-        if (event === 'media_info') {
+        if (event === PlayerEvents.MEDIA_INFO) {
             if (this._mediaElement != null && this._mediaElement.readyState !== 0) {  // HAVE_NOTHING
                 Promise.resolve().then(() => {
-                    this._emitter.emit('media_info', this.mediaInfo);
+                    this._emitter.emit(PlayerEvents.MEDIA_INFO, this.mediaInfo);
                 });
             }
-        } else if (event === 'statistics_info') {
+        } else if (event === PlayerEvents.STATISTICS_INFO) {
             if (this._mediaElement != null && this._mediaElement.readyState !== 0) {
                 Promise.resolve().then(() => {
-                    this._emitter.emit('statistics_info', this.statisticsInfo);
+                    this._emitter.emit(PlayerEvents.STATISTICS_INFO, this.statisticsInfo);
                 });
             }
         }
@@ -187,11 +188,11 @@ class NativePlayer {
     }
 
     _onvLoadedMetadata(e) {
-        this._emitter.emit('media_info', this.mediaInfo);
+        this._emitter.emit(PlayerEvents.MEDIA_INFO, this.mediaInfo);
     }
 
     _reportStatisticsInfo() {
-        this._emitter.emit('statistics_info', this.statisticsInfo);
+        this._emitter.emit(PlayerEvents.STATISTICS_INFO, this.statisticsInfo);
     }
 
 }

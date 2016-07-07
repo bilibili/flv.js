@@ -1,9 +1,10 @@
 import Polyfill from './utils/polyfill.js';
 import Features from './core/features.js';
-import {InvalidArgumentException} from './utils/exception.js';
 import FlvPlayer from './player/flv-player.js';
 import NativePlayer from './player/native-player.js';
+import PlayerEvents from './player/player-events.js';
 import LoggingControl from './utils/logging-control.js';
+import {InvalidArgumentException} from './utils/exception.js';
 
 // entry/index file
 
@@ -48,6 +49,7 @@ flvjs.createPlayer = createPlayer;
 flvjs.isSupported = isSupported;
 flvjs.getFeatureList = getFeatureList;
 
+flvjs.Events = PlayerEvents;
 flvjs.FlvPlayer = FlvPlayer;
 flvjs.NativePlayer = NativePlayer;
 flvjs.LoggingControl = LoggingControl;

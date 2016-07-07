@@ -1,7 +1,10 @@
 import EventEmitter from 'events';
 import Log from '../utils/logger.js';
+import PlayerEvents from './player-events.js';
 import Transmuxer from '../core/transmuxer.js';
+import TransmuxingEvents from '../core/transmuxing-events.js';
 import MSEController from '../core/mse-controller.js';
+import MSEEvents from '../core/mse-events.js';
 import Browser from '../utils/browser.js';
 import {createDefaultConfig} from '../config.js';
 import {InvalidArgumentException, IllegalStateException} from '../utils/exception.js';
@@ -69,16 +72,16 @@ class FlvPlayer {
     }
 
     on(event, listener) {
-        if (event === 'media_info') {
+        if (event === PlayerEvents.MEDIA_INFO) {
             if (this._mediaInfo != null) {
                 Promise.resolve().then(() => {
-                    this._emitter.emit('media_info', this.mediaInfo);
+                    this._emitter.emit(PlayerEvents.MEDIA_INFO, this.mediaInfo);
                 });
             }
-        } else if (event === 'statistics_info') {
+        } else if (event === PlayerEvents.STATISTICS_INFO) {
             if (this._statisticsInfo != null) {
                 Promise.resolve().then(() => {
-                    this._emitter.emit('statistics_info', this.statisticsInfo);
+                    this._emitter.emit(PlayerEvents.STATISTICS_INFO, this.statisticsInfo);
                 });
             }
         }
@@ -98,7 +101,7 @@ class FlvPlayer {
 
         this._msectl = new MSEController();
         this._msectl.attachMediaElement(mediaElement);
-        this._msectl.on('buffer_full', this._onmseBufferFull.bind(this));
+        this._msectl.on(MSEEvents.BUFFER_FULL, this._onmseBufferFull.bind(this));
 
         if (this._pendingSeekTime != null) {
             mediaElement.currentTime = this._pendingSeekTime;
@@ -127,21 +130,21 @@ class FlvPlayer {
         }
 
         this._transmuxer = new Transmuxer(this._mediaDataSource, this._config);
-        this._transmuxer.on('init_segment', (type, is) => {
+        this._transmuxer.on(TransmuxingEvents.INIT_SEGMENT, (type, is) => {
             this._msectl.appendInitSegment(is);
         });
-        this._transmuxer.on('media_segment', (type, ms) => {
+        this._transmuxer.on(TransmuxingEvents.MEDIA_SEGMENT, (type, ms) => {
             this._msectl.appendMediaSegment(ms);
         });
-        this._transmuxer.on('media_info', (mediaInfo) => {
+        this._transmuxer.on(TransmuxingEvents.MEDIA_INFO, (mediaInfo) => {
             this._mediaInfo = mediaInfo;
-            this._emitter.emit('media_info', mediaInfo);
+            this._emitter.emit(PlayerEvents.MEDIA_INFO, mediaInfo);
         });
-        this._transmuxer.on('statistics_info', (statInfo) => {
+        this._transmuxer.on(TransmuxingEvents.STATISTICS_INFO, (statInfo) => {
             this._statisticsInfo = this._fillStatisticsInfo(statInfo);
-            this._emitter.emit('statistics_info', statInfo);
+            this._emitter.emit(PlayerEvents.STATISTICS_INFO, statInfo);
         });
-        this._transmuxer.on('recommend_seekpoint', (milliseconds) => {
+        this._transmuxer.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, (milliseconds) => {
             if (this._mediaElement) {
                 this._requestSetTime = true;
                 this._mediaElement.currentTime = milliseconds / 1000;

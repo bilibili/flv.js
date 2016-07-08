@@ -8,12 +8,12 @@ export const LoaderStatus = {
     kComplete: 4
 };
 
-export const LoaderError = {
-    kOK: 0,
-    kException: 1,
-    kHttpStatusCodeInvalid: 2,
-    kConnectingTimeout: 3,
-    kEarlyEof: 4
+export const LoaderErrors = {
+    kOK: 'ok',
+    kException: 'exception',
+    kHttpStatusCodeInvalid: 'httpStatusCodeInvalid',
+    kConnectingTimeout: 'connectingTimeout',
+    kEarlyEof: 'earlyEof'
 };
 
 /* Loader has callbacks which have following prototypes:

@@ -1,5 +1,5 @@
 import Log from '../utils/logger.js';
-import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
+import {BaseLoader, LoaderStatus, LoaderErrors} from './loader.js';
 import {RuntimeException} from '../utils/exception.js';
 
 /* fetch + stream IO loader. Currently working on chrome 43+.
@@ -94,7 +94,7 @@ class FetchStreamLoader extends BaseLoader {
             } else {
                 this._status = LoaderStatus.kError;
                 if (this._onError) {
-                    this._onError(LoaderError.kHttpStatusCodeInvalid, {code: res.status, msg: res.statusText});
+                    this._onError(LoaderErrors.kHttpStatusCodeInvalid, {code: res.status, msg: res.statusText});
                 } else {
                     throw new RuntimeException('FetchStreamLoader: Http code invalid, ' + res.status + ' ' + res.statusText);
                 }
@@ -102,7 +102,7 @@ class FetchStreamLoader extends BaseLoader {
         }).catch((e) => {
             this._status = LoaderStatus.kError;
             if (this._onError) {
-                this._onError(LoaderError.kException, {code: -1, msg: e.message});
+                this._onError(LoaderErrors.kException, {code: -1, msg: e.message});
             } else {
                 throw e;
             }
@@ -147,10 +147,10 @@ class FetchStreamLoader extends BaseLoader {
             if (e.code === 19 && // NETWORK_ERR
                 (this._contentLength === null ||
                 (this._contentLength !== null && this._receivedLength < this._contentLength))) {
-                type = LoaderError.kEarlyEof;
+                type = LoaderErrors.kEarlyEof;
                 info = {code: e.code, msg: 'Fetch stream meet Early-EOF'};
             } else {
-                type = LoaderError.kException;
+                type = LoaderErrors.kException;
                 info = {code: e.code, msg: e.message};
             }
 

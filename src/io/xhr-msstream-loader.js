@@ -1,5 +1,5 @@
 import Log from '../utils/logger.js';
-import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
+import {BaseLoader, LoaderStatus, LoaderErrors} from './loader.js';
 import {RuntimeException} from '../utils/exception.js';
 
 /* For IE11/Edge browser by microsoft which supports `xhr.responseType = 'ms-stream'`
@@ -159,7 +159,7 @@ class MSStreamLoader extends BaseLoader {
             } else {
                 this._status = LoaderStatus.kError;
                 if (this._onError) {
-                    this._onError(LoaderError.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
+                    this._onError(LoaderErrors.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
                 } else {
                     throw new RuntimeException('MSStreamLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText);
                 }
@@ -169,7 +169,7 @@ class MSStreamLoader extends BaseLoader {
 
     _xhrOnError(e) {
         this._status = LoaderStatus.kError;
-        let type = LoaderError.kException;
+        let type = LoaderErrors.kException;
         let info = {code: -1, msg: e.constructor.name + ' ' + e.type};
 
         if (this._onError) {
@@ -229,10 +229,10 @@ class MSStreamLoader extends BaseLoader {
         let info = null;
 
         if (this._contentLength && this._receivedLength < this._contentLength) {
-            type = LoaderError.kEarlyEof;
+            type = LoaderErrors.kEarlyEof;
             info = {code: -1, msg: 'MSStream meet Early-Eof'};
         } else {
-            type = LoaderError.kException;
+            type = LoaderErrors.kException;
             info = {code: -1, msg: e.constructor.name + ' ' + e.type};
         }
 

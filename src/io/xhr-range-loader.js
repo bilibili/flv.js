@@ -1,6 +1,6 @@
 import Log from '../utils/logger.js';
 import SpeedSampler from './speed-sampler.js';
-import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
+import {BaseLoader, LoaderStatus, LoaderErrors} from './loader.js';
 import {RuntimeException} from '../utils/exception.js';
 
 // Universal IO Loader, implemented by adding Range header in xhr's request header
@@ -151,7 +151,7 @@ class RangeLoader extends BaseLoader {
             } else {
                 this._status = LoaderStatus.kError;
                 if (this._onError) {
-                    this._onError(LoaderError.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
+                    this._onError(LoaderErrors.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
                 } else {
                     throw new RuntimeException('RangeLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText);
                 }
@@ -260,10 +260,10 @@ class RangeLoader extends BaseLoader {
 
         if (this._contentLength && this._receivedLength > 0
                                 && this._receivedLength < this._contentLength) {
-            type = LoaderError.kEarlyEof;
+            type = LoaderErrors.kEarlyEof;
             info = {code: -1, msg: 'RangeLoader meet Early-Eof'};
         } else {
-            type = LoaderError.kException;
+            type = LoaderErrors.kException;
             info = {code: -1, msg: e.constructor.name + ' ' + e.type};
         }
 

@@ -1,5 +1,5 @@
 import Log from '../utils/logger.js';
-import {LoaderStatus, LoaderError} from './loader.js';
+import {LoaderStatus, LoaderErrors} from './loader.js';
 import SpeedSampler from './speed-sampler.js';
 import FetchStreamLoader from './fetch-stream-loader.js';
 import MozChunkedLoader from './xhr-moz-chunked-loader.js';
@@ -700,7 +700,7 @@ class IOController {
         this._flushStashBuffer(false);
 
         switch (type) {
-            case LoaderError.kEarlyEof: {
+            case LoaderErrors.kEarlyEof: {
                 // http reconnect
                 Log.w(this.TAG, 'Connection lost, trying reconnect...');
                 let current = this._currentRange;
@@ -710,9 +710,9 @@ class IOController {
                 }
                 return;
             }
-            case LoaderError.kConnectingTimeout:
-            case LoaderError.kHttpStatusCodeInvalid:
-            case LoaderError.kException:
+            case LoaderErrors.kConnectingTimeout:
+            case LoaderErrors.kHttpStatusCodeInvalid:
+            case LoaderErrors.kException:
                 break;
         }
 

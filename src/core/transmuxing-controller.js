@@ -5,7 +5,7 @@ import FlvDemuxer from '../demux/flv-demuxer.js';
 import MP4Remuxer from '../remux/mp4-remuxer.js';
 import IOController from '../io/io-controller.js';
 import TransmuxingEvents from './transmuxing-events.js';
-import {LoaderStatus, LoaderError} from '../io/loader.js';
+import {LoaderStatus, LoaderErrors} from '../io/loader.js';
 
 // Transmuxing (IO, Demuxing, Remuxing) controller, with multipart support
 class TransmuxingController {

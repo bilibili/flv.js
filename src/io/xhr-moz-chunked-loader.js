@@ -1,5 +1,5 @@
 import Log from '../utils/logger.js';
-import {BaseLoader, LoaderStatus, LoaderError} from './loader.js';
+import {BaseLoader, LoaderStatus, LoaderErrors} from './loader.js';
 import {RuntimeException} from '../utils/exception.js';
 
 // For FireFox browser which supports `xhr.responseType = 'moz-chunked-arraybuffer'`
@@ -95,7 +95,7 @@ class MozChunkedLoader extends BaseLoader {
             if (xhr.status !== 0 && (xhr.status < 200 || xhr.status > 299)) {
                 this._status = LoaderStatus.kError;
                 if (this._onError) {
-                    this._onError(LoaderError.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
+                    this._onError(LoaderErrors.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
                 } else {
                     throw new RuntimeException('MozChunkedLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText);
                 }
@@ -144,10 +144,10 @@ class MozChunkedLoader extends BaseLoader {
         let info = null;
 
         if (this._contentLength && e.loaded < this._contentLength) {
-            type = LoaderError.kEarlyEof;
+            type = LoaderErrors.kEarlyEof;
             info = {code: -1, msg: 'Moz-Chunked stream meet Early-Eof'};
         } else {
-            type = LoaderError.kException;
+            type = LoaderErrors.kException;
             info = {code: -1, msg: e.constructor.name + ' ' + e.type};
         }
 

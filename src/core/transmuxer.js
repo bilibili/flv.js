@@ -114,6 +114,7 @@ class Transmuxer {
     }
 
     _onInitSegment(type, initSegment) {
+        // do async invoke
         Promise.resolve().then(() => {
             this._emitter.emit(TransmuxingEvents.INIT_SEGMENT, type, initSegment);
         });

@@ -707,7 +707,7 @@ class FlvDemuxer {
                 continue;
             }
 
-            // Notice: Nalu without header (00 00 00 01)
+            // Notice: Nalu without startcode header (00 00 00 01)
             let sps = new Uint8Array(arrayBuffer, dataOffset + offset, len);
             offset += len;
 
@@ -815,6 +815,7 @@ class FlvDemuxer {
         let keyframe = false;
 
         while (offset < dataSize) {
+            // Nalu with length-header (AVC1)
             let naluSize = v.getUint32(offset, !le);  // Big-Endian read
             if (lengthSize === 3) {
                 naluSize >>>= 8;

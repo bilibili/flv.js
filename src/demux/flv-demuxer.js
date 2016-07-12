@@ -391,7 +391,7 @@ class FlvDemuxer {
             let soundFormat = soundSpec >>> 4;
             if (soundFormat !== 10) {  // AAC
                 // TODO: support MP3 audio codec
-                this._onError(DemuxErrors.kCodecUnsupported, 'Flv: Unsupported audio codec idx: ' + soundFormat);
+                this._onError(DemuxErrors.CODEC_UNSUPPORTED, 'Flv: Unsupported audio codec idx: ' + soundFormat);
                 return;
             }
 
@@ -414,7 +414,7 @@ class FlvDemuxer {
                     soundRate = 48000;
                     break;
                 default:
-                    this._onError(DemuxErrors.kCodecUnsupported, 'Flv: Unsupported audio sample rate idx: ' + soundRateIndex);
+                    this._onError(DemuxErrors.FORMAT_ERROR, 'Flv: Invalid audio sample rate idx: ' + soundRateIndex);
                     return;
             }
 
@@ -424,7 +424,7 @@ class FlvDemuxer {
             meta.audioSampleRate = soundRate;
             meta.channelCount = (soundType === 0 ? 1 : 2);
             meta.refSampleDuration = Math.floor(1024 / meta.audioSampleRate * meta.timescale);
-            meta.codec = 'mp4a.40.5';  // TODO: browser manifest codec consideration
+            meta.codec = 'mp4a.40.5';
         }
 
         let aacData = this._parseAACAudioData(arrayBuffer, dataOffset + 1, dataSize - 1);
@@ -532,7 +532,7 @@ class FlvDemuxer {
         // 4 bits
         samplingIndex = ((array[0] & 0x07) << 1) | (array[1] >>> 7);
         if (samplingIndex < 0 || samplingIndex >= mpegSamplingRates.length) {
-            this._onError(DemuxErrors.kFormatError, 'Flv: AAC invalid sampling frequency index!');
+            this._onError(DemuxErrors.FORMAT_ERROR, 'Flv: AAC invalid sampling frequency index!');
             return;
         }
 
@@ -541,7 +541,7 @@ class FlvDemuxer {
         // 4 bits
         let channelConfig = (array[1] & 0x78) >>> 3;
         if (channelConfig < 0 || channelConfig >= 8) {
-            this._onError(DemuxErrors.kFormatError, 'Flv: AAC invalid channel configuration');
+            this._onError(DemuxErrors.FORMAT_ERROR, 'Flv: AAC invalid channel configuration');
             return;
         }
 
@@ -578,7 +578,6 @@ class FlvDemuxer {
             extensionSamplingIndex = samplingIndex;
             config = new Array(4);
 
-            // TODO: browser manifest codec consideration
             if (samplingIndex >= 6) {
                 extensionSamplingIndex = samplingIndex - 3;
             } else if (channelConfig === 1) {  // Mono channel
@@ -621,7 +620,7 @@ class FlvDemuxer {
         let codecId = spec & 15;
 
         if (codecId !== 7) {
-            this._onError(DemuxErrors.kCodecUnsupported, `Flv: Unsupported codec in video frame: ${codecId}`);
+            this._onError(DemuxErrors.CODEC_UNSUPPORTED, `Flv: Unsupported codec in video frame: ${codecId}`);
             return;
         }
 
@@ -647,7 +646,7 @@ class FlvDemuxer {
         } else if (packetType === 2) {
             // empty, AVC end of sequence
         } else {
-            this._onError(DemuxErrors.kFormatError, `Flv: Invalid video packet type ${packetType}`);
+            this._onError(DemuxErrors.FORMAT_ERROR, `Flv: Invalid video packet type ${packetType}`);
             return;
         }
     }
@@ -681,19 +680,19 @@ class FlvDemuxer {
         let avcLevel = v.getUint8(3);  // AVCLevelIndication
 
         if (version !== 1 || avcProfile === 0) {
-            this._onError(DemuxErrors.kFormatError, 'Flv: Invalid AVCDecoderConfigurationRecord');
+            this._onError(DemuxErrors.FORMAT_ERROR, 'Flv: Invalid AVCDecoderConfigurationRecord');
             return;
         }
 
         this._naluLengthSize = (v.getUint8(4) & 3) + 1;  // lengthSizeMinusOne
         if (this._naluLengthSize !== 3 && this._naluLengthSize !== 4) {  // holy shit!!!
-            this._onError(DemuxErrors.kFormatError, `Flv: Strange NaluLengthSizeMinusOne: ${this._naluLengthSize - 1}`);
+            this._onError(DemuxErrors.FORMAT_ERROR, `Flv: Strange NaluLengthSizeMinusOne: ${this._naluLengthSize - 1}`);
             return;
         }
 
         let spsCount = v.getUint8(5) & 31;  // numOfSequenceParameterSets
         if (spsCount === 0 || spsCount > 1) {
-            this._onError(DemuxErrors.kFormatError, `Flv: Invalid H264 SPS count: ${spsCount}`);
+            this._onError(DemuxErrors.FORMAT_ERROR, `Flv: Invalid H264 SPS count: ${spsCount}`);
             return;
         }
 
@@ -768,7 +767,7 @@ class FlvDemuxer {
 
         let ppsCount = v.getUint8(offset);  // numOfPictureParameterSets
         if (ppsCount === 0 || ppsCount > 1) {
-            this._onError(DemuxErrors.kFormatError, `Flv: Invalid H264 PPS count: ${ppsCount}`);
+            this._onError(DemuxErrors.FORMAT_ERROR, `Flv: Invalid H264 PPS count: ${ppsCount}`);
             return;
         }
 

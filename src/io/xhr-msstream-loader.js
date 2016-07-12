@@ -159,7 +159,7 @@ class MSStreamLoader extends BaseLoader {
             } else {
                 this._status = LoaderStatus.kError;
                 if (this._onError) {
-                    this._onError(LoaderErrors.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
+                    this._onError(LoaderErrors.HTTP_STATUS_CODE_INVALID, {code: xhr.status, msg: xhr.statusText});
                 } else {
                     throw new RuntimeException('MSStreamLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText);
                 }
@@ -169,7 +169,7 @@ class MSStreamLoader extends BaseLoader {
 
     _xhrOnError(e) {
         this._status = LoaderStatus.kError;
-        let type = LoaderErrors.kException;
+        let type = LoaderErrors.EXCEPTION;
         let info = {code: -1, msg: e.constructor.name + ' ' + e.type};
 
         if (this._onError) {
@@ -229,10 +229,10 @@ class MSStreamLoader extends BaseLoader {
         let info = null;
 
         if (this._contentLength && this._receivedLength < this._contentLength) {
-            type = LoaderErrors.kEarlyEof;
+            type = LoaderErrors.EARLY_EOF;
             info = {code: -1, msg: 'MSStream meet Early-Eof'};
         } else {
-            type = LoaderErrors.kException;
+            type = LoaderErrors.EARLY_EOF;
             info = {code: -1, msg: e.constructor.name + ' ' + e.type};
         }
 

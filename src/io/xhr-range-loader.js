@@ -151,7 +151,7 @@ class RangeLoader extends BaseLoader {
             } else {
                 this._status = LoaderStatus.kError;
                 if (this._onError) {
-                    this._onError(LoaderErrors.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
+                    this._onError(LoaderErrors.HTTP_STATUS_CODE_INVALID, {code: xhr.status, msg: xhr.statusText});
                 } else {
                     throw new RuntimeException('RangeLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText);
                 }
@@ -260,10 +260,10 @@ class RangeLoader extends BaseLoader {
 
         if (this._contentLength && this._receivedLength > 0
                                 && this._receivedLength < this._contentLength) {
-            type = LoaderErrors.kEarlyEof;
+            type = LoaderErrors.EARLY_EOF;
             info = {code: -1, msg: 'RangeLoader meet Early-Eof'};
         } else {
-            type = LoaderErrors.kException;
+            type = LoaderErrors.EXCEPTION;
             info = {code: -1, msg: e.constructor.name + ' ' + e.type};
         }
 

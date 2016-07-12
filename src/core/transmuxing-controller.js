@@ -3,6 +3,7 @@ import Log from '../utils/logger.js';
 import MediaInfo from './media-info.js';
 import FlvDemuxer from '../demux/flv-demuxer.js';
 import MP4Remuxer from '../remux/mp4-remuxer.js';
+import DemuxErrors from '../demux/demux-errors.js';
 import IOController from '../io/io-controller.js';
 import TransmuxingEvents from './transmuxing-events.js';
 import {LoaderStatus, LoaderErrors} from '../io/loader.js';
@@ -226,7 +227,7 @@ class TransmuxingController {
             Promise.resolve().then(() => {
                 this._internalAbort();
             });
-            this._emitter.emit(TransmuxingEvents.DEMUX_ERROR, 'Non-FLV, Unsupported media type');
+            this._emitter.emit(TransmuxingEvents.DEMUX_ERROR, DemuxErrors.FORMAT_UNSUPPORTED, 'Non-FLV, Unsupported media type');
         }
 
         return probeData != null ? probeData.consumed : 0;

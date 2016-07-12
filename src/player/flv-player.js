@@ -5,6 +5,7 @@ import Transmuxer from '../core/transmuxer.js';
 import TransmuxingEvents from '../core/transmuxing-events.js';
 import MSEController from '../core/mse-controller.js';
 import MSEEvents from '../core/mse-events.js';
+import {ErrorTypes, ErrorDetails} from './player-errors.js';
 import Browser from '../utils/browser.js';
 import {createDefaultConfig} from '../config.js';
 import {InvalidArgumentException, IllegalStateException} from '../utils/exception.js';
@@ -102,6 +103,13 @@ class FlvPlayer {
         this._msectl = new MSEController();
         this._msectl.attachMediaElement(mediaElement);
         this._msectl.on(MSEEvents.BUFFER_FULL, this._onmseBufferFull.bind(this));
+        this._msectl.on(MSEEvents.ERROR, (info) => {
+            this._emitter.emit(PlayerEvents.ERROR,
+                               ErrorTypes.MEDIA_ERROR,
+                               ErrorDetails.MEDIA_MSE_ERROR,
+                               info
+            );
+        });
 
         if (this._pendingSeekTime != null) {
             mediaElement.currentTime = this._pendingSeekTime;
@@ -130,11 +138,18 @@ class FlvPlayer {
         }
 
         this._transmuxer = new Transmuxer(this._mediaDataSource, this._config);
+
         this._transmuxer.on(TransmuxingEvents.INIT_SEGMENT, (type, is) => {
             this._msectl.appendInitSegment(is);
         });
         this._transmuxer.on(TransmuxingEvents.MEDIA_SEGMENT, (type, ms) => {
             this._msectl.appendMediaSegment(ms);
+        });
+        this._transmuxer.on(TransmuxingEvents.IO_ERROR, (detail, info) => {
+            this._emitter.emit(PlayerEvents.ERROR, ErrorTypes.NETWORK_ERROR, detail, info);
+        });
+        this._transmuxer.on(TransmuxingEvents.DEMUX_ERROR, (detail, info) => {
+            this._emitter.emit(PlayerEvents.ERROR, ErrorTypes.MEDIA_ERROR, detail, {code: -1, msg: info});
         });
         this._transmuxer.on(TransmuxingEvents.MEDIA_INFO, (mediaInfo) => {
             this._mediaInfo = mediaInfo;

@@ -95,7 +95,7 @@ class MozChunkedLoader extends BaseLoader {
             if (xhr.status !== 0 && (xhr.status < 200 || xhr.status > 299)) {
                 this._status = LoaderStatus.kError;
                 if (this._onError) {
-                    this._onError(LoaderErrors.kHttpStatusCodeInvalid, {code: xhr.status, msg: xhr.statusText});
+                    this._onError(LoaderErrors.HTTP_STATUS_CODE_INVALID, {code: xhr.status, msg: xhr.statusText});
                 } else {
                     throw new RuntimeException('MozChunkedLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText);
                 }
@@ -144,10 +144,10 @@ class MozChunkedLoader extends BaseLoader {
         let info = null;
 
         if (this._contentLength && e.loaded < this._contentLength) {
-            type = LoaderErrors.kEarlyEof;
+            type = LoaderErrors.EARLY_EOF;
             info = {code: -1, msg: 'Moz-Chunked stream meet Early-Eof'};
         } else {
-            type = LoaderErrors.kException;
+            type = LoaderErrors.EXCEPTION;
             info = {code: -1, msg: e.constructor.name + ' ' + e.type};
         }
 

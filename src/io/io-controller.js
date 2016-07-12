@@ -700,7 +700,7 @@ class IOController {
         this._flushStashBuffer(false);
 
         switch (type) {
-            case LoaderErrors.kEarlyEof: {
+            case LoaderErrors.EARLY_EOF: {
                 // http reconnect
                 Log.w(this.TAG, 'Connection lost, trying reconnect...');
                 let current = this._currentRange;
@@ -710,9 +710,9 @@ class IOController {
                 }
                 return;
             }
-            case LoaderErrors.kConnectingTimeout:
-            case LoaderErrors.kHttpStatusCodeInvalid:
-            case LoaderErrors.kException:
+            case LoaderErrors.CONNECTING_TIMEOUT:
+            case LoaderErrors.HTTP_STATUS_CODE_INVALID:
+            case LoaderErrors.EXCEPTION:
                 break;
         }
 

@@ -3,6 +3,7 @@ import Features from './core/features.js';
 import FlvPlayer from './player/flv-player.js';
 import NativePlayer from './player/native-player.js';
 import PlayerEvents from './player/player-events.js';
+import {ErrorTypes, ErrorDetails} from './player/player-errors.js';
 import LoggingControl from './utils/logging-control.js';
 import {InvalidArgumentException} from './utils/exception.js';
 
@@ -50,6 +51,9 @@ flvjs.isSupported = isSupported;
 flvjs.getFeatureList = getFeatureList;
 
 flvjs.Events = PlayerEvents;
+flvjs.ErrorTypes = ErrorTypes;
+flvjs.ErrorDetails = ErrorDetails;
+
 flvjs.FlvPlayer = FlvPlayer;
 flvjs.NativePlayer = NativePlayer;
 flvjs.LoggingControl = LoggingControl;

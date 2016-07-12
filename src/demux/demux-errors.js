@@ -1,7 +1,8 @@
 const DemuxErrors = {
-    kOK: 'ok',
-    kFormatError: 'formatError',
-    kCodecUnsupported: 'codecUnsupported'
+    OK: 'ok',
+    FORMAT_ERROR: 'formatError',
+    FORMAT_UNSUPPORTED: 'formatUnsupported',
+    CODEC_UNSUPPORTED: 'codecUnsupported'
 };
 
 export default DemuxErrors;

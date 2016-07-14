@@ -1,4 +1,5 @@
 import Log from '../utils/logger.js';
+import Browser from '../utils/browser.js';
 import {BaseLoader, LoaderStatus, LoaderErrors} from './loader.js';
 import {RuntimeException} from '../utils/exception.js';
 
@@ -12,7 +13,7 @@ class FetchStreamLoader extends BaseLoader {
 
     static isSupported() {
         try {
-            return (self.fetch && self.ReadableStream);
+            return (self.fetch && self.ReadableStream && !Browser.msedge);
         } catch (e) {
             return false;
         }

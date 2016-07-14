@@ -90,7 +90,6 @@ class MSEController {
                 // remove all sourcebuffers
                 let sb = this._sourceBuffers[type];
                 if (sb) {
-                    sb.abort();
                     ms.removeSourceBuffer(sb);
                     sb.removeEventListener('error', this.e.onSourceBufferError);
                     sb.removeEventListener('updateend', this.e.onSourceBufferUpdateEnd);
@@ -304,7 +303,8 @@ class MSEController {
     }
 
     _onSourceBufferError(e) {
-        Log.e(this.TAG, 'SourceBuffer Error, msg = ' + e.message);
+        Log.e(this.TAG, `SourceBuffer Error: ${e}`);
+        // this error might not always be fatal, just ignore it
     }
 
 }

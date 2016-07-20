@@ -32,6 +32,7 @@ let TransmuxingWorker = function (self) {
                 controller.on(TransmuxingEvents.DEMUX_ERROR, onDemuxError.bind(this));
                 controller.on(TransmuxingEvents.INIT_SEGMENT, onInitSegment.bind(this));
                 controller.on(TransmuxingEvents.MEDIA_SEGMENT, onMediaSegment.bind(this));
+                controller.on(TransmuxingEvents.LOADING_COMPLETE, onLoadingComplete.bind(this));
                 controller.on(TransmuxingEvents.MEDIA_INFO, onMediaInfo.bind(this));
                 controller.on(TransmuxingEvents.STATISTICS_INFO, onStatisticsInfo.bind(this));
                 controller.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, onRecommendSeekpoint.bind(this));
@@ -84,6 +85,13 @@ let TransmuxingWorker = function (self) {
             }
         };
         self.postMessage(obj, [mediaSegment.data]);  // data: ArrayBuffer
+    }
+
+    function onLoadingComplete() {
+        let obj = {
+            msg: TransmuxingEvents.LOADING_COMPLETE
+        };
+        self.postMessage(obj);
     }
 
     function onMediaInfo(mediaInfo) {

@@ -39,6 +39,7 @@ class Transmuxer {
             ctl.on(TransmuxingEvents.DEMUX_ERROR, this._onDemuxError.bind(this));
             ctl.on(TransmuxingEvents.INIT_SEGMENT, this._onInitSegment.bind(this));
             ctl.on(TransmuxingEvents.MEDIA_SEGMENT, this._onMediaSegment.bind(this));
+            ctl.on(TransmuxingEvents.LOADING_COMPLETE, this._onLoadingComplete.bind(this));
             ctl.on(TransmuxingEvents.MEDIA_INFO, this._onMediaInfo.bind(this));
             ctl.on(TransmuxingEvents.STATISTICS_INFO, this._onStatisticsInfo.bind(this));
             ctl.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, this._onRecommendSeekpoint.bind(this));
@@ -126,6 +127,12 @@ class Transmuxer {
         });
     }
 
+    _onLoadingComplete() {
+        Promise.resolve().then(() => {
+            this._emitter.emit(TransmuxingEvents.LOADING_COMPLETE);
+        });
+    }
+
     _onMediaInfo(mediaInfo) {
         Promise.resolve().then(() => {
             this._emitter.emit(TransmuxingEvents.MEDIA_INFO, mediaInfo);
@@ -175,6 +182,9 @@ class Transmuxer {
             case TransmuxingEvents.INIT_SEGMENT:
             case TransmuxingEvents.MEDIA_SEGMENT:
                 this._emitter.emit(message.msg, data.type, data.data);
+                break;
+            case TransmuxingEvents.LOADING_COMPLETE:
+                this._emitter.emit(message.msg);
                 break;
             case TransmuxingEvents.MEDIA_INFO:
                 Object.setPrototypeOf(data, MediaInfo.prototype);

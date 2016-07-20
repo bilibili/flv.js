@@ -275,6 +275,8 @@ class TransmuxingController {
         if (nextSegmentIndex < this._mediaDataSource.segments.length) {
             this._internalAbort();
             this._loadSegment(nextSegmentIndex);
+        } else {
+            this._emitter.emit(TransmuxingEvents.LOADING_COMPLETE);
         }
     }
 
@@ -289,13 +291,10 @@ class TransmuxingController {
     }
 
     _onRemuxerInitSegmentArrival(type, initSegment) {
-        let is = initSegment;
         this._emitter.emit(TransmuxingEvents.INIT_SEGMENT, type, initSegment);
     }
 
     _onRemuxerMediaSegmentArrival(type, mediaSegment) {
-        let ms = mediaSegment;
-        let info = ms.info;
         this._emitter.emit(TransmuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
         if (type === 'video') {
             this._reportStatisticsInfo();

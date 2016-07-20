@@ -145,6 +145,10 @@ class FlvPlayer {
         this._transmuxer.on(TransmuxingEvents.MEDIA_SEGMENT, (type, ms) => {
             this._msectl.appendMediaSegment(ms);
         });
+        this._transmuxer.on(TransmuxingEvents.LOADING_COMPLETE, () => {
+            Log.v(this.TAG, 'Loading Complete!');
+            this._msectl.endOfStream();
+        });
         this._transmuxer.on(TransmuxingEvents.IO_ERROR, (detail, info) => {
             this._emitter.emit(PlayerEvents.ERROR, ErrorTypes.NETWORK_ERROR, detail, info);
         });

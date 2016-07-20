@@ -25,6 +25,7 @@ class MSEController {
         this._mediaElement = null;
 
         this._isBufferFull = false;
+        this._hasPendingEos = false;
 
         this._pendingSourceBufferInit = [];
         this._mimeTypes = {
@@ -186,7 +187,13 @@ class MSEController {
 
             // abort current buffer append algorithm
             let sb = this._sourceBuffers[type];
-            sb.abort();
+            try {
+                // If range removal algorithm is running, InvalidStateError will be throwed
+                // Ignore it.
+                sb.abort();
+            } catch (error) {
+                Log.e(this.TAG, error.message);
+            }
 
             // IDRList should be clear
             this._idrList.clear();
@@ -206,6 +213,25 @@ class MSEController {
             if (!sb.updating) {
                 this._doRemoveRanges();
             }
+        }
+    }
+
+    endOfStream() {
+        let ms = this._mediaSource;
+        let sb = this._sourceBuffers;
+        if (!ms || ms.readyState !== 'open') {
+            return;
+        }
+        if (sb.video && sb.video.updating || sb.audio && sb.audio.updating) {
+            // if any sourcebuffer is updating, defer eos operation
+            // See _onSourceBufferUpdateEnd()
+            this._hasPendingEos = true;
+        } else {
+            this._hasPendingEos = false;
+            // Notify media data loading complete
+            // This is helpful for correcting total duration to match last media segment
+            // Otherwise MediaElement's ended event may not be triggered
+            ms.endOfStream();
         }
     }
 
@@ -299,6 +325,8 @@ class MSEController {
             this._doRemoveRanges();
         } else if (this._hasPendingSegments()) {
             this._doAppendSegments();
+        } else if (this._hasPendingEos) {
+            this.endOfStream();
         }
     }
 

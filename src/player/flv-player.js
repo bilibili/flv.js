@@ -96,7 +96,7 @@ class FlvPlayer {
     attachMediaElement(mediaElement) {
         this._mediaElement = mediaElement;
         mediaElement.addEventListener('seeking', this.e.onvSeeking);
-        if (this._config.lazyLoad) {
+        if (this._config.lazyLoad && !this._config.isLive) {
             mediaElement.addEventListener('timeupdate', this.e.onvTimeUpdate);
         }
 
@@ -137,6 +137,9 @@ class FlvPlayer {
             throw new IllegalStateException('HTMLMediaElement must be attached before load()!');
         }
 
+        this._requestSetTime = true;
+        this._mediaElement.currentTime = 0;
+
         this._transmuxer = new Transmuxer(this._mediaDataSource, this._config);
 
         this._transmuxer.on(TransmuxingEvents.INIT_SEGMENT, (type, is) => {
@@ -176,8 +179,9 @@ class FlvPlayer {
     unload() {
         if (this._mediaElement) {
             this._mediaElement.pause();
-            this._requestSetTime = true;
-            this._mediaElement.currentTime = 0;
+        }
+        if (this._msectl) {
+            this._msectl.seek(0);
         }
         if (this._transmuxer) {
             this._transmuxer.close();
@@ -402,7 +406,7 @@ class FlvPlayer {
     }
 
     _onvTimeUpdate(e) {
-        if (!this._config.lazyLoad) {
+        if (!this._config.lazyLoad || this._config.isLive) {
             return;
         }
 

@@ -701,14 +701,18 @@ class IOController {
 
         switch (type) {
             case LoaderErrors.EARLY_EOF: {
-                // http reconnect
-                Log.w(this.TAG, 'Connection lost, trying reconnect...');
-                let current = this._currentRange;
-                let next = this._mergeRanges(current.from, current.to);
-                if (next.from !== -1) {
-                    this._internalSeek(next.from, false, false);
+                if (!this._config.isLive) {
+                    // Do internal http reconnect if not live stream
+                    Log.w(this.TAG, 'Connection lost, trying reconnect...');
+                    let current = this._currentRange;
+                    let next = this._mergeRanges(current.from, current.to);
+                    if (next.from !== -1) {
+                        this._internalSeek(next.from, false, false);
+                    }
+                    return;
                 }
-                return;
+                // live stream: throw EarlyEof error to upper-layer
+                break;
             }
             case LoaderErrors.CONNECTING_TIMEOUT:
             case LoaderErrors.HTTP_STATUS_CODE_INVALID:

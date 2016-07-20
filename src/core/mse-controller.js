@@ -187,12 +187,14 @@ class MSEController {
 
             // abort current buffer append algorithm
             let sb = this._sourceBuffers[type];
-            try {
-                // If range removal algorithm is running, InvalidStateError will be throwed
-                // Ignore it.
-                sb.abort();
-            } catch (error) {
-                Log.e(this.TAG, error.message);
+            if (this._mediaSource.readyState === 'open') {
+                try {
+                    // If range removal algorithm is running, InvalidStateError will be throwed
+                    // Ignore it.
+                    sb.abort();
+                } catch (error) {
+                    Log.e(this.TAG, error.message);
+                }
             }
 
             // IDRList should be clear

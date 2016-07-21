@@ -82,7 +82,7 @@ class MSEController {
         if (this._mediaSource) {
             let ms = this._mediaSource;
             for (let type in this._sourceBuffers) {
-                // pending segmends should be discard
+                // pending segments should be discard
                 let ps = this._pendingSegments[type];
                 ps.splice(0, ps.length);
                 this._pendingSegments[type] = null;
@@ -225,7 +225,7 @@ class MSEController {
             return;
         }
         if (sb.video && sb.video.updating || sb.audio && sb.audio.updating) {
-            // if any sourcebuffer is updating, defer eos operation
+            // If any sourcebuffer is updating, defer endOfStream operation
             // See _onSourceBufferUpdateEnd()
             this._hasPendingEos = true;
         } else {

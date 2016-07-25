@@ -35,6 +35,12 @@ class FlvPlayer {
             onvTimeUpdate: this._onvTimeUpdate.bind(this)
         };
 
+        if (self.performance && self.performance.now) {
+            this._now = self.performance.now.bind(self.performance);
+        } else {
+            this._now = Date.now;
+        }
+
         this._pendingSeekTime = null;  // in seconds
         this._requestSetTime = false;
         this._seekpointRecord = null;
@@ -364,7 +370,7 @@ class FlvPlayer {
 
     _checkAndApplyUnbufferedSeekpoint() {
         if (this._seekpointRecord) {
-            if (this._seekpointRecord.recordTime <= self.performance.now() - 200) {
+            if (this._seekpointRecord.recordTime <= this._now() - 100) {
                 let target = this._mediaElement.currentTime;
                 this._seekpointRecord = null;
                 if (!this._isTimepointBuffered(target)) {
@@ -400,7 +406,7 @@ class FlvPlayer {
 
         this._seekpointRecord = {
             seekPoint: target,
-            recordTime: self.performance.now()
+            recordTime: this._now()
         };
         window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);
     }

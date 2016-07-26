@@ -273,6 +273,15 @@ class MSEController {
                 } catch (error) {
                     this._pendingSegments[type].unshift(segment);
                     if (error.code === 22) {  // QuotaExceededError
+                        /* Notice that FireFox may not throw QuotaExceededError if SourceBuffer is full
+                         * Currently we can only do lazy-load to avoid SourceBuffer become scattered.
+                         * SourceBuffer eviction policy may be changed in future version of FireFox.
+                         *
+                         * Related issues:
+                         * https://bugzilla.mozilla.org/show_bug.cgi?id=1279885
+                         * https://bugzilla.mozilla.org/show_bug.cgi?id=1280023
+                         */
+
                         // report buffer full, abort network IO
                         if (!this._isBufferFull) {
                             this._emitter.emit(MSEEvents.BUFFER_FULL);

@@ -13,6 +13,8 @@ class FetchStreamLoader extends BaseLoader {
 
     static isSupported() {
         try {
+            // fetch + stream is broken on Microsoft Edge. Disable for now.
+            // see https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/8196907/
             return (self.fetch && self.ReadableStream && !Browser.msedge);
         } catch (e) {
             return false;

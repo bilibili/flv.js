@@ -297,7 +297,7 @@ class FlvPlayer {
             this._transmuxer.pause();
 
             if (this._progressCheckId === 0) {
-                this._progressCheckId = window.setInterval(this._checkProgressAndResume.bind(this), 2000);
+                this._progressCheckId = window.setInterval(this._checkProgressAndResume.bind(this), 1000);
             }
         }
     }
@@ -350,11 +350,15 @@ class FlvPlayer {
 
         if (directSeek) {  // buffered position
             if (!this._alwaysSeekKeyframe) {
+                this._requestSetTime = true;
                 this._mediaElement.currentTime = seconds;
             } else {
                 let idr = this._msectl.getNearestKeyframe(Math.floor(seconds * 1000));
                 this._requestSetTime = true;
                 this._mediaElement.currentTime = idr.dts / 1000;
+            }
+            if (this._progressCheckId) {
+                this._checkProgressAndResume();
             }
         } else {
             if (this._progressCheckId !== 0) {
@@ -400,6 +404,9 @@ class FlvPlayer {
                 let idr = this._msectl.getNearestKeyframe(Math.floor(target * 1000));
                 this._requestSetTime = true;
                 this._mediaElement.currentTime = idr.dts / 1000;
+            }
+            if (this._progressCheckId) {
+                this._checkProgressAndResume();
             }
             return;
         }

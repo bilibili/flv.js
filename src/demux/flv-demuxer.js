@@ -616,7 +616,7 @@ class FlvDemuxer {
 
         let spec = (new Uint8Array(arrayBuffer, dataOffset, dataSize))[0];
 
-        let frameType = (spec & 240) >>> 4;  // unused
+        let frameType = (spec & 240) >>> 4;
         let codecId = spec & 15;
 
         if (codecId !== 7) {
@@ -624,10 +624,10 @@ class FlvDemuxer {
             return;
         }
 
-        this._parseAVCVideoPacket(arrayBuffer, dataOffset + 1, dataSize - 1, tagTimestamp, tagPosition);
+        this._parseAVCVideoPacket(arrayBuffer, dataOffset + 1, dataSize - 1, tagTimestamp, tagPosition, frameType);
     }
 
-    _parseAVCVideoPacket(arrayBuffer, dataOffset, dataSize, tagTimestamp, tagPosition) {
+    _parseAVCVideoPacket(arrayBuffer, dataOffset, dataSize, tagTimestamp, tagPosition, frameType) {
         if (dataSize < 4) {
             Log.w(this.TAG, 'Flv: Invalid AVC packet, missing AVCPacketType or/and CompositionTime');
             return;
@@ -642,7 +642,7 @@ class FlvDemuxer {
         if (packetType === 0) {  // AVCDecoderConfigurationRecord
             this._parseAVCDecoderConfigurationRecord(arrayBuffer, dataOffset + 4, dataSize - 4);
         } else if (packetType === 1) {  // One or more Nalus
-            this._parseAVCVideoData(arrayBuffer, dataOffset + 4, dataSize - 4, tagTimestamp, cts, tagPosition);
+            this._parseAVCVideoData(arrayBuffer, dataOffset + 4, dataSize - 4, tagTimestamp, tagPosition, frameType, cts);
         } else if (packetType === 2) {
             // empty, AVC end of sequence
         } else {
@@ -802,7 +802,7 @@ class FlvDemuxer {
         this._onTrackMetadata('video', meta);
     }
 
-    _parseAVCVideoData(arrayBuffer, dataOffset, dataSize, tagTimestamp, cts, tagPosition) {
+    _parseAVCVideoData(arrayBuffer, dataOffset, dataSize, tagTimestamp, tagPosition, frameType, cts) {
         let le = this._littleEndian;
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
 
@@ -811,7 +811,7 @@ class FlvDemuxer {
         let offset = 0;
         const lengthSize = this._naluLengthSize;
         let dts = this._timestampBase + tagTimestamp;
-        let keyframe = false;
+        let keyframe = (frameType === 1);  // from FLV Frame Type constants
 
         while (offset < dataSize) {
             // Nalu with length-header (AVC1)

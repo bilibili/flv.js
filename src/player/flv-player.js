@@ -142,9 +142,15 @@ class FlvPlayer {
         if (!this._mediaElement) {
             throw new IllegalStateException('HTMLMediaElement must be attached before load()!');
         }
+        if (this._transmuxer) {
+            throw new IllegalStateException('FlvPlayer.load() has been called, please call unload() first!');
+        }
 
-        this._requestSetTime = true;
-        this._mediaElement.currentTime = 0;
+        if (this._mediaElement.readyState > 0) {
+            this._requestSetTime = true;
+            // IE11 may throw InvalidStateError if readyState === 0
+            this._mediaElement.currentTime = 0;
+        }
 
         this._transmuxer = new Transmuxer(this._mediaDataSource, this._config);
 

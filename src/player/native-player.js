@@ -75,6 +75,10 @@ class NativePlayer {
             this._mediaElement.removeEventListener('loadedmetadata', this.e.onvLoadedMetadata);
             this._mediaElement = null;
         }
+        if (this._statisticsReporter != null) {
+            window.clearInterval(this._statisticsReporter);
+            this._statisticsReporter = null;
+        }
     }
 
     load() {
@@ -82,7 +86,9 @@ class NativePlayer {
             throw new IllegalStateException('HTMLMediaElement must be attached before load()!');
         }
         this._mediaElement.src = this._mediaDataSource.url;
-        this._mediaElement.currentTime = 0;
+        if (this._mediaElement.readyState > 0) {
+            this._mediaElement.currentTime = 0;
+        }
         this._mediaElement.preload = 'auto';
         this._mediaElement.load();
         this._statisticsReporter = window.setInterval(

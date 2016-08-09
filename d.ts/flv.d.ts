@@ -90,14 +90,43 @@ declare namespace FlvJs {
         applyConfig: Object,
     }
 
+    interface Events {
+        ERROR: string,
+        MEDIA_INFO: string,
+        STATISTICS_INFO: string
+    }
+
+    interface ErrorTypes {
+        NETWORK_ERROR: string,
+        MEDIA_ERROR: string,
+        OTHER_ERROR: string
+    }
+
+    interface ErrorDetails {
+        NETWORK_EXCEPTION: string,
+        NETWORK_STATUS_CODE_INVALID: string,
+        NETWORK_TIMEOUT: string,
+        NETWORK_EARLY_EOF: string,
+
+        MEDIA_MSE_ERROR: string,
+
+        MEDIA_FORMAT_ERROR: string,
+        MEDIA_FORMAT_UNSUPPORTED: string,
+        MEDIA_CODEC_UNSUPPORTED: string
+    }
+
 }
 
 declare var flvjs: {
-    createPlayer(mediaDataSource: FlvJs.MediaDataSource, config?: FlvJs.Config): FlvJs.Player;
-    isSupported(): boolean;
-    getFeatureList(): FlvJs.FeatureList;
+    createPlayer(mediaDataSource: FlvJs.MediaDataSource, config?: FlvJs.Config): FlvJs.Player,
+    isSupported(): boolean,
+    getFeatureList(): FlvJs.FeatureList,
 
-    FlvPlayer: FlvJs.PlayerConstructor;
-    NativePlayer: FlvJs.PlayerConstructor;
-    LoggingControl: FlvJs.LoggingControl;
-}
+    Events: FlvJs.Events,
+    ErrorTypes: FlvJs.ErrorTypes,
+    ErrorDetails: FlvJs.ErrorDetails,
+
+    FlvPlayer: FlvJs.PlayerConstructor,
+    NativePlayer: FlvJs.PlayerConstructor,
+    LoggingControl: FlvJs.LoggingControl
+};

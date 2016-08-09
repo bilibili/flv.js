@@ -3,14 +3,15 @@ flv.js
 ======
 HTML5 Flash Video(FLV) Player, written in pure JavaScript without Flash. LONG LIVE FLV!
 
-This project relies on [Media Source Extensions][].
+This project relies on [Media Source Extensions][], and inspired by [hls.js][].
 
 ### Overview
-A JavaScript library which implements Flash Video(FLV) format playback in HTML5 video. It works by tramsmuxing FLV file stream into ISO BMFF (Fragmented MP4) segments,  then feed mp4 segments into browser through [Media Source Extensions][] API.
+A JavaScript library which implements Flash Video(FLV) format playback in HTML5 video. It works by tramsmuxing FLV file stream into ISO BMFF (Fragmented MP4) segments, then feed mp4 segments into browser through [Media Source Extensions][] API.
 
 flv.js is written in [ECMAScript 6][], and transpiled into ECMAScript 5 by [Babel Compiler][], bundled with [Browserify][].
 
 [Media Source Extensions]: https://w3c.github.io/media-source/
+[hls.js]: https://github.com/dailymotion/hls.js
 [ECMAScript 6]: https://github.com/lukehoban/es6features
 [Babel Compiler]: https://babeljs.io/
 [Browserify]: http://browserify.org/
@@ -29,7 +30,7 @@ npm install -g gulp  # install build tool
 gulp release         # packaged & minimized js will be emitted in dist folder
 ```
 
-[cnpm](https://github.com/cnpm/cnpm) is recommended if you are in Mainland China.
+[cnpm](https://github.com/cnpm/cnpm) mirror is recommended if you are in Mainland China.
 
 ### Getting Started
 ```js

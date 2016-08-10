@@ -1,5 +1,6 @@
 import Log from '../utils/logger.js';
 import MP4 from './mp4-generator.js';
+import AAC from './aac-slient.js';
 import Browser from '../utils/browser.js';
 import {SampleInfo, MediaSegmentInfo, MediaSegmentInfoList} from '../core/media-segment-info.js';
 import {IllegalStateException} from '../utils/exception.js';
@@ -35,6 +36,10 @@ class MP4Remuxer {
         this._forceFirstIDR = (Browser.chrome &&
                               (Browser.version.major < 50 ||
                               (Browser.version.major === 50 && Browser.version.build < 2661))) ? true : false;
+
+        // Fill slient aac frame after keyframe-seeking if under msedge/msie
+        // Make audio beginDts equals with video beginDts.
+        this._fillSlientAfterSeek = (Browser.msedge || Browser.msie);
     }
 
     destroy() {
@@ -99,8 +104,8 @@ class MP4Remuxer {
         if (!this._onMediaSegment) {
             throw new IllegalStateException('MP4Remuxer: onMediaSegment callback must be specificed!');
         }
-        this._remuxAudio(audioTrack);
         this._remuxVideo(videoTrack);
+        this._remuxAudio(audioTrack);
     }
 
     _onTrackMetadataReceived(type, metadata) {
@@ -132,6 +137,10 @@ class MP4Remuxer {
         let track = audioTrack;
         let samples = track.samples;
         let dtsCorrection = -1;
+
+        let remuxEmptyFrame = false;
+        let emptyFrameDuration = -1;
+
         let firstDts = -1, lastDts = -1, lastPts = -1;
 
         if (!samples || samples.length === 0) {
@@ -169,11 +178,14 @@ class MP4Remuxer {
                 if (this._audioNextDts == undefined) {
                     if (this._audioSegmentInfoList.isEmpty()) {
                         dtsCorrection = 0;
+                        if (this._fillSlientAfterSeek && !this._videoSegmentInfoList.isEmpty()) {
+                            remuxEmptyFrame = true;
+                        }
                     } else {
                         let lastSample = this._audioSegmentInfoList.getLastSampleBefore(originalDts);
                         if (lastSample != null) {
                             let distance = (originalDts - (lastSample.originalDts + lastSample.duration));
-                            if (distance < 0 || distance <= 3) {
+                            if (distance <= 3) {
                                 distance = 0;
                             }
                             let expectedDts = lastSample.dts + lastSample.duration + distance;
@@ -188,8 +200,46 @@ class MP4Remuxer {
             }
 
             let dts = originalDts - dtsCorrection;
+            if (remuxEmptyFrame) {
+                // align audio segment beginDts to match with current video segment's beginDts
+                let videoSegment = this._videoSegmentInfoList.getLastSegmentBefore(originalDts);
+                if (videoSegment != null && videoSegment.beginDts < dts) {
+                    emptyFrameDuration = dts - videoSegment.beginDts;
+                    dts = videoSegment.beginDts;
+                } else {
+                    remuxEmptyFrame = false;
+                }
+            }
             if (firstDts === -1) {
                 firstDts = dts;
+            }
+
+            if (remuxEmptyFrame) {
+                remuxEmptyFrame = false;
+                samples.unshift(aacSample);
+
+                let frame = this._generateEmptyAudio(dts, emptyFrameDuration);
+                if (frame == null) {
+                    continue;
+                }
+                let mp4Sample = frame.mp4Sample;
+                let unit = frame.unit;
+
+                mp4Samples.push(mp4Sample);
+
+                // re-allocate mdatbox buffer with new size, to fit with this slient frame
+                bytes += unit.byteLength;
+                mdatbox = new Uint8Array(bytes);
+                mdatbox[0] = (bytes >>> 24) & 0xFF;
+                mdatbox[1] = (bytes >>> 16) & 0xFF;
+                mdatbox[2] = (bytes >>>  8) & 0xFF;
+                mdatbox[3] = (bytes) & 0xFF;
+                mdatbox.set(MP4.types.mdat, 4);
+
+                // fill data now
+                mdatbox.set(unit, offset);
+                offset += unit.byteLength;
+                continue;
             }
 
             let sampleDuration = 0;
@@ -264,6 +314,34 @@ class MP4Remuxer {
         });
     }
 
+    _generateEmptyAudio(dts, frameDuration) {
+        Log.v(this.TAG, `GenerateEmptyAudio: dts = ${dts}, duration = ${frameDuration}`);
+        let unit = AAC.getSlientFrame(this._audioMeta.channelCount);
+        if (unit == null) {
+            return null;
+        }
+
+        let mp4Sample = {
+            dts: dts,
+            pts: dts,
+            cts: 0,
+            size: unit.byteLength,
+            duration: frameDuration,
+            originalDts: dts,
+            flags: {
+                isLeading: 0,
+                dependsOn: 1,
+                isDependedOn: 0,
+                hasRedundancy: 0
+            }
+        };
+
+        return {
+            unit,
+            mp4Sample
+        };
+    }
+
     _remuxVideo(videoTrack) {
         let track = videoTrack;
         let samples = track.samples;
@@ -310,7 +388,7 @@ class MP4Remuxer {
                         let lastSample = this._videoSegmentInfoList.getLastSampleBefore(originalDts);
                         if (lastSample != null) {
                             let distance = (originalDts - (lastSample.originalDts + lastSample.duration));
-                            if (distance < 0 || distance <= 3) {
+                            if (distance <= 3) {
                                 distance = 0;
                             }
                             let expectedDts = lastSample.dts + lastSample.duration + distance;

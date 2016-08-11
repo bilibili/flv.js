@@ -1,6 +1,8 @@
+// from hls.js/src/helper/aac.js
+
 class AAC {
 
-    static getSlientFrame(channelCount) {
+    static getSilentFrame(channelCount) {
         if (channelCount === 1) {
             return new Uint8Array([0x00, 0xc8, 0x00, 0x80, 0x23, 0x80]);
         } else if (channelCount === 2) {

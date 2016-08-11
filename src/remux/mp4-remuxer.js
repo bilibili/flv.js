@@ -1,6 +1,6 @@
 import Log from '../utils/logger.js';
 import MP4 from './mp4-generator.js';
-import AAC from './aac-slient.js';
+import AAC from './aac-silent.js';
 import Browser from '../utils/browser.js';
 import {SampleInfo, MediaSegmentInfo, MediaSegmentInfoList} from '../core/media-segment-info.js';
 import {IllegalStateException} from '../utils/exception.js';
@@ -37,9 +37,9 @@ class MP4Remuxer {
                               (Browser.version.major < 50 ||
                               (Browser.version.major === 50 && Browser.version.build < 2661))) ? true : false;
 
-        // Fill slient aac frame after keyframe-seeking if under msedge/msie
-        // Make audio beginDts equals with video beginDts.
-        this._fillSlientAfterSeek = (Browser.msedge || Browser.msie);
+        // Workaround for IE11/Edge: Fill silent aac frame after keyframe-seeking
+        // Make audio beginDts equals with video beginDts, in order to fix seek freeze
+        this._fillSilentAfterSeek = (Browser.msedge || Browser.msie);
     }
 
     destroy() {
@@ -137,11 +137,10 @@ class MP4Remuxer {
         let track = audioTrack;
         let samples = track.samples;
         let dtsCorrection = -1;
-
-        let remuxEmptyFrame = false;
-        let emptyFrameDuration = -1;
-
         let firstDts = -1, lastDts = -1, lastPts = -1;
+
+        let remuxSilentFrame = false;
+        let silentFrameDuration = -1;
 
         if (!samples || samples.length === 0) {
             return;
@@ -178,8 +177,8 @@ class MP4Remuxer {
                 if (this._audioNextDts == undefined) {
                     if (this._audioSegmentInfoList.isEmpty()) {
                         dtsCorrection = 0;
-                        if (this._fillSlientAfterSeek && !this._videoSegmentInfoList.isEmpty()) {
-                            remuxEmptyFrame = true;
+                        if (this._fillSilentAfterSeek && !this._videoSegmentInfoList.isEmpty()) {
+                            remuxSilentFrame = true;
                         }
                     } else {
                         let lastSample = this._audioSegmentInfoList.getLastSampleBefore(originalDts);
@@ -200,25 +199,25 @@ class MP4Remuxer {
             }
 
             let dts = originalDts - dtsCorrection;
-            if (remuxEmptyFrame) {
+            if (remuxSilentFrame) {
                 // align audio segment beginDts to match with current video segment's beginDts
                 let videoSegment = this._videoSegmentInfoList.getLastSegmentBefore(originalDts);
                 if (videoSegment != null && videoSegment.beginDts < dts) {
-                    emptyFrameDuration = dts - videoSegment.beginDts;
+                    silentFrameDuration = dts - videoSegment.beginDts;
                     dts = videoSegment.beginDts;
                 } else {
-                    remuxEmptyFrame = false;
+                    remuxSilentFrame = false;
                 }
             }
             if (firstDts === -1) {
                 firstDts = dts;
             }
 
-            if (remuxEmptyFrame) {
-                remuxEmptyFrame = false;
+            if (remuxSilentFrame) {
+                remuxSilentFrame = false;
                 samples.unshift(aacSample);
 
-                let frame = this._generateEmptyAudio(dts, emptyFrameDuration);
+                let frame = this._generateSilentAudio(dts, silentFrameDuration);
                 if (frame == null) {
                     continue;
                 }
@@ -227,7 +226,7 @@ class MP4Remuxer {
 
                 mp4Samples.push(mp4Sample);
 
-                // re-allocate mdatbox buffer with new size, to fit with this slient frame
+                // re-allocate mdatbox buffer with new size, to fit with this silent frame
                 bytes += unit.byteLength;
                 mdatbox = new Uint8Array(bytes);
                 mdatbox[0] = (bytes >>> 24) & 0xFF;
@@ -314,10 +313,12 @@ class MP4Remuxer {
         });
     }
 
-    _generateEmptyAudio(dts, frameDuration) {
-        Log.v(this.TAG, `GenerateEmptyAudio: dts = ${dts}, duration = ${frameDuration}`);
-        let unit = AAC.getSlientFrame(this._audioMeta.channelCount);
+    _generateSilentAudio(dts, frameDuration) {
+        Log.v(this.TAG, `GenerateSilentAudio: dts = ${dts}, duration = ${frameDuration}`);
+
+        let unit = AAC.getSilentFrame(this._audioMeta.channelCount);
         if (unit == null) {
+            Log.w(this.TAG, `Cannot generate silent aac frame for channelCount = ${this._audioMeta.channelCount}`);
             return null;
         }
 

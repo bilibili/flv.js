@@ -25,8 +25,10 @@ class RangeLoader extends BaseLoader {
         this._seekHandler = seekHandler;
         this._needStash = false;
 
-        this._chunkSizeKBList = [128, 256, 512, 768, 1024, 1536, 2048, 3072, 4096];
-        this._currentChunkSizeKB = 256;
+        this._chunkSizeKBList = [
+            128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 5120, 6144, 7168, 8192
+        ];
+        this._currentChunkSizeKB = 384;
         this._currentSpeed = 0;
         this._currentSpeedNormalized = 0;
 

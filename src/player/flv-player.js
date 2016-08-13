@@ -31,8 +31,7 @@ class FlvPlayer {
         }
 
         this.e = {
-            onvSeeking: this._onvSeeking.bind(this),
-            onvTimeUpdate: this._onvTimeUpdate.bind(this)
+            onvSeeking: this._onvSeeking.bind(this)
         };
 
         if (self.performance && self.performance.now) {
@@ -102,12 +101,10 @@ class FlvPlayer {
     attachMediaElement(mediaElement) {
         this._mediaElement = mediaElement;
         mediaElement.addEventListener('seeking', this.e.onvSeeking);
-        if (this._config.lazyLoad && !this._config.isLive) {
-            mediaElement.addEventListener('timeupdate', this.e.onvTimeUpdate);
-        }
 
         this._msectl = new MSEController();
         this._msectl.attachMediaElement(mediaElement);
+        this._msectl.on(MSEEvents.UPDATE_END, this._onmseUpdateEnd.bind(this));
         this._msectl.on(MSEEvents.BUFFER_FULL, this._onmseBufferFull.bind(this));
         this._msectl.on(MSEEvents.ERROR, (info) => {
             this._emitter.emit(PlayerEvents.ERROR,
@@ -127,9 +124,6 @@ class FlvPlayer {
         if (this._mediaElement) {
             this._msectl.detachMediaElement();
             this._mediaElement.removeEventListener('seeking', this.e.onvSeeking);
-            if (this._config.lazyLoad) {
-                this._mediaElement.removeEventListener('timeupdate', this.e.onvTimeUpdate);
-            }
             this._mediaElement = null;
         }
         if (this._msectl) {
@@ -291,6 +285,32 @@ class FlvPlayer {
         return statInfo;
     }
 
+    _onmseUpdateEnd() {
+        if (!this._config.lazyLoad || this._config.isLive) {
+            return;
+        }
+
+        let buffered = this._mediaElement.buffered;
+        let currentTime = this._mediaElement.currentTime;
+        let currentRangeStart = 0;
+        let currentRangeEnd = 0;
+
+        for (let i = 0; i < buffered.length; i++) {
+            let start = buffered.start(i);
+            let end = buffered.end(i);
+            if (start <= currentTime && currentTime < end) {
+                currentRangeStart = start;
+                currentRangeEnd = end;
+                break;
+            }
+        }
+
+        if (currentRangeEnd >= currentTime + this._config.lazyLoadMaxDuration && this._progressCheckId === 0) {
+            Log.v(this.TAG, 'Maximum buffering duration exceeded, suspend transmuxing task');
+            this._suspendTransmuxer();
+        }
+    }
+
     _onmseBufferFull() {
         Log.v(this.TAG, 'MSE SourceBuffer is full, suspend transmuxing task');
         if (this._progressCheckId === 0) {
@@ -422,32 +442,6 @@ class FlvPlayer {
             recordTime: this._now()
         };
         window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);
-    }
-
-    _onvTimeUpdate(e) {
-        if (!this._config.lazyLoad || this._config.isLive) {
-            return;
-        }
-
-        let buffered = this._mediaElement.buffered;
-        let currentTime = this._mediaElement.currentTime;
-        let currentRangeStart = 0;
-        let currentRangeEnd = 0;
-
-        for (let i = 0; i < buffered.length; i++) {
-            let start = buffered.start(i);
-            let end = buffered.end(i);
-            if (start <= currentTime && currentTime < end) {
-                currentRangeStart = start;
-                currentRangeEnd = end;
-                break;
-            }
-        }
-
-        if (currentRangeEnd >= currentTime + this._config.lazyLoadMaxDuration && this._progressCheckId === 0) {
-            Log.v(this.TAG, 'Maximum buffering duration exceeded, suspend transmuxing task');
-            this._suspendTransmuxer();
-        }
     }
 
 }

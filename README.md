@@ -6,7 +6,7 @@ HTML5 Flash Video(FLV) Player, written in pure JavaScript without Flash. LONG LI
 This project relies on [Media Source Extensions][], and inspired by [hls.js][].
 
 ### Overview
-A JavaScript library which implements Flash Video(FLV) format playback in HTML5 video. It works by tramsmuxing FLV file stream into ISO BMFF (Fragmented MP4) segments, then feed mp4 segments into browser through [Media Source Extensions][] API.
+A JavaScript library which implements Flash Video(FLV) format playback in HTML5 video. It works by transmuxing FLV file stream into ISO BMFF (Fragmented MP4) segments, then feed mp4 segments into browser through [Media Source Extensions][] API.
 
 flv.js is written in [ECMAScript 6][], and transpiled into ECMAScript 5 by [Babel Compiler][], bundled with [Browserify][].
 

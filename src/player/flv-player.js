@@ -381,7 +381,11 @@ class FlvPlayer {
             } else {
                 let idr = this._msectl.getNearestKeyframe(Math.floor(seconds * 1000));
                 this._requestSetTime = true;
-                this._mediaElement.currentTime = idr.dts / 1000;
+                if (idr != null) {
+                    this._mediaElement.currentTime = idr.dts / 1000;
+                } else {
+                    this._mediaElement.currentTime = seconds;
+                }
             }
             if (this._progressCheckId) {
                 this._checkProgressAndResume();
@@ -428,8 +432,10 @@ class FlvPlayer {
         if (this._isTimepointBuffered(target)) {
             if (this._alwaysSeekKeyframe) {
                 let idr = this._msectl.getNearestKeyframe(Math.floor(target * 1000));
-                this._requestSetTime = true;
-                this._mediaElement.currentTime = idr.dts / 1000;
+                if (idr != null) {
+                    this._requestSetTime = true;
+                    this._mediaElement.currentTime = idr.dts / 1000;
+                }
             }
             if (this._progressCheckId) {
                 this._checkProgressAndResume();

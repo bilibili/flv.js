@@ -8,6 +8,8 @@ export const defaultConfig = {
     lazyLoad: true,
     lazyLoadMaxDuration: 3 * 60,
 
+    statisticsInfoReportInterval: 600,
+
     seekType: 'range',  // [range, param, custom]
     seekParamStart: 'bstart',
     seekParamEnd: 'bend',

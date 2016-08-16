@@ -43,7 +43,10 @@ class FlvPlayer {
         this._pendingSeekTime = null;  // in seconds
         this._requestSetTime = false;
         this._seekpointRecord = null;
+        this._statisticsReporter = null;
         this._progressCheckId = 0;
+
+        this._hasStatisticsListener = false;
 
         this._mediaDataSource = mediaDataSource;
         this._mediaElement = null;
@@ -85,16 +88,29 @@ class FlvPlayer {
                 });
             }
         } else if (event === PlayerEvents.STATISTICS_INFO) {
+            this._hasStatisticsListener = true;
             if (this._statisticsInfo != null) {
                 Promise.resolve().then(() => {
                     this._emitter.emit(PlayerEvents.STATISTICS_INFO, this.statisticsInfo);
                 });
+            }
+            if (this._statisticsReporter == null) {
+                this._statisticsReporter = window.setInterval(
+                    this._reportStatisticsInfo.bind(this),
+                this._config.statisticsInfoReportInterval);
             }
         }
         this._emitter.addListener(event, listener);
     }
 
     off(event, listener) {
+        if (event === PlayerEvents.STATISTICS_INFO) {
+            this._hasStatisticsListener = false;
+            if (this._statisticsReporter != null) {
+                window.clearInterval(this._statisticsReporter);
+                this._statisticsReporter = null;
+            }
+        }
         this._emitter.removeListener(event, listener);
     }
 
@@ -153,10 +169,19 @@ class FlvPlayer {
         });
         this._transmuxer.on(TransmuxingEvents.MEDIA_SEGMENT, (type, ms) => {
             this._msectl.appendMediaSegment(ms);
+            if (this._hasStatisticsListener && this._statisticsReporter == null) {
+                this._statisticsReporter = window.setInterval(
+                    this._reportStatisticsInfo.bind(this),
+                this._config.statisticsInfoReportInterval);
+            }
         });
         this._transmuxer.on(TransmuxingEvents.LOADING_COMPLETE, () => {
             Log.v(this.TAG, 'Loading Complete!');
             this._msectl.endOfStream();
+            if (this._statisticsReporter != null) {
+                window.clearInterval(this._statisticsReporter);
+                this._statisticsReporter = null;
+            }
         });
         this._transmuxer.on(TransmuxingEvents.IO_ERROR, (detail, info) => {
             this._emitter.emit(PlayerEvents.ERROR, ErrorTypes.NETWORK_ERROR, detail, info);
@@ -170,7 +195,6 @@ class FlvPlayer {
         });
         this._transmuxer.on(TransmuxingEvents.STATISTICS_INFO, (statInfo) => {
             this._statisticsInfo = this._fillStatisticsInfo(statInfo);
-            this._emitter.emit(PlayerEvents.STATISTICS_INFO, statInfo);
         });
         this._transmuxer.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, (milliseconds) => {
             if (this._mediaElement) {
@@ -183,6 +207,10 @@ class FlvPlayer {
     }
 
     unload() {
+        if (this._statisticsReporter != null) {
+            window.clearInterval(this._statisticsReporter);
+            this._statisticsReporter = null;
+        }
         if (this._mediaElement) {
             this._mediaElement.pause();
         }
@@ -285,6 +313,10 @@ class FlvPlayer {
         return statInfo;
     }
 
+    _reportStatisticsInfo() {
+        this._emitter.emit(PlayerEvents.STATISTICS_INFO, this.statisticsInfo);
+    }
+
     _onmseUpdateEnd() {
         if (!this._config.lazyLoad || this._config.isLive) {
             return;
@@ -321,6 +353,11 @@ class FlvPlayer {
     _suspendTransmuxer() {
         if (this._transmuxer) {
             this._transmuxer.pause();
+
+            if (this._statisticsReporter != null) {
+                window.clearInterval(this._statisticsReporter);
+                this._statisticsReporter = null;
+            }
 
             if (this._progressCheckId === 0) {
                 this._progressCheckId = window.setInterval(this._checkProgressAndResume.bind(this), 1000);

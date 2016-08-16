@@ -1,14 +1,20 @@
 import EventEmitter from 'events';
 import PlayerEvents from './player-events.js';
+import {createDefaultConfig} from '../config.js';
 import {InvalidArgumentException, IllegalStateException} from '../utils/exception.js';
 
 // Player wrapper for browser's native player (HTMLVideoElement) without MediaSource src. 
 class NativePlayer {
 
-    constructor(mediaDataSource) {
+    constructor(mediaDataSource, config) {
         this.TAG = this.constructor.name;
         this._type = 'NativePlayer';
         this._emitter = new EventEmitter();
+
+        this._config = createDefaultConfig();
+        if (typeof config === 'object') {
+            Object.assign(this._config, config);
+        }
 
         if (mediaDataSource.type.toLowerCase() === 'flv') {
             throw new InvalidArgumentException('NativePlayer does\'t support flv MediaDataSource input!');
@@ -93,7 +99,7 @@ class NativePlayer {
         this._mediaElement.load();
         this._statisticsReporter = window.setInterval(
             this._reportStatisticsInfo.bind(this),
-        1000);
+        this._config.statisticsInfoReportInterval);
     }
 
     unload() {

@@ -1,8 +1,8 @@
 const DemuxErrors = {
-    OK: 'ok',
-    FORMAT_ERROR: 'formatError',
-    FORMAT_UNSUPPORTED: 'formatUnsupported',
-    CODEC_UNSUPPORTED: 'codecUnsupported'
+    OK: 'OK',
+    FORMAT_ERROR: 'FormatError',
+    FORMAT_UNSUPPORTED: 'FormatUnsupported',
+    CODEC_UNSUPPORTED: 'CodecUnsupported'
 };
 
 export default DemuxErrors;

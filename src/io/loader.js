@@ -9,11 +9,11 @@ export const LoaderStatus = {
 };
 
 export const LoaderErrors = {
-    OK: 'ok',
-    EXCEPTION: 'exception',
-    HTTP_STATUS_CODE_INVALID: 'httpStatusCodeInvalid',
-    CONNECTING_TIMEOUT: 'connectingTimeout',
-    EARLY_EOF: 'earlyEof'
+    OK: 'OK',
+    EXCEPTION: 'Exception',
+    HTTP_STATUS_CODE_INVALID: 'HttpStatusCodeInvalid',
+    CONNECTING_TIMEOUT: 'ConnectingTimeout',
+    EARLY_EOF: 'EarlyEof'
 };
 
 /* Loader has callbacks which have following prototypes:

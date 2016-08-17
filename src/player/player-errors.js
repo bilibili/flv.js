@@ -13,7 +13,7 @@ export const ErrorDetails = {
     NETWORK_TIMEOUT: LoaderErrors.CONNECTING_TIMEOUT,
     NETWORK_EARLY_EOF: LoaderErrors.EARLY_EOF,
 
-    MEDIA_MSE_ERROR: 'mediaMSEError',
+    MEDIA_MSE_ERROR: 'MediaMSEError',
 
     MEDIA_FORMAT_ERROR: DemuxErrors.FORMAT_ERROR,
     MEDIA_FORMAT_UNSUPPORTED: DemuxErrors.FORMAT_UNSUPPORTED,

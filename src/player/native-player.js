@@ -120,6 +120,10 @@ class NativePlayer {
         this._mediaElement.pause();
     }
 
+    get type() {
+        return this._type;
+    }
+
     get buffered() {
         return this._mediaElement.buffered;
     }

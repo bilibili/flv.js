@@ -314,7 +314,9 @@ class FlvPlayer {
     }
 
     _reportStatisticsInfo() {
-        this._emitter.emit(PlayerEvents.STATISTICS_INFO, this.statisticsInfo);
+        if (this._statisticsInfo != null) {
+            this._emitter.emit(PlayerEvents.STATISTICS_INFO, this.statisticsInfo);
+        }
     }
 
     _onmseUpdateEnd() {

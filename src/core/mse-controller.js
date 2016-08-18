@@ -116,6 +116,7 @@ class MSEController {
 
         if (this._mediaElement) {
             this._mediaElement.src = '';
+            this._mediaElement.removeAttribute('src');
             this._mediaElement = null;
         }
         if (this._mediaSourceObjectURL) {

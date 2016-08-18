@@ -78,6 +78,7 @@ class NativePlayer {
     detachMediaElement() {
         if (this._mediaElement) {
             this._mediaElement.src = '';
+            this._mediaElement.removeAttribute('src');
             this._mediaElement.removeEventListener('loadedmetadata', this.e.onvLoadedMetadata);
             this._mediaElement = null;
         }
@@ -105,6 +106,7 @@ class NativePlayer {
     unload() {
         if (this._mediaElement) {
             this._mediaElement.src = '';
+            this._mediaElement.removeAttribute('src');
         }
         if (this._statisticsReporter != null) {
             window.clearInterval(this._statisticsReporter);

@@ -1,5 +1,3 @@
-import {InvalidArgumentException} from '../utils/exception.js';
-
 // Represents an media sample (audio / video)
 export class SampleInfo {
 
@@ -49,18 +47,17 @@ export class IDRSampleList {
     }
 
     appendArray(syncPoints) {
-        let sp = syncPoints;
         let list = this._list;
 
-        if (sp.length === 0) {
+        if (syncPoints.length === 0) {
             return;
         }
 
-        if (list.length === 0 || sp[0].originalDts >= list[list.length - 1].originalDts) {
-            Array.prototype.push.apply(list, sp);
-        } else {
-            throw new InvalidArgumentException('Unordered syncPoints to be append!');
+        if (list.length > 0 && syncPoints[0].originalDts < list[list.length - 1].originalDts) {
+            this.clear();
         }
+
+        Array.prototype.push.apply(list, syncPoints);
     }
 
     getLastSyncPointBeforeDts(dts) {

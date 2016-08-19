@@ -173,12 +173,14 @@ class Transmuxer {
         let message = e.data;
         let data = message.data;
 
+        if (message.msg === 'destroyed' || this._workerDestroying) {
+            this._workerDestroying = false;
+            this._worker.terminate();
+            this._worker = null;
+            return;
+        }
+
         switch (message.msg) {
-            case 'destroyed':
-                this._workerDestroying = false;
-                this._worker.terminate();
-                this._worker = null;
-                break;
             case TransmuxingEvents.INIT_SEGMENT:
             case TransmuxingEvents.MEDIA_SEGMENT:
                 this._emitter.emit(message.msg, data.type, data.data);

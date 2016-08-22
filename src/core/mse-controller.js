@@ -298,6 +298,7 @@ class MSEController {
     }
 
     _onSourceOpen() {
+        Log.v(this.TAG, 'MediaSource onSourceOpen');
         this._mediaSource.removeEventListener('sourceopen', this.e.onSourceOpen);
         // deferred sourcebuffer creation / initialization
         if (this._pendingSourceBufferInit.length > 0) {
@@ -307,14 +308,20 @@ class MSEController {
                 this.appendInitSegment(segment, true);
             }
         }
+        // there may be some pending media segments, append them
+        if (this._hasPendingSegments()) {
+            this._doAppendSegments();
+        }
     }
 
     _onSourceEnded() {
         // fired on endOfStream
+        Log.v(this.TAG, 'MediaSource onSourceEnded');
     }
 
     _onSourceClose() {
         // fired on detaching from media element
+        Log.v(this.TAG, 'MediaSource onSourceClose');
         if (this._mediaSource && this.e != null) {
             this._mediaSource.removeEventListener('sourceopen', this.e.onSourceOpen);
             this._mediaSource.removeEventListener('sourceended', this.e.onSourceEnded);

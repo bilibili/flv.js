@@ -10,6 +10,7 @@ export const defaultConfig = {
 
     statisticsInfoReportInterval: 600,
 
+    accurateSeek: false,
     seekType: 'range',  // [range, param, custom]
     seekParamStart: 'bstart',
     seekParamEnd: 'bend',

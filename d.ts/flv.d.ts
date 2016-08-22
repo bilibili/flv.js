@@ -33,6 +33,7 @@ declare namespace FlvJs {
 
         statisticsInfoReportInterval?: number,
 
+        accurateSeek: boolean,
         seekType?: string,  // [range, param, custom]
         seekParamStart?: string,
         seekParamEnd?: string,

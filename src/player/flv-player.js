@@ -60,6 +60,10 @@ class FlvPlayer {
                                (Browser.version.major < 50 ||
                                (Browser.version.major === 50 && Browser.version.build < 2661)));
         this._alwaysSeekKeyframe = (chromeNeedIDRFix || Browser.msedge || Browser.msie) ? true : false;
+
+        if (this._alwaysSeekKeyframe) {
+            this._config.accurateSeek = false;
+        }
     }
 
     destroy() {
@@ -197,7 +201,7 @@ class FlvPlayer {
             this._statisticsInfo = this._fillStatisticsInfo(statInfo);
         });
         this._transmuxer.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, (milliseconds) => {
-            if (this._mediaElement) {
+            if (this._mediaElement && !this._config.accurateSeek) {
                 this._requestSetTime = true;
                 this._mediaElement.currentTime = milliseconds / 1000;
             }
@@ -436,8 +440,12 @@ class FlvPlayer {
             }
             this._msectl.seek(seconds);
             this._transmuxer.seek(Math.floor(seconds * 1000));  // in milliseconds
-            // no need to set mediaElement.currentTime,
+            // no need to set mediaElement.currentTime if non-accurateSeek,
             // just wait for the recommend_seekpoint callback
+            if (this._config.accurateSeek) {
+                this._requestSetTime = true;
+                this._mediaElement.currentTime = seconds;
+            }
         }
     }
 
@@ -455,6 +463,11 @@ class FlvPlayer {
                     // Chrome/Edge use DTS, while FireFox/Safari use PTS
                     this._msectl.seek(target);
                     this._transmuxer.seek(Math.floor(target * 1000));
+                    // set currentTime if accurateSeek, or wait for recommend_seekpoint callback
+                    if (this._config.accurateSeek) {
+                        this._requestSetTime = true;
+                        this._mediaElement.currentTime = target;
+                    }
                 }
             } else {
                 window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);

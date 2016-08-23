@@ -201,16 +201,16 @@ class MSEController {
             // IDRList should be clear
             this._idrList.clear();
 
+            // pending segments should be discard
+            let ps = this._pendingSegments[type];
+            ps.splice(0, ps.length);
+
             // record ranges to be remove from SourceBuffer
             for (let i = 0; i < sb.buffered.length; i++) {
                 let start = sb.buffered.start(i);
                 let end = sb.buffered.end(i);
                 this._pendingRemoveRanges[type].push({start, end});
             }
-
-            // pending segments should be discard
-            let ps = this._pendingSegments[type];
-            ps.splice(0, ps.length);
 
             // if sb is not updating, let's remove ranges now!
             if (!sb.updating) {

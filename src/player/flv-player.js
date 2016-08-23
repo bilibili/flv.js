@@ -173,13 +173,17 @@ class FlvPlayer {
         });
         this._transmuxer.on(TransmuxingEvents.MEDIA_SEGMENT, (type, ms) => {
             this._msectl.appendMediaSegment(ms);
+
             if (this._hasStatisticsListener && this._statisticsReporter == null) {
-                this._statisticsReporter = window.setInterval(
-                    this._reportStatisticsInfo.bind(this),
-                this._config.statisticsInfoReportInterval);
+                if (this._progressChecker == null) {
+                    this._statisticsReporter = window.setInterval(
+                        this._reportStatisticsInfo.bind(this),
+                    this._config.statisticsInfoReportInterval);
+                }
             }
-            if (this._config.lazyLoad) {
-                // lazyLoad check
+
+            // lazyLoad check
+            if (this._config.lazyLoad && !this._config.isLive) {
                 let currentTime = this._mediaElement.currentTime;
                 if (ms.info.endDts >= (currentTime + this._config.lazyLoadMaxDuration) * 1000) {
                     if (this._progressChecker == null) {

@@ -44,7 +44,7 @@ class FlvPlayer {
         this._requestSetTime = false;
         this._seekpointRecord = null;
         this._statisticsReporter = null;
-        this._progressCheckId = 0;
+        this._progressChecker = null;
 
         this._hasStatisticsListener = false;
 
@@ -67,9 +67,9 @@ class FlvPlayer {
     }
 
     destroy() {
-        if (this._progressCheckId !== 0) {
-            window.clearInterval(this._progressCheckId);
-            this._progressCheckId = 0;
+        if (this._progressChecker != null) {
+            window.clearInterval(this._progressChecker);
+            this._progressChecker = null;
         }
         if (this._transmuxer) {
             this.unload();
@@ -177,6 +177,16 @@ class FlvPlayer {
                 this._statisticsReporter = window.setInterval(
                     this._reportStatisticsInfo.bind(this),
                 this._config.statisticsInfoReportInterval);
+            }
+            if (this._config.lazyLoad) {
+                // lazyLoad check
+                let currentTime = this._mediaElement.currentTime;
+                if (ms.info.endDts >= (currentTime + this._config.lazyLoadMaxDuration) * 1000) {
+                    if (this._progressChecker == null) {
+                        Log.v(this.TAG, 'Maximum buffering duration exceeded, suspend transmuxing task');
+                        this._suspendTransmuxer();
+                    }
+                }
             }
         });
         this._transmuxer.on(TransmuxingEvents.LOADING_COMPLETE, () => {
@@ -343,7 +353,7 @@ class FlvPlayer {
             }
         }
 
-        if (currentRangeEnd >= currentTime + this._config.lazyLoadMaxDuration && this._progressCheckId === 0) {
+        if (currentRangeEnd >= currentTime + this._config.lazyLoadMaxDuration && this._progressChecker == null) {
             Log.v(this.TAG, 'Maximum buffering duration exceeded, suspend transmuxing task');
             this._suspendTransmuxer();
         }
@@ -351,7 +361,7 @@ class FlvPlayer {
 
     _onmseBufferFull() {
         Log.v(this.TAG, 'MSE SourceBuffer is full, suspend transmuxing task');
-        if (this._progressCheckId === 0) {
+        if (this._progressChecker == null) {
             this._suspendTransmuxer();
         }
     }
@@ -365,8 +375,8 @@ class FlvPlayer {
                 this._statisticsReporter = null;
             }
 
-            if (this._progressCheckId === 0) {
-                this._progressCheckId = window.setInterval(this._checkProgressAndResume.bind(this), 1000);
+            if (this._progressChecker == null) {
+                this._progressChecker = window.setInterval(this._checkProgressAndResume.bind(this), 1000);
             }
         }
     }
@@ -375,15 +385,12 @@ class FlvPlayer {
         let currentTime = this._mediaElement.currentTime;
         let buffered = this._mediaElement.buffered;
 
-        let to = 0;
         let needResume = false;
-        let inBufferedRange = false;
 
         for (let i = 0; i < buffered.length; i++) {
             let from = buffered.start(i);
-            to = buffered.end(i);
+            let to = buffered.end(i);
             if (currentTime >= from && currentTime < to) {
-                inBufferedRange = true;
                 if (currentTime >= to - 30) {
                     needResume = true;
                 }
@@ -391,9 +398,9 @@ class FlvPlayer {
             }
         }
 
-        if (needResume || !inBufferedRange) {
-            window.clearInterval(this._progressCheckId);
-            this._progressCheckId = 0;
+        if (needResume) {
+            window.clearInterval(this._progressChecker);
+            this._progressChecker = null;
             if (needResume) {
                 Log.v(this.TAG, 'Continue loading from paused position');
                 this._transmuxer.resume();
@@ -430,13 +437,13 @@ class FlvPlayer {
                     this._mediaElement.currentTime = seconds;
                 }
             }
-            if (this._progressCheckId) {
+            if (this._progressChecker != null) {
                 this._checkProgressAndResume();
             }
         } else {
-            if (this._progressCheckId !== 0) {
-                window.clearInterval(this._progressCheckId);
-                this._progressCheckId = 0;
+            if (this._progressChecker != null) {
+                window.clearInterval(this._progressChecker);
+                this._progressChecker = null;
             }
             this._msectl.seek(seconds);
             this._transmuxer.seek(Math.floor(seconds * 1000));  // in milliseconds
@@ -455,9 +462,9 @@ class FlvPlayer {
                 let target = this._mediaElement.currentTime;
                 this._seekpointRecord = null;
                 if (!this._isTimepointBuffered(target)) {
-                    if (this._progressCheckId !== 0) {
-                        window.clearTimeout(this._progressCheckId);
-                        this._progressCheckId = 0;
+                    if (this._progressChecker != null) {
+                        window.clearTimeout(this._progressChecker);
+                        this._progressChecker = null;
                     }
                     // .currentTime is consists with .buffered timestamp
                     // Chrome/Edge use DTS, while FireFox/Safari use PTS
@@ -489,7 +496,7 @@ class FlvPlayer {
                     this._mediaElement.currentTime = idr.dts / 1000;
                 }
             }
-            if (this._progressCheckId) {
+            if (this._progressChecker != null) {
                 this._checkProgressAndResume();
             }
             return;

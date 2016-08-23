@@ -7,6 +7,7 @@ export const defaultConfig = {
 
     lazyLoad: true,
     lazyLoadMaxDuration: 3 * 60,
+    deferLoadAfterSourceOpen: true,
 
     statisticsInfoReportInterval: 600,
 

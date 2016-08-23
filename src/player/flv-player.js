@@ -53,6 +53,9 @@ class FlvPlayer {
         this._msectl = null;
         this._transmuxer = null;
 
+        this._mseSourceOpened = false;
+        this._hasPendingLoad = false;
+
         this._mediaInfo = null;
         this._statisticsInfo = null;
 
@@ -123,9 +126,16 @@ class FlvPlayer {
         mediaElement.addEventListener('seeking', this.e.onvSeeking);
 
         this._msectl = new MSEController();
-        this._msectl.attachMediaElement(mediaElement);
+
         this._msectl.on(MSEEvents.UPDATE_END, this._onmseUpdateEnd.bind(this));
         this._msectl.on(MSEEvents.BUFFER_FULL, this._onmseBufferFull.bind(this));
+        this._msectl.on(MSEEvents.SOURCE_OPEN, () => {
+            this._mseSourceOpened = true;
+            if (this._hasPendingLoad) {
+                this._hasPendingLoad = false;
+                this.load();
+            }
+        });
         this._msectl.on(MSEEvents.ERROR, (info) => {
             this._emitter.emit(PlayerEvents.ERROR,
                                ErrorTypes.MEDIA_ERROR,
@@ -133,6 +143,8 @@ class FlvPlayer {
                                info
             );
         });
+
+        this._msectl.attachMediaElement(mediaElement);
 
         if (this._pendingSeekTime != null) {
             mediaElement.currentTime = this._pendingSeekTime;
@@ -158,6 +170,14 @@ class FlvPlayer {
         }
         if (this._transmuxer) {
             throw new IllegalStateException('FlvPlayer.load() has been called, please call unload() first!');
+        }
+        if (this._hasPendingLoad) {
+            return;
+        }
+
+        if (this._config.deferLoadAfterSourceOpen && this._mseSourceOpened === false) {
+            this._hasPendingLoad = true;
+            return;
         }
 
         if (this._mediaElement.readyState > 0) {

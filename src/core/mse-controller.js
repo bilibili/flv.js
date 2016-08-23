@@ -312,6 +312,7 @@ class MSEController {
         if (this._hasPendingSegments()) {
             this._doAppendSegments();
         }
+        this._emitter.emit(MSEEvents.SOURCE_OPEN);
     }
 
     _onSourceEnded() {

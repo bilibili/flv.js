@@ -30,11 +30,11 @@ declare namespace FlvJs {
 
         lazyLoad?: boolean,
         lazyLoadMaxDuration?: number,
-        deferLoadAfterSourceOpen: boolean,
+        deferLoadAfterSourceOpen?: boolean,
 
         statisticsInfoReportInterval?: number,
 
-        accurateSeek: boolean,
+        accurateSeek?: boolean,
         seekType?: string,  // [range, param, custom]
         seekParamStart?: string,
         seekParamEnd?: string,

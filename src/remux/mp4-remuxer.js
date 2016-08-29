@@ -136,7 +136,7 @@ class MP4Remuxer {
     _remuxAudio(audioTrack) {
         let track = audioTrack;
         let samples = track.samples;
-        let dtsCorrection = -1;
+        let dtsCorrection = undefined;
         let firstDts = -1, lastDts = -1, lastPts = -1;
 
         let remuxSilentFrame = false;
@@ -173,7 +173,7 @@ class MP4Remuxer {
             let unit = aacSample.unit;
             let originalDts = aacSample.dts - this._dtsBase;
 
-            if (dtsCorrection === -1) {
+            if (dtsCorrection == undefined) {
                 if (this._audioNextDts == undefined) {
                     if (this._audioSegmentInfoList.isEmpty()) {
                         dtsCorrection = 0;
@@ -346,7 +346,7 @@ class MP4Remuxer {
     _remuxVideo(videoTrack) {
         let track = videoTrack;
         let samples = track.samples;
-        let dtsCorrection = -1;
+        let dtsCorrection = undefined;
         let firstDts = -1, lastDts = -1;
         let firstPts = -1, lastPts = -1;
 
@@ -381,7 +381,7 @@ class MP4Remuxer {
             let keyframe = avcSample.isKeyframe;
             let originalDts = avcSample.dts - this._dtsBase;
 
-            if (dtsCorrection === -1) {
+            if (dtsCorrection == undefined) {
                 if (this._videoNextDts == undefined) {
                     if (this._videoSegmentInfoList.isEmpty()) {
                         dtsCorrection = 0;

@@ -174,7 +174,7 @@ class MSEController {
         this._pendingSegments[ms.type].push(ms);
 
         let sb = this._sourceBuffers[ms.type];
-        if (sb && !sb.updating) {
+        if (sb && !sb.updating && !this._hasPendingRemoveRanges()) {
             this._doAppendSegments();
         }
     }

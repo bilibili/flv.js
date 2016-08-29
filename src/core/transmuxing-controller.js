@@ -162,7 +162,7 @@ class TransmuxingController {
             let targetSegmentInfo = this._mediaInfo.segments[targetSegmentIndex];
 
             if (targetSegmentInfo == undefined) {
-                // target segment hasn't been loaded. We need metadata then seek to expected time 
+                // target segment hasn't been loaded. We need metadata then seek to expected time
                 this._pendingSeekTime = milliseconds;
                 this._internalAbort();
                 this._remuxer.seek();
@@ -256,9 +256,9 @@ class TransmuxingController {
         }
 
         if (this._pendingSeekTime != null) {
-            let target = this._pendingSeekTime;
-            this._pendingSeekTime = null;
             Promise.resolve().then(() => {
+                let target = this._pendingSeekTime;
+                this._pendingSeekTime = null;
                 this.seek(target);
             });
         }
@@ -295,6 +295,10 @@ class TransmuxingController {
     }
 
     _onRemuxerMediaSegmentArrival(type, mediaSegment) {
+        if (this._pendingSeekTime != null) {
+            // Media segments after new-segment cross-seeking should be dropped.
+            return;
+        }
         this._emitter.emit(TransmuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
         if (type === 'video') {
             this._reportStatisticsInfo();

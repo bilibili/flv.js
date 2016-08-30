@@ -31,6 +31,7 @@ class FlvPlayer {
         }
 
         this.e = {
+            onvLoadedMetadata: this._onvLoadedMetadata.bind(this),
             onvSeeking: this._onvSeeking.bind(this)
         };
 
@@ -123,6 +124,7 @@ class FlvPlayer {
 
     attachMediaElement(mediaElement) {
         this._mediaElement = mediaElement;
+        mediaElement.addEventListener('loadedmetadata', this.e.onvLoadedMetadata);
         mediaElement.addEventListener('seeking', this.e.onvSeeking);
 
         this._msectl = new MSEController();
@@ -147,14 +149,20 @@ class FlvPlayer {
         this._msectl.attachMediaElement(mediaElement);
 
         if (this._pendingSeekTime != null) {
-            mediaElement.currentTime = this._pendingSeekTime;
-            this._pendingSeekTime = null;
+            try {
+                mediaElement.currentTime = this._pendingSeekTime;
+                this._pendingSeekTime = null;
+            } catch (e) {
+                // IE11 may throw InvalidStateError if readyState === 0
+                // We can defer set currentTime operation after loadedmetadata
+            }
         }
     }
 
     detachMediaElement() {
         if (this._mediaElement) {
             this._msectl.detachMediaElement();
+            this._mediaElement.removeEventListener('loadedmetadata', this.e.onvLoadedMetadata);
             this._mediaElement.removeEventListener('seeking', this.e.onvSeeking);
             this._mediaElement = null;
         }
@@ -503,6 +511,13 @@ class FlvPlayer {
             } else {
                 window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);
             }
+        }
+    }
+
+    _onvLoadedMetadata(e) {
+        if (this._pendingSeekTime != null) {
+            this._mediaElement.currentTime = this._pendingSeekTime;
+            this._pendingSeekTime = null;
         }
     }
 

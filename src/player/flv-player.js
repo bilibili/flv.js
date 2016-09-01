@@ -222,12 +222,12 @@ class FlvPlayer {
             }
         });
         this._transmuxer.on(TransmuxingEvents.LOADING_COMPLETE, () => {
-            Log.v(this.TAG, 'Loading Complete!');
             this._msectl.endOfStream();
             if (this._statisticsReporter != null) {
                 window.clearInterval(this._statisticsReporter);
                 this._statisticsReporter = null;
             }
+            this._emitter.emit(PlayerEvents.LOADING_COMPLETE);
         });
         this._transmuxer.on(TransmuxingEvents.IO_ERROR, (detail, info) => {
             this._emitter.emit(PlayerEvents.ERROR, ErrorTypes.NETWORK_ERROR, detail, info);

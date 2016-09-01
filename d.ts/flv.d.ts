@@ -96,6 +96,7 @@ declare namespace FlvJs {
 
     interface Events {
         ERROR: string,
+        LOADING_COMPLETE: string,
         MEDIA_INFO: string,
         STATISTICS_INFO: string
     }

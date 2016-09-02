@@ -13,7 +13,8 @@ export const LoaderErrors = {
     EXCEPTION: 'Exception',
     HTTP_STATUS_CODE_INVALID: 'HttpStatusCodeInvalid',
     CONNECTING_TIMEOUT: 'ConnectingTimeout',
-    EARLY_EOF: 'EarlyEof'
+    EARLY_EOF: 'EarlyEof',
+    UNRECOVERABLE_EARLY_EOF: 'UnrecoverableEarlyEof'
 };
 
 /* Loader has callbacks which have following prototypes:

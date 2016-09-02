@@ -229,6 +229,9 @@ class FlvPlayer {
             }
             this._emitter.emit(PlayerEvents.LOADING_COMPLETE);
         });
+        this._transmuxer.on(TransmuxingEvents.RECOVERED_EARLY_EOF, () => {
+            this._emitter.emit(PlayerEvents.RECOVERED_EARLY_EOF);
+        });
         this._transmuxer.on(TransmuxingEvents.IO_ERROR, (detail, info) => {
             this._emitter.emit(PlayerEvents.ERROR, ErrorTypes.NETWORK_ERROR, detail, info);
         });

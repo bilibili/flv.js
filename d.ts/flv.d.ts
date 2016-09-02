@@ -97,6 +97,7 @@ declare namespace FlvJs {
     interface Events {
         ERROR: string,
         LOADING_COMPLETE: string,
+        RECOVERED_EARLY_EOF: string,
         MEDIA_INFO: string,
         STATISTICS_INFO: string
     }
@@ -111,7 +112,7 @@ declare namespace FlvJs {
         NETWORK_EXCEPTION: string,
         NETWORK_STATUS_CODE_INVALID: string,
         NETWORK_TIMEOUT: string,
-        NETWORK_EARLY_EOF: string,
+        NETWORK_UNRECOVERABLE_EARLY_EOF: string,
 
         MEDIA_MSE_ERROR: string,
 

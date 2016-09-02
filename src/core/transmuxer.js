@@ -40,6 +40,7 @@ class Transmuxer {
             ctl.on(TransmuxingEvents.INIT_SEGMENT, this._onInitSegment.bind(this));
             ctl.on(TransmuxingEvents.MEDIA_SEGMENT, this._onMediaSegment.bind(this));
             ctl.on(TransmuxingEvents.LOADING_COMPLETE, this._onLoadingComplete.bind(this));
+            ctl.on(TransmuxingEvents.RECOVERED_EARLY_EOF, this._onRecoveredEarlyEof.bind(this));
             ctl.on(TransmuxingEvents.MEDIA_INFO, this._onMediaInfo.bind(this));
             ctl.on(TransmuxingEvents.STATISTICS_INFO, this._onStatisticsInfo.bind(this));
             ctl.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, this._onRecommendSeekpoint.bind(this));
@@ -133,6 +134,12 @@ class Transmuxer {
         });
     }
 
+    _onRecoveredEarlyEof() {
+        Promise.resolve().then(() => {
+            this._emitter.emit(TransmuxingEvents.RECOVERED_EARLY_EOF);
+        });
+    }
+
     _onMediaInfo(mediaInfo) {
         Promise.resolve().then(() => {
             this._emitter.emit(TransmuxingEvents.MEDIA_INFO, mediaInfo);
@@ -186,6 +193,7 @@ class Transmuxer {
                 this._emitter.emit(message.msg, data.type, data.data);
                 break;
             case TransmuxingEvents.LOADING_COMPLETE:
+            case TransmuxingEvents.RECOVERED_EARLY_EOF:
                 this._emitter.emit(message.msg);
                 break;
             case TransmuxingEvents.MEDIA_INFO:

@@ -100,6 +100,7 @@ class TransmuxingController {
         ioctl.onError = this._onIOException.bind(this);
         ioctl.onSeeked = this._onIOSeeked.bind(this);
         ioctl.onComplete = this._onIOComplete.bind(this);
+        ioctl.onRecoveredEarlyEof = this._onIORecoveredEarlyEof.bind(this);
 
         if (optionalFrom) {
             this._demuxer.bindDataSource(this._ioctl);
@@ -278,6 +279,10 @@ class TransmuxingController {
         } else {
             this._emitter.emit(TransmuxingEvents.LOADING_COMPLETE);
         }
+    }
+
+    _onIORecoveredEarlyEof() {
+        this._emitter.emit(TransmuxingEvents.RECOVERED_EARLY_EOF);
     }
 
     _onIOException(type, info) {

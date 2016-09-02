@@ -61,6 +61,8 @@ class IOController {
         this._speedSampler = new SpeedSampler();
         this._speedNormalizeList = [64, 128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096];
 
+        this._isEarlyEofReconnecting = false;
+
         this._paused = false;
         this._resumeFrom = 0;
 
@@ -68,6 +70,7 @@ class IOController {
         this._onSeeked = null;
         this._onError = null;
         this._onComplete = null;
+        this._onRecoveredEarlyEof = null;
 
         this._selectSeekHandler();
         this._selectLoader();
@@ -88,10 +91,13 @@ class IOController {
         this._progressRanges = null;
         this._speedSampler = null;
 
+        this._isEarlyEofReconnecting = false;
+
         this._onDataArrival = null;
         this._onSeeked = null;
         this._onError = null;
         this._onComplete = null;
+        this._onRecoveredEarlyEof = null;
 
         this._extraData = null;
     }
@@ -149,6 +155,14 @@ class IOController {
 
     set onComplete(callback) {
         this._onComplete = callback;
+    }
+
+    get onRecoveredEarlyEof() {
+        return this._onRecoveredEarlyEof;
+    }
+
+    set onRecoveredEarlyEof(callback) {
+        this._onRecoveredEarlyEof = callback;
     }
 
     get currentUrl() {
@@ -484,6 +498,13 @@ class IOController {
         if (this._paused) {
             return;
         }
+        if (this._isEarlyEofReconnecting) {
+            // Auto-reconnect for EarlyEof succeed, notify to upper-layer by callback
+            this._isEarlyEofReconnecting = false;
+            if (this._onRecoveredEarlyEof) {
+                this._onRecoveredEarlyEof();
+            }
+        }
 
         this._speedSampler.addBytes(chunk.byteLength);
 
@@ -703,11 +724,18 @@ class IOController {
 
         this._flushStashBuffer(false);
 
+        if (this._isEarlyEofReconnecting) {
+            // Auto-reconnect for EarlyEof failed, throw UnrecoverableEarlyEof error to upper-layer
+            this._isEarlyEofReconnecting = false;
+            type = LoaderErrors.UNRECOVERABLE_EARLY_EOF;
+        }
+
         switch (type) {
             case LoaderErrors.EARLY_EOF: {
                 if (!this._config.isLive) {
                     // Do internal http reconnect if not live stream
                     Log.w(this.TAG, 'Connection lost, trying reconnect...');
+                    this._isEarlyEofReconnecting = true;
                     let current = this._currentRange;
                     let next = this._mergeRanges(current.from, current.to);
                     if (next.from !== -1) {
@@ -715,9 +743,11 @@ class IOController {
                     }
                     return;
                 }
-                // live stream: throw EarlyEof error to upper-layer
+                // live stream: throw UnrecoverableEarlyEof error to upper-layer
+                type = LoaderErrors.UNRECOVERABLE_EARLY_EOF;
                 break;
             }
+            case LoaderErrors.UNRECOVERABLE_EARLY_EOF:
             case LoaderErrors.CONNECTING_TIMEOUT:
             case LoaderErrors.HTTP_STATUS_CODE_INVALID:
             case LoaderErrors.EXCEPTION:

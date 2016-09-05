@@ -1,27 +1,27 @@
 'use strict';
 
-var del = require('del');
-var gulp = require('gulp');
-var rename = require('gulp-rename');
-var uglify = require('gulp-uglify');
-var eslint = require('gulp-eslint');
-var sourcemaps = require('gulp-sourcemaps');
-var babelify = require('babelify');
-var browserify = require('browserify');
-var watchify = require('watchify');
-var buffer = require('vinyl-buffer');
-var source = require('vinyl-source-stream');
+const del = require('del');
+const gulp = require('gulp');
+const rename = require('gulp-rename');
+const uglify = require('gulp-uglify');
+const eslint = require('gulp-eslint');
+const sourcemaps = require('gulp-sourcemaps');
+const babelify = require('babelify');
+const browserify = require('browserify');
+const watchify = require('watchify');
+const buffer = require('vinyl-buffer');
+const source = require('vinyl-source-stream');
 
 
 function doWatchify() {
-    var customOpts = {
+    let customOpts = {
         entries: 'src/flv.js',
         debug: true,
         transform: [babelify]
     };
 
-    var opts = Object.assign({}, watchify.args, customOpts);
-    var b = watchify(browserify(opts));
+    let opts = Object.assign({}, watchify.args, customOpts);
+    let b = watchify(browserify(opts));
 
     b.on('update', doBundle.bind(global, b));
     b.on('log', console.log.bind(console));
@@ -50,7 +50,7 @@ gulp.task('default', ['clean', 'lint', 'build']);
 gulp.task('release', ['clean', 'lint', 'build', 'minimize']);
 
 gulp.task('watch', ['clean'], function () {
-    var gulpWatcher = gulp.watch(['gulpfile.js', 'src/**/*.js']);
+    let gulpWatcher = gulp.watch(['gulpfile.js', 'src/**/*.js']);
 
     gulpWatcher.on('change', function (e) {
         if (e.type === 'changed' || e.type === 'added') {
@@ -72,7 +72,7 @@ gulp.task('lint', function () {
 });
 
 gulp.task('build', ['clean', 'lint'], function () {
-    var b = browserify({
+    let b = browserify({
         entries: 'src/flv.js',
         debug: true,
         transform: [babelify]
@@ -82,7 +82,7 @@ gulp.task('build', ['clean', 'lint'], function () {
 });
 
 gulp.task('minimize', ['lint', 'build'], function () {
-    var options = {
+    let options = {
         sourceMap: true,
         sourceMapIncludeSources: true,
         sourceMapRoot: './src/',

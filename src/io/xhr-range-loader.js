@@ -84,6 +84,7 @@ class RangeLoader extends BaseLoader {
 
         let from = this._range.from + this._receivedLength;
         let to = from + chunkSize;
+
         if (this._contentLength != null) {
             if (to - this._range.from >= this._contentLength) {
                 to = this._range.from + this._contentLength - 1;
@@ -163,21 +164,30 @@ class RangeLoader extends BaseLoader {
 
     _onProgress(e) {
         if (this._contentLength === null) {
+            let openNextRange = false;
+
             if (this._waitForTotalLength) {
                 this._waitForTotalLength = false;
                 this._totalLengthReceived = true;
+                openNextRange = true;
+
                 let total = e.total;
                 this._internalAbort();
                 if (total != null & total !== 0) {
                     this._totalLength = total;
                 }
-                this._openSubRange();
-                return;
             }
+
+            // calculate currrent request range's contentLength
             if (this._range.to === -1) {
                 this._contentLength = this._totalLength - this._range.from;
             } else {  // to !== -1
                 this._contentLength = this._range.to - this._range.from;
+            }
+
+            if (openNextRange) {
+                this._openSubRange();
+                return;
             }
             if (this._onContentLengthKnown) {
                 this._onContentLengthKnown(this._contentLength);

@@ -43,6 +43,8 @@ class MP4Remuxer {
     }
 
     destroy() {
+        this._dtsBase = -1;
+        this._dtsBaseInited = false;
         this._audioMeta = null;
         this._videoMeta = null;
         this._audioSegmentInfoList.clear();
@@ -104,6 +106,9 @@ class MP4Remuxer {
         if (!this._onMediaSegment) {
             throw new IllegalStateException('MP4Remuxer: onMediaSegment callback must be specificed!');
         }
+        if (!this._dtsBaseInited) {
+            this._calculateDtsBase(audioTrack, videoTrack);
+        }
         this._remuxVideo(videoTrack);
         this._remuxAudio(audioTrack);
     }
@@ -133,6 +138,22 @@ class MP4Remuxer {
         });
     }
 
+    _calculateDtsBase(audioTrack, videoTrack) {
+        if (this._dtsBaseInited) {
+            return;
+        }
+
+        if (audioTrack.samples && audioTrack.samples.length) {
+            this._audioDtsBase = audioTrack.samples[0].dts;
+        }
+        if (videoTrack.samples && videoTrack.samples.length) {
+            this._videoDtsBase = videoTrack.samples[0].dts;
+        }
+
+        this._dtsBase = Math.min(this._audioDtsBase, this._videoDtsBase);
+        this._dtsBaseInited = true;
+    }
+
     _remuxAudio(audioTrack) {
         let track = audioTrack;
         let samples = track.samples;
@@ -144,16 +165,6 @@ class MP4Remuxer {
 
         if (!samples || samples.length === 0) {
             return;
-        }
-
-        if (!this._dtsBaseInited) {
-            this._audioDtsBase = samples[0].dts;
-            if (this._audioDtsBase === Infinity || this._videoDtsBase === Infinity) {
-                this._dtsBase = 0;
-            } else {
-                this._dtsBase = Math.min(this._audioDtsBase, this._videoDtsBase);
-                this._dtsBaseInited = true;
-            }
         }
 
         let bytes = 8 + track.length;
@@ -352,16 +363,6 @@ class MP4Remuxer {
 
         if (!samples || samples.length === 0) {
             return;
-        }
-
-        if (!this._dtsBaseInited) {
-            this._videoDtsBase = samples[0].dts;
-            if (this._audioDtsBase === Infinity || this._videoDtsBase === Infinity) {
-                this._dtsBase = 0;
-            } else {
-                this._dtsBase = Math.min(this._audioDtsBase, this._videoDtsBase);
-                this._dtsBaseInited = true;
-            }
         }
 
         let bytes = 8 + videoTrack.length;

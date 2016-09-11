@@ -50,12 +50,13 @@ class IOController {
         this._loader = null;
         this._loaderClass = null;
         this._seekHandler = null;
+
         this._dataSource = dataSource;
         this._refTotalLength = dataSource.filesize ? dataSource.filesize : null;
         this._totalLength = this._refTotalLength;
         this._fullRequestFlag = false;
         this._currentRange = null;
-        this._progressRanges = [];
+
         this._speed = 0;
         this._speedNormalized = 0;
         this._speedSampler = new SpeedSampler();
@@ -88,7 +89,6 @@ class IOController {
         this._stashBuffer = null;
         this._stashUsed = this._stashSize = this._bufferSize = this._stashByteStart = 0;
         this._currentRange = null;
-        this._progressRanges = null;
         this._speedSampler = null;
 
         this._isEarlyEofReconnecting = false;
@@ -131,7 +131,6 @@ class IOController {
         this._onDataArrival = callback;
     }
 
-    // TODO: add SeekReason: Request / internal(continue loading, reconnecting)
     get onSeeked() {
         return this._onSeeked;
     }
@@ -234,17 +233,16 @@ class IOController {
             this._currentRange.from = optionalFrom;
         }
 
-        this._progressRanges = [];
-        this._progressRanges.push(this._currentRange);
         this._speedSampler.reset();
-        this._fullRequestFlag = true;
+        if (!optionalFrom) {
+            this._fullRequestFlag = true;
+        }
 
         this._loader.open(this._dataSource, Object.assign({}, this._currentRange));
     }
 
     abort() {
         this._loader.abort();
-        this._mergeRanges(this._currentRange.from, this._currentRange.to);
 
         if (this._paused) {
             this._paused = false;
@@ -255,7 +253,6 @@ class IOController {
     pause() {
         if (this.isWorking()) {
             this._loader.abort();
-            this._mergeRanges(this._currentRange.from, this._currentRange.to);
 
             if (this._stashUsed !== 0) {
                 this._resumeFrom = this._stashByteStart;
@@ -274,44 +271,15 @@ class IOController {
             this._paused = false;
             let bytes = this._resumeFrom;
             this._resumeFrom = 0;
-            this._currentRange = {from: 0, to: -1};
-            this._progressRanges = [];
-            this._internalSeek(bytes, true, false);
+            this._internalSeek(bytes, true);
         }
     }
 
     seek(bytes) {
         this._paused = false;
-        this._currentRange = {from: 0, to: -1};
-        this._progressRanges = [];
         this._stashUsed = 0;
         this._stashByteStart = 0;
-        this._internalSeek(bytes, true, false);
-    }
-
-    getCurrentWorkingRange() {
-        return Object.assign({}, this._currentRange);
-    }
-
-    searchRangeContains(bytes) {
-        let ranges = this._progressRanges;
-
-        for (let i = 0; i < ranges.length; i++) {
-            let range = ranges[i];
-            if (range.from <= bytes && bytes < range.to) {
-                return range;
-            }
-        }
-        return null;
-    }
-
-    continueLoadRange(range) {
-        if (range != null) {
-            if (this._totalLength === null ||
-                    (this._totalLength !== null && range.to < this._totalLength - 1)) {
-                this._internalSeek(range.to + 1, true, true);
-            }
-        }
+        this._internalSeek(bytes, true);
     }
 
     /**
@@ -319,75 +287,20 @@ class IOController {
      * However, stash data shouldn't be dropped if seeking requested from http reconnection
      *
      * @dropUnconsumed: Ignore and discard all unconsumed data in stash buffer
-     * @doFlushRanges: Flush/Remove all buffered ranges after seekpoint
      */
-    _internalSeek(bytes, dropUnconsumed, doFlushRanges) {
+    _internalSeek(bytes, dropUnconsumed) {
         if (this._loader.isWorking()) {
             this._loader.abort();
         }
 
-        if (doFlushRanges && bytes <= this._stashByteStart + this._stashUsed) {
-            // current buffering position must be discard. Drop all stash data
-            if (this._stashUsed !== 0) {
-                this._currentRange.to = this._stashByteStart - 1;
-            }
-            this._stashUsed = 0;
-            this._stashByteStart = 0;
-        } else {
-            // dispatch & flush stash buffer before seek
-            let remain = this._flushStashBuffer(dropUnconsumed);
-            if (remain) {
-                this._currentRange.to -= remain;
-            }
-        }
+        // dispatch & flush stash buffer before seek
+        this._flushStashBuffer(dropUnconsumed);
 
         this._loader.destroy();
         this._loader = null;
 
-        let ranges = this._progressRanges;
         let requestRange = {from: bytes, to: -1};
-        let bufferedArea = false;
-        let insertIndex = 0;
-
-        if (doFlushRanges) {
-            for (let i = 0; i < ranges.length; i++) {
-                if (ranges[i].from >= bytes) {
-                    ranges.splice(i, ranges.length - i);
-                    break;
-                } else if (ranges[i].to >= bytes) {
-                    ranges[i].to = bytes - 1;
-                    ranges.splice(i + 1, ranges.length - i - 1);
-                    break;
-                }
-            }
-        }
-
-        this._mergeRanges(this._currentRange.from, this._currentRange.to);
-
-        for (let i = 0; i < ranges.length; i++) {
-            if (bytes >= ranges[i].from && bytes <= ranges[i].to) {
-                bufferedArea = true;
-                break;
-            }
-
-            if (i === ranges.length - 1) {
-                insertIndex = ranges.length;
-                break;
-            }
-
-            if (bytes > ranges[i].to && bytes < ranges[i + 1].from) {
-                requestRange.to = ranges[i + 1].from - 1;
-                insertIndex = i + 1;
-                break;
-            }
-        }
-
-        if (bufferedArea) {  // TODO: allow re-load buffered area
-            Log.w(this.TAG, 'Seek target position has been buffered!');
-        }
-
         this._currentRange = {from: requestRange.from, to: -1};
-        ranges.splice(insertIndex, 0, this._currentRange);
 
         this._speed = 0;
         this._speedSampler.reset();
@@ -407,7 +320,7 @@ class IOController {
 
         this._dataSource.url = url;
 
-        // TODO: reconnect with new url
+        // TODO: replace with new url
     }
 
     _expandBuffer(expectedBytes) {
@@ -634,93 +547,12 @@ class IOController {
         return 0;
     }
 
-    /**
-     * @return next load range
-     */
-    _mergeRanges(from, to) {
-        let ranges = this._progressRanges;
-        let length = ranges.length;
-        let next = {from: -1, to: -1};
-
-        let backup = Object.assign({}, this._currentRange);
-
-        // left endpoint merge
-        for (let i = 0; i < length; i++) {
-            if (ranges[i].from === from && ranges[i].to <= to) {
-                ranges[i].to = to;
-                if (i > 0 && ranges[i - 1].to + 1 === ranges[i].from) {
-                    from = ranges[i - 1].from;
-                    ranges[i - 1].to = ranges[i].to;
-                    ranges.splice(i, 1);
-                    length--;
-                }
-                break;
-            }
-        }
-
-        // right endpoint merge
-        for (let i = 0; i < length; i++) {
-            if (ranges[i].from === from && ranges[i].to === to) {
-                if (i === length - 1) {  // latest range
-                    // +1s
-                    if (this._totalLength && ranges[i].to + 1 < this._totalLength) {
-                        next.from = ranges[i].to + 1;
-                        next.to = -1;
-                    }
-                } else if (to + 1 === ranges[i + 1].from) {
-                    // Merge connected ranges
-                    ranges[i].to = ranges[i + 1].to;
-                    ranges.splice(i + 1, 1);
-                    length--;
-                    if (i === length - 1) {  // latest range
-                        if (this._totalLength && ranges[i].to + 1 < this._totalLength) {
-                            next.from = ranges[i].to + 1;
-                            next.to = -1;
-                        }
-                    } else {
-                        if (ranges[i].to < ranges[i + 1].from - 1) {
-                            next.from = ranges[i].to + 1;
-                            next.to = ranges[i + 1].from - 1;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-
-        // correct this._currentRange
-        let corrected = false;
-        length = this._progressRanges.length;
-        for (let i = 0; i < length; i++) {
-            let range = this._progressRanges[i];
-            if (range.from <= backup.from && backup.to <= range.to
-                                          && !(range.from === backup.from && range.to === backup.to)) {
-                corrected = true;
-                this._currentRange = range;
-                break;
-            }
-        }
-
-        if (!corrected) {
-            this._currentRange = backup;
-        }
-
-        return next;
-    }
-
     _onLoaderComplete(from, to) {
         // Force-flush stash buffer, and drop unconsumed data
         this._flushStashBuffer(true);
 
-        let next = this._mergeRanges(from, to);
-
-        // continue loading from appropriate position
-        if (next.from !== -1) {
-            this._internalSeek(next.from, true, false);
-        } else {
-            if (this._onComplete) {
-                this._onComplete(this._extraData);
-            }
+        if (this._onComplete) {
+            this._onComplete(this._extraData);
         }
     }
 
@@ -739,14 +571,16 @@ class IOController {
             case LoaderErrors.EARLY_EOF: {
                 if (!this._config.isLive) {
                     // Do internal http reconnect if not live stream
-                    Log.w(this.TAG, 'Connection lost, trying reconnect...');
-                    this._isEarlyEofReconnecting = true;
-                    let current = this._currentRange;
-                    let next = this._mergeRanges(current.from, current.to);
-                    if (next.from !== -1) {
-                        this._internalSeek(next.from, false, false);
+                    if (this._totalLength) {
+                        let nextFrom = this._currentRange.to + 1;
+                        if (nextFrom < this._totalLength) {
+                            Log.w(this.TAG, 'Connection lost, trying reconnect...');
+                            this._isEarlyEofReconnecting = true;
+                            this._internalSeek(nextFrom, false);
+                        }
+                        return;
                     }
-                    return;
+                    // else: We don't know totalLength, throw UnrecoverableEarlyEof
                 }
                 // live stream: throw UnrecoverableEarlyEof error to upper-layer
                 type = LoaderErrors.UNRECOVERABLE_EARLY_EOF;

@@ -182,7 +182,7 @@ class RangeLoader extends BaseLoader {
             if (this._range.to === -1) {
                 this._contentLength = this._totalLength - this._range.from;
             } else {  // to !== -1
-                this._contentLength = this._range.to - this._range.from;
+                this._contentLength = this._range.to - this._range.from + 1;
             }
 
             if (openNextRange) {

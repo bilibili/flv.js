@@ -459,7 +459,21 @@ class FlvPlayer {
     _internalSeek(seconds) {
         let directSeek = this._isTimepointBuffered(seconds);
 
-        if (directSeek) {  // buffered position
+        let directSeekBegin = false;
+        let directSeekBeginTime = 0;
+
+        if (seconds < 1.0) {
+            let videoBeginTime = this._mediaElement.buffered.start(0);
+            if (videoBeginTime < 1.0 && seconds < videoBeginTime) {
+                directSeekBegin = true;
+                directSeekBeginTime = videoBeginTime;
+            }
+        }
+
+        if (directSeekBegin) {  // seek to video begin, set currentTime directly if beginPTS buffered
+            this._requestSetTime = true;
+            this._mediaElement.currentTime = directSeekBeginTime;
+        }  else if (directSeek) {  // buffered position
             if (!this._alwaysSeekKeyframe) {
                 this._requestSetTime = true;
                 this._mediaElement.currentTime = seconds;
@@ -530,6 +544,16 @@ class FlvPlayer {
             this._requestSetTime = false;
             return;
         }
+
+        if (target < 1.0) {  // seek to video begin, set currentTime directly if beginPTS buffered
+            let videoBeginTime = this._mediaElement.buffered.start(0);
+            if (videoBeginTime < 1.0 && target < videoBeginTime) {
+                this._requestSetTime = true;
+                this._mediaElement.currentTime = videoBeginTime;
+                return;
+            }
+        }
+
         if (this._isTimepointBuffered(target)) {
             if (this._alwaysSeekKeyframe) {
                 let idr = this._msectl.getNearestKeyframe(Math.floor(target * 1000));

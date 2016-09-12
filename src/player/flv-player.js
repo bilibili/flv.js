@@ -462,7 +462,7 @@ class FlvPlayer {
         let directSeekBegin = false;
         let directSeekBeginTime = 0;
 
-        if (seconds < 1.0) {
+        if (seconds < 1.0 && this._mediaElement.buffered.length > 0) {
             let videoBeginTime = this._mediaElement.buffered.start(0);
             if (videoBeginTime < 1.0 && seconds < videoBeginTime) {
                 directSeekBegin = true;
@@ -545,7 +545,7 @@ class FlvPlayer {
             return;
         }
 
-        if (target < 1.0) {  // seek to video begin, set currentTime directly if beginPTS buffered
+        if (target < 1.0 && this._mediaElement.buffered.length > 0) {  // seek to video begin, set currentTime directly if beginPTS buffered
             let videoBeginTime = this._mediaElement.buffered.start(0);
             if (videoBeginTime < 1.0 && target < videoBeginTime) {
                 this._requestSetTime = true;

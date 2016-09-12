@@ -1,10 +1,11 @@
 import Log from '../utils/logger.js';
-import {LoaderStatus, LoaderErrors} from './loader.js';
 import SpeedSampler from './speed-sampler.js';
+import {LoaderStatus, LoaderErrors} from './loader.js';
 import FetchStreamLoader from './fetch-stream-loader.js';
 import MozChunkedLoader from './xhr-moz-chunked-loader.js';
 import MSStreamLoader from './xhr-msstream-loader.js';
 import RangeLoader from './xhr-range-loader.js';
+import WebSocketLoader from './websocket-loader.js';
 import RangeSeekHandler from './range-seek-handler.js';
 import ParamSeekHandler from './param-seek-handler.js';
 import {RuntimeException, IllegalStateException, InvalidArgumentException} from '../utils/exception.js';
@@ -52,6 +53,7 @@ class IOController {
         this._seekHandler = null;
 
         this._dataSource = dataSource;
+        this._isWebSocketURL = /wss?:\/\/(.+?)\//.test(dataSource.url);
         this._refTotalLength = dataSource.filesize ? dataSource.filesize : null;
         this._totalLength = this._refTotalLength;
         this._fullRequestFlag = false;
@@ -202,7 +204,9 @@ class IOController {
     }
 
     _selectLoader() {
-        if (FetchStreamLoader.isSupported()) {
+        if (this._isWebSocketURL) {
+            this._loaderClass = WebSocketLoader;
+        } else if (FetchStreamLoader.isSupported()) {
             this._loaderClass = FetchStreamLoader;
         } else if (MSStreamLoader.isSupported()) {
             this._loaderClass = MSStreamLoader;

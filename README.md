@@ -18,8 +18,9 @@ flv.js is written in [ECMAScript 6][], and transpiled into ECMAScript 5 by [Babe
 
 ### Features
 - FLV container with H.264 + AAC codec playback
-- Multipart video segments playback
-- HTTP FLV live stream playback
+- Multipart segmented video playback
+- HTTP FLV low latency live stream playback
+- FLV over WebSocket live stream playback
 - Compatible with Chrome, FireFox, IE11 and Edge
 - Extermely low overhead, and hardware accelerated by your browser!
 

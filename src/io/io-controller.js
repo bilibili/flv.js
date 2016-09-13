@@ -208,8 +208,6 @@ class IOController {
             this._loaderClass = WebSocketLoader;
         } else if (FetchStreamLoader.isSupported()) {
             this._loaderClass = FetchStreamLoader;
-        } else if (MSStreamLoader.isSupported()) {
-            this._loaderClass = MSStreamLoader;
         } else if (MozChunkedLoader.isSupported()) {
             this._loaderClass = MozChunkedLoader;
         } else if (RangeLoader.isSupported()) {

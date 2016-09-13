@@ -2,7 +2,10 @@ import Log from '../utils/logger.js';
 import {BaseLoader, LoaderStatus, LoaderErrors} from './loader.js';
 import {RuntimeException} from '../utils/exception.js';
 
-/* For IE11/Edge browser by microsoft which supports `xhr.responseType = 'ms-stream'`
+/* Notice: ms-stream may cause IE/Edge browser crash if seek too frequently!!!
+ * The browser may crash in wininet.dll. Disable for now.
+ *
+ * For IE11/Edge browser by microsoft which supports `xhr.responseType = 'ms-stream'`
  * Notice that ms-stream API sucks. The buffer is always expanding along with downloading.
  *
  * We need to abort the xhr if buffer size exceeded limit size (e.g. 16 MiB), then do reconnect.

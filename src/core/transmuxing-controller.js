@@ -199,7 +199,11 @@ class TransmuxingController {
     _onInitChunkArrival(data, byteStart) {
         let probeData = null;
 
-        if ((probeData = FlvDemuxer.probe(data)).match) {
+        if (byteStart > 0) {
+            // IOController seeked immediately after opened, byteStart > 0 callback may received
+            this._demuxer.bindDataSource(this._ioctl);
+            this._demuxer.timestampBase = this._mediaDataSource.segments[this._currentSegmentIndex].timestampBase;
+        } else if ((probeData = FlvDemuxer.probe(data)).match) {
             // Always create new FlvDemuxer
             this._demuxer = new FlvDemuxer(probeData, this._config);
 

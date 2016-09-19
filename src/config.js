@@ -1,5 +1,5 @@
 export const defaultConfig = {
-    enableWorker: true,
+    enableWorker: false,
     enableStashBuffer: true,
     stashInitialSize: undefined,
 

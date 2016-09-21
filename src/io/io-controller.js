@@ -211,7 +211,6 @@ class IOController {
         } else if (MozChunkedLoader.isSupported()) {
             this._loaderClass = MozChunkedLoader;
         } else if (RangeLoader.isSupported()) {
-            Log.w(this.TAG, 'Your browser doesn\'t support streaming!');
             this._loaderClass = RangeLoader;
         } else {
             throw new RuntimeException('Your browser doesn\'t support xhr with arraybuffer responseType!');

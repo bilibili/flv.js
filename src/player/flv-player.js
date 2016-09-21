@@ -1,12 +1,12 @@
 import EventEmitter from 'events';
 import Log from '../utils/logger.js';
+import Browser from '../utils/browser.js';
 import PlayerEvents from './player-events.js';
 import Transmuxer from '../core/transmuxer.js';
 import TransmuxingEvents from '../core/transmuxing-events.js';
 import MSEController from '../core/mse-controller.js';
 import MSEEvents from '../core/mse-events.js';
 import {ErrorTypes, ErrorDetails} from './player-errors.js';
-import Browser from '../utils/browser.js';
 import {createDefaultConfig} from '../config.js';
 import {InvalidArgumentException, IllegalStateException} from '../utils/exception.js';
 
@@ -464,9 +464,10 @@ class FlvPlayer {
 
         if (seconds < 1.0 && this._mediaElement.buffered.length > 0) {
             let videoBeginTime = this._mediaElement.buffered.start(0);
-            if (videoBeginTime < 1.0 && seconds < videoBeginTime) {
+            if ((videoBeginTime < 1.0 && seconds < videoBeginTime) || Browser.safari) {
                 directSeekBegin = true;
-                directSeekBeginTime = videoBeginTime;
+                // also workaround for Safari: Seek to 0 may cause video stuck, use 0.1 to avoid
+                directSeekBeginTime = Browser.safari ? 0.1 : videoBeginTime;
             }
         }
 
@@ -547,9 +548,10 @@ class FlvPlayer {
 
         if (target < 1.0 && this._mediaElement.buffered.length > 0) {  // seek to video begin, set currentTime directly if beginPTS buffered
             let videoBeginTime = this._mediaElement.buffered.start(0);
-            if (videoBeginTime < 1.0 && target < videoBeginTime) {
+            if ((videoBeginTime < 1.0 && target < videoBeginTime) || Browser.safari) {
                 this._requestSetTime = true;
-                this._mediaElement.currentTime = videoBeginTime;
+                // also workaround for Safari: Seek to 0 may cause video stuck, use 0.1 to avoid
+                this._mediaElement.currentTime = Browser.safari ? 0.1 : videoBeginTime;
                 return;
             }
         }

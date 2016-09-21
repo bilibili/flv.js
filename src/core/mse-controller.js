@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
 import Log from '../utils/logger.js';
+import Browser from '../utils/browser.js';
 import MSEEvents from './mse-events.js';
 import {SampleInfo, IDRSampleList} from './media-segment-info.js';
 import {IllegalStateException} from '../utils/exception.js';
@@ -33,6 +34,10 @@ class MSEController {
             audio: null
         };
         this._sourceBuffers = {
+            video: null,
+            audio: null
+        };
+        this._lastInitSegments = {
             video: null,
             audio: null
         };
@@ -87,6 +92,7 @@ class MSEController {
                 ps.splice(0, ps.length);
                 this._pendingSegments[type] = null;
                 this._pendingRemoveRanges[type] = null;
+                this._lastInitSegments[type] = null;
 
                 // remove all sourcebuffers
                 let sb = this._sourceBuffers[type];
@@ -142,6 +148,8 @@ class MSEController {
         let firstInitSegment = false;
 
         Log.v(this.TAG, 'Received Initialization Segment, mimeType: ' + mimeType);
+        this._lastInitSegments[is.type] = is;
+
         if (mimeType !== this._mimeTypes[is.type]) {
             if (!this._mimeTypes[is.type]) {  // empty, first chance create sourcebuffer
                 firstInitSegment = true;
@@ -222,6 +230,18 @@ class MSEController {
             // if sb is not updating, let's remove ranges now!
             if (!sb.updating) {
                 this._doRemoveRanges();
+            }
+
+            // Safari 10 may get InvalidStateError in the later appendBuffer() after SourceBuffer.remove() call
+            // Internal parser's state may be invalid at this time. Re-append last InitSegment to workaround.
+            if (Browser.safari) {
+                let lastInitSegment = this._lastInitSegments[type];
+                if (lastInitSegment) {
+                    this._pendingSegments[type].push(lastInitSegment);
+                    if (!sb.updating) {
+                        this._doAppendSegments();
+                    }
+                }
             }
         }
     }

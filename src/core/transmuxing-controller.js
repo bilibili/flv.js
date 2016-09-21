@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
 import Log from '../utils/logger.js';
+import Browser from '../utils/browser.js';
 import MediaInfo from './media-info.js';
 import FlvDemuxer from '../demux/flv-demuxer.js';
 import MP4Remuxer from '../remux/mp4-remuxer.js';
@@ -157,7 +158,7 @@ class TransmuxingController {
                 let keyframe = segmentInfo.getNearestKeyframe(milliseconds);
                 this._remuxer.seek(keyframe.milliseconds);
                 this._ioctl.seek(keyframe.fileposition);
-                // Will be resolved in @_onRemuxerMediaSegmentArrival
+                // Will be resolved in _onRemuxerMediaSegmentArrival()
                 this._pendingResolveSeekPoint = keyframe.milliseconds;
             }
         } else {
@@ -312,12 +313,13 @@ class TransmuxingController {
         }
         this._emitter.emit(TransmuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
 
-        if (this._pendingResolveSeekPoint != null) {
+        if (this._pendingResolveSeekPoint != null && type === 'video') {
             let syncPoints = mediaSegment.info.syncPoints;
             let seekpoint = this._pendingResolveSeekPoint;
             this._pendingResolveSeekPoint = null;
 
-            if (syncPoints.length > 0 && syncPoints[0].originalDts === seekpoint) {
+            // Safari: Pass PTS for recommend_seekpoint
+            if (Browser.safari && syncPoints.length > 0 && syncPoints[0].originalDts === seekpoint) {
                 seekpoint = syncPoints[0].pts;
             }
             // else: use original DTS (keyframe.milliseconds)

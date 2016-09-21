@@ -57,6 +57,7 @@ class TransmuxingController {
         this._ioctl = null;
 
         this._pendingSeekTime = null;
+        this._pendingResolveSeekPoint = null;
     }
 
     destroy() {
@@ -156,7 +157,8 @@ class TransmuxingController {
                 let keyframe = segmentInfo.getNearestKeyframe(milliseconds);
                 this._remuxer.seek(keyframe.milliseconds);
                 this._ioctl.seek(keyframe.fileposition);
-                this._emitter.emit(TransmuxingEvents.RECOMMEND_SEEKPOINT, keyframe.milliseconds);
+                // Will be resolved in @_onRemuxerMediaSegmentArrival
+                this._pendingResolveSeekPoint = keyframe.milliseconds;
             }
         } else {
             // cross-segment seeking
@@ -178,7 +180,7 @@ class TransmuxingController {
                 this._remuxer.insertDiscontinuity();
                 this._demuxer.timestampBase = this._mediaDataSource.segments[targetSegmentIndex].timestampBase;
                 this._loadSegment(targetSegmentIndex, keyframe.fileposition);
-                this._emitter.emit(TransmuxingEvents.RECOMMEND_SEEKPOINT, keyframe.milliseconds);
+                this._pendingResolveSeekPoint = keyframe.milliseconds;
             }
         }
     }
@@ -309,6 +311,20 @@ class TransmuxingController {
             return;
         }
         this._emitter.emit(TransmuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
+
+        if (this._pendingResolveSeekPoint != null) {
+            let syncPoints = mediaSegment.info.syncPoints;
+            let seekpoint = this._pendingResolveSeekPoint;
+            this._pendingResolveSeekPoint = null;
+
+            if (syncPoints.length > 0 && syncPoints[0].originalDts === seekpoint) {
+                seekpoint = syncPoints[0].pts;
+            }
+            // else: use original DTS (keyframe.milliseconds)
+
+            this._emitter.emit(TransmuxingEvents.RECOMMEND_SEEKPOINT, seekpoint);
+        }
+
         if (type === 'video') {
             this._reportStatisticsInfo();
         }

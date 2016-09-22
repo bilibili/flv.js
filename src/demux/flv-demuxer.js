@@ -711,8 +711,10 @@ class FlvDemuxer {
             offset += len;
 
             let config = SPSParser.parseSPS(sps);
-            meta.width = config.present_size.width;
-            meta.height = config.present_size.height;
+            meta.codecWidth = config.codec_size.width;
+            meta.codecHeight = config.codec_size.height;
+            meta.presentWidth = config.present_size.width;
+            meta.presentHeight = config.present_size.height;
 
             meta.profile = config.profile_string;
             meta.level = config.level_string;
@@ -743,8 +745,8 @@ class FlvDemuxer {
             meta.codec = codecString;
 
             let mi = this._mediaInfo;
-            mi.width = config.codec_size.width;
-            mi.height = config.codec_size.height;
+            mi.width = meta.codecWidth;
+            mi.height = meta.codecHeight;
             mi.fps = meta.frameRate.fps;
             mi.profile = meta.profile;
             mi.level = meta.level;

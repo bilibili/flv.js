@@ -192,7 +192,8 @@ class MP4 {
     // Track header box
     static tkhd(meta) {
         let trackId = meta.id, duration = meta.duration;
-        let width = meta.width, height = meta.height;
+        let width = meta.presentWidth, height = meta.presentHeight;
+
         return MP4.box(MP4.types.tkhd, new Uint8Array([
             0x00, 0x00, 0x00, 0x07,  // version(0) + flags
             0x00, 0x00, 0x00, 0x00,  // creation_time
@@ -357,7 +358,8 @@ class MP4 {
 
     static avc1(meta) {
         let avcc = meta.avcc;
-        let width = meta.width, height = meta.height;
+        let width = meta.codecWidth, height = meta.codecHeight;
+
         let data = new Uint8Array([
             0x00, 0x00, 0x00, 0x00,  // reserved(4)
             0x00, 0x00, 0x00, 0x01,  // reserved(2) + data_reference_index(2)

@@ -501,7 +501,6 @@ class MP4Remuxer {
         let moofbox = MP4.moof(track, firstDts);
         track.samples = [];
         track.length = 0;
-        track.nbNalu = 0;
 
         this._onMediaSegment('video', {
             type: 'video',

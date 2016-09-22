@@ -67,7 +67,7 @@ class FlvDemuxer {
             fps_den: 1000
         };
 
-        this._videoTrack = {type: 'video', id: 1, sequenceNumber: 0, samples: [], length: 0, nbNalu: 0};
+        this._videoTrack = {type: 'video', id: 1, sequenceNumber: 0, samples: [], length: 0};
         this._audioTrack = {type: 'audio', id: 2, sequenceNumber: 0, samples: [], length: 0};
 
         this._littleEndian = (function () {
@@ -397,25 +397,14 @@ class FlvDemuxer {
 
             let soundRate = 0;
             let soundRateIndex = (soundSpec & 12) >>> 2;
-            switch (soundRateIndex) {
-                case 0:
-                    soundRate = 5500;
-                    break;
-                case 1:
-                    soundRate = 11025;
-                    break;
-                case 2:
-                    soundRate = 22050;
-                    break;
-                case 3:
-                    soundRate = 44100;
-                    break;
-                case 4:
-                    soundRate = 48000;
-                    break;
-                default:
-                    this._onError(DemuxErrors.FORMAT_ERROR, 'Flv: Invalid audio sample rate idx: ' + soundRateIndex);
-                    return;
+
+            let soundRateTable = [5500, 11025, 22050, 44100, 48000];
+
+            if (soundRateIndex < soundRateTable.length) {
+                soundRate = soundRateTable[soundRateIndex];
+            } else {
+                this._onError(DemuxErrors.FORMAT_ERROR, 'Flv: Invalid audio sample rate idx: ' + soundRateIndex);
+                return;
             }
 
             let soundSize = (soundSpec & 2) >>> 1;  // unused
@@ -855,7 +844,6 @@ class FlvDemuxer {
             }
             track.samples.push(avcSample);
             track.length += length;
-            track.nbNalu += units.length;
         }
     }
 

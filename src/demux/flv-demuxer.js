@@ -809,6 +809,10 @@ class FlvDemuxer {
         let keyframe = (frameType === 1);  // from FLV Frame Type constants
 
         while (offset < dataSize) {
+            if (offset + 4 >= dataSize) {
+                Log.w(this.TAG, `Malformed Nalu near timestamp ${dts}, offset = ${offset}, dataSize = ${dataSize}`);
+                break;  // data not enough for next Nalu
+            }
             // Nalu with length-header (AVC1)
             let naluSize = v.getUint32(offset, !le);  // Big-Endian read
             if (lengthSize === 3) {

@@ -355,14 +355,18 @@ class FlvDemuxer {
 
     _parseKeyframesIndex(keyframes) {
         let times = [];
+        let filepositions = [];
 
-        keyframes.times.forEach((time) => {
-            times.push(this._timestampBase + Math.floor(time * 1000));
-        });
+        // ignore first keyframe which is actually AVC Sequence Header (AVCDecoderConfigurationRecord)
+        for (let i = 1; i < keyframes.times.length; i++) {
+            let time = this._timestampBase + Math.floor(keyframes.times[i] * 1000);
+            times.push(time);
+            filepositions.push(keyframes.filepositions[i]);
+        }
 
         return {
             times: times,
-            filepositions: keyframes.filepositions
+            filepositions: filepositions
         };
     }
 

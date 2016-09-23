@@ -32,7 +32,10 @@ class FlvPlayer {
 
         this.e = {
             onvLoadedMetadata: this._onvLoadedMetadata.bind(this),
-            onvSeeking: this._onvSeeking.bind(this)
+            onvSeeking: this._onvSeeking.bind(this),
+            onvCanPlay: this._onvCanPlay.bind(this),
+            onvStalled: this._onvStalled.bind(this),
+            onvProgress: this._onvProgress.bind(this)
         };
 
         if (self.performance && self.performance.now) {
@@ -56,6 +59,7 @@ class FlvPlayer {
 
         this._mseSourceOpened = false;
         this._hasPendingLoad = false;
+        this._receivedCanPlay = false;
 
         this._mediaInfo = null;
         this._statisticsInfo = null;
@@ -126,6 +130,9 @@ class FlvPlayer {
         this._mediaElement = mediaElement;
         mediaElement.addEventListener('loadedmetadata', this.e.onvLoadedMetadata);
         mediaElement.addEventListener('seeking', this.e.onvSeeking);
+        mediaElement.addEventListener('canplay', this.e.onvCanPlay);
+        mediaElement.addEventListener('stalled', this.e.onvStalled);
+        mediaElement.addEventListener('progress', this.e.onvProgress);
 
         this._msectl = new MSEController();
 
@@ -164,6 +171,9 @@ class FlvPlayer {
             this._msectl.detachMediaElement();
             this._mediaElement.removeEventListener('loadedmetadata', this.e.onvLoadedMetadata);
             this._mediaElement.removeEventListener('seeking', this.e.onvSeeking);
+            this._mediaElement.removeEventListener('canplay', this.e.onvCanPlay);
+            this._mediaElement.removeEventListener('stalled', this.e.onvStalled);
+            this._mediaElement.removeEventListener('progress', this.e.onvProgress);
             this._mediaElement = null;
         }
         if (this._msectl) {
@@ -532,6 +542,22 @@ class FlvPlayer {
         }
     }
 
+    _checkAndResumeStuckPlayback() {
+        let media = this._mediaElement;
+        if (!this._receivedCanPlay || media.readyState < 2) {  // HAVE_CURRENT_DATA
+            let buffered = media.buffered;
+            if (buffered.length > 0 && media.currentTime < buffered.start(0)) {
+                Log.w(this.TAG, `Playback seems stuck at ${media.currentTime}, seek to ${buffered.start(0)}`);
+                this._requestSetTime = true;
+                this._mediaElement.currentTime = buffered.start(0);
+                this._mediaElement.removeEventListener('progress', this.e.onvProgress);
+            }
+        } else {
+            // Playback didn't stuck, remove progress event listener
+            this._mediaElement.removeEventListener('progress', this.e.onvProgress);
+        }
+    }
+
     _onvLoadedMetadata(e) {
         if (this._pendingSeekTime != null) {
             this._mediaElement.currentTime = this._pendingSeekTime;
@@ -541,13 +567,16 @@ class FlvPlayer {
 
     _onvSeeking(e) {  // handle seeking request from browser's progress bar
         let target = this._mediaElement.currentTime;
+        let buffered = this._mediaElement.buffered;
+
         if (this._requestSetTime) {
             this._requestSetTime = false;
             return;
         }
 
-        if (target < 1.0 && this._mediaElement.buffered.length > 0) {  // seek to video begin, set currentTime directly if beginPTS buffered
-            let videoBeginTime = this._mediaElement.buffered.start(0);
+        if (target < 1.0 && buffered.length > 0) {
+            // seek to video begin, set currentTime directly if beginPTS buffered
+            let videoBeginTime = buffered.start(0);
             if ((videoBeginTime < 1.0 && target < videoBeginTime) || Browser.safari) {
                 this._requestSetTime = true;
                 // also workaround for Safari: Seek to 0 may cause video stuck, use 0.1 to avoid
@@ -575,6 +604,19 @@ class FlvPlayer {
             recordTime: this._now()
         };
         window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);
+    }
+
+    _onvCanPlay(e) {
+        this._receivedCanPlay = true;
+        this._mediaElement.removeEventListener('canplay', this.e.onvCanPlay);
+    }
+
+    _onvStalled(e) {
+        this._checkAndResumeStuckPlayback();
+    }
+
+    _onvProgress(e) {
+        this._checkAndResumeStuckPlayback();
     }
 
 }

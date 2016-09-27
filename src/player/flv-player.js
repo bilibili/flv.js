@@ -542,9 +542,9 @@ class FlvPlayer {
         }
     }
 
-    _checkAndResumeStuckPlayback() {
+    _checkAndResumeStuckPlayback(stalled) {
         let media = this._mediaElement;
-        if (!this._receivedCanPlay || media.readyState < 2) {  // HAVE_CURRENT_DATA
+        if (stalled || !this._receivedCanPlay || media.readyState < 2) {  // HAVE_CURRENT_DATA
             let buffered = media.buffered;
             if (buffered.length > 0 && media.currentTime < buffered.start(0)) {
                 Log.w(this.TAG, `Playback seems stuck at ${media.currentTime}, seek to ${buffered.start(0)}`);
@@ -612,7 +612,7 @@ class FlvPlayer {
     }
 
     _onvStalled(e) {
-        this._checkAndResumeStuckPlayback();
+        this._checkAndResumeStuckPlayback(true);
     }
 
     _onvProgress(e) {

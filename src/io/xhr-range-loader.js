@@ -31,6 +31,7 @@ class RangeLoader extends BaseLoader {
         this._currentChunkSizeKB = 384;
         this._currentSpeed = 0;
         this._currentSpeedNormalized = 0;
+        this._zeroSpeedChunkCount = 0;
 
         this._xhr = null;
         this._speedSampler = new SpeedSampler();
@@ -230,6 +231,14 @@ class RangeLoader extends BaseLoader {
 
         this._lastTimeLoaded = 0;
         let KBps = this._speedSampler.lastSecondKBps;
+        if (KBps === 0) {
+            this._zeroSpeedChunkCount++;
+            if (this._zeroSpeedChunkCount >= 3) {
+                // Try get currentKBps after 3 chunks
+                KBps = this._speedSampler.currentKBps;
+            }
+        }
+
         if (KBps !== 0) {
             this._currentSpeed = KBps;
             let normalized = this._normalizeSpeed(KBps);

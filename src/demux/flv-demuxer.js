@@ -26,7 +26,7 @@ function ReadBig32(array, index) {
 }
 
 
-class FlvDemuxer {
+class FLVDemuxer {
 
     constructor(probeData, config) {
         this.TAG = this.constructor.name;
@@ -857,4 +857,4 @@ class FlvDemuxer {
 
 }
 
-export default FlvDemuxer;
+export default FLVDemuxer;

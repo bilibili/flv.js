@@ -2,7 +2,7 @@ import EventEmitter from 'events';
 import Log from '../utils/logger.js';
 import Browser from '../utils/browser.js';
 import MediaInfo from './media-info.js';
-import FlvDemuxer from '../demux/flv-demuxer.js';
+import FLVDemuxer from '../demux/flv-demuxer.js';
 import MP4Remuxer from '../remux/mp4-remuxer.js';
 import DemuxErrors from '../demux/demux-errors.js';
 import IOController from '../io/io-controller.js';
@@ -206,9 +206,9 @@ class TransmuxingController {
             // IOController seeked immediately after opened, byteStart > 0 callback may received
             this._demuxer.bindDataSource(this._ioctl);
             this._demuxer.timestampBase = this._mediaDataSource.segments[this._currentSegmentIndex].timestampBase;
-        } else if ((probeData = FlvDemuxer.probe(data)).match) {
-            // Always create new FlvDemuxer
-            this._demuxer = new FlvDemuxer(probeData, this._config);
+        } else if ((probeData = FLVDemuxer.probe(data)).match) {
+            // Always create new FLVDemuxer
+            this._demuxer = new FLVDemuxer(probeData, this._config);
 
             if (!this._remuxer) {
                 this._remuxer = new MP4Remuxer(this._config);

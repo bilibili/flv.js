@@ -38,6 +38,7 @@ declare namespace FlvJs {
         seekType?: string,  // [range, param, custom]
         seekParamStart?: string,
         seekParamEnd?: string,
+        rangeLoadZeroStart?: boolean,
         customSeekHandler?: any
     }
 

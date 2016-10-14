@@ -1,7 +1,7 @@
 class RangeSeekHandler {
 
-    constructor() {
-
+    constructor(zeroStart) {
+        this._zeroStart = zeroStart || false;
     }
 
     getConfig(url, range) {
@@ -15,6 +15,8 @@ class RangeSeekHandler {
                 param = `bytes=${range.from.toString()}-`;
             }
             headers['Range'] = param;
+        } else if (this._zeroStart) {
+            headers['Range'] = 'bytes=0-';
         }
 
         return {

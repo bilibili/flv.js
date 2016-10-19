@@ -67,6 +67,7 @@ declare namespace FlvJs {
         unload(): void;
         play(): void;
         pause(): void;
+        type: string;
         buffered: TimeRanges;
         duration: number;
         volume: number;

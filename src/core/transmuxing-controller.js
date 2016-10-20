@@ -201,11 +201,14 @@ class TransmuxingController {
 
     _onInitChunkArrival(data, byteStart) {
         let probeData = null;
+        let consumed = 0;
 
         if (byteStart > 0) {
             // IOController seeked immediately after opened, byteStart > 0 callback may received
             this._demuxer.bindDataSource(this._ioctl);
             this._demuxer.timestampBase = this._mediaDataSource.segments[this._currentSegmentIndex].timestampBase;
+
+            consumed = this._demuxer.parseChunks(data, byteStart);
         } else if ((probeData = FLVDemuxer.probe(data)).match) {
             // Always create new FLVDemuxer
             this._demuxer = new FLVDemuxer(probeData, this._config);
@@ -229,6 +232,8 @@ class TransmuxingController {
 
             this._remuxer.onInitSegment = this._onRemuxerInitSegmentArrival.bind(this);
             this._remuxer.onMediaSegment = this._onRemuxerMediaSegmentArrival.bind(this);
+
+            consumed = this._demuxer.parseChunks(data, byteStart);
         } else {
             probeData = null;
             Log.e(this.TAG, 'Non-FLV, Unsupported media type!');
@@ -236,9 +241,11 @@ class TransmuxingController {
                 this._internalAbort();
             });
             this._emitter.emit(TransmuxingEvents.DEMUX_ERROR, DemuxErrors.FORMAT_UNSUPPORTED, 'Non-FLV, Unsupported media type');
+
+            consumed = 0;
         }
 
-        return probeData != null ? probeData.consumed : 0;
+        return consumed;
     }
 
     _onMediaInfo(mediaInfo) {

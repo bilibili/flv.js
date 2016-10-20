@@ -203,13 +203,23 @@ class FLVDemuxer {
         let offset = 0;
         let le = this._littleEndian;
 
+        if (byteStart === 0) {  // buffer with FLV header
+            if (chunk.byteLength > 13) {
+                let probeData = FLVDemuxer.probe(chunk);
+                offset = probeData.dataOffset;
+                byteStart = probeData.dataOffset;
+            } else {
+                return 0;
+            }
+        }
+
         if (this._firstParse) {  // handle PreviousTagSize0 before Tag1
             this._firstParse = false;
             if (byteStart !== this._dataOffset) {
                 Log.w(this.TAG, 'First time parsing but chunk byteStart invalid!');
             }
 
-            let v = new DataView(chunk);
+            let v = new DataView(chunk, offset);
             let prevTagSize0 = v.getUint32(0, !le);
             if (prevTagSize0 !== 0) {
                 Log.w(this.TAG, 'PrevTagSize0 !== 0 !!!');

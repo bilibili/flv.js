@@ -1,6 +1,5 @@
 import Log from '../utils/logger.js';
 import AMF from './amf-parser.js';
-import BSearch from '../utils/bsearch.js';
 import SPSParser from './sps-parser.js';
 import DemuxErrors from './demux-errors.js';
 import MediaInfo from '../core/media-info.js';

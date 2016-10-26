@@ -177,43 +177,6 @@ export class MediaSegmentInfoList {
         this._list.splice(insertIdx, 0, msi);
     }
 
-    removeSegmentsAfter(originalDts) {
-        let list = this._list;
-        if (list.length === 0) {
-            return;
-        }
-        let last = list.length - 1;
-        let mid = 0;
-        let lbound = 0;
-        let ubound = last;
-
-        let idx = 0;
-
-        if (originalDts < list[0].originalBeginDts) {
-            idx = 0;
-            lbound = ubound + 1;
-        }
-
-        while (lbound <= ubound) {
-            mid = lbound + Math.floor((ubound - lbound) / 2);
-            if (mid === last) {  // no segments need to be remove
-                return;
-            } else if (list[mid].lastSample.originalDts < originalDts && originalDts <= list[mid + 1].originalBeginDts) {
-                idx = mid + 1;
-                break;
-            } else if (list[mid].originalBeginDts <= originalDts && originalDts < list[mid].originalEndDts) {
-                idx = mid;
-                break;
-            } else if (originalDts > list[mid].lastSample.originalDts) {
-                lbound = mid + 1;
-            } else {
-                ubound = mid - 1;
-            }
-        }
-
-        this._list.splice(idx, this._list.length - idx);
-    }
-
     getLastSegmentBefore(originalBeginDts) {
         let idx = this._searchNearestSegmentBefore(originalBeginDts);
         if (idx >= 0) {

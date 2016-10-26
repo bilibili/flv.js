@@ -53,7 +53,7 @@
             <button onclick="flv_load()">Load</button>
             <button onclick="flv_start()">Start</button>
             <button onclick="flv_pause()">Pause</button>
-            <button onclick="flv_stop()">Stop</button>
+            <button onclick="flv_destroy()">Destroy</button>
             <input style="width:100px" type="text" name="seekpoint"/>
             <button onclick="flv_seekto()">SeekTo</button>
         </div>
@@ -72,11 +72,13 @@
                 var mediaDataSource = JSON.parse(xhr.response);
 
                 var element = document.getElementsByName('videoElement')[0];
-                if (typeof player !== 'undefined') {
-                    player.unload();
-                    player.detachMediaElement();
-                    player.destroy();
-                    player = null;
+                if (typeof player !== "undefined") {
+                    if (player != null) {
+                        player.unload();
+                        player.detachMediaElement();
+                        player.destroy();
+                        player = null;
+                    }
                 }
                 player = flvjs.createPlayer(mediaDataSource, {
                     enableWorker: false,
@@ -97,8 +99,12 @@
             player.pause();
         }
 
-        function flv_stop() {
-            console.log('Fuck!');
+        function flv_destroy() {
+            player.pause();
+            player.unload();
+            player.detachMediaElement();
+            player.destroy();
+            player = null;
         }
 
         function flv_seekto() {

@@ -2,6 +2,7 @@
   "name": "flv.js",
   "version": "0.0.1",
   "description": "HTML5 FLV Player",
+  "keywords": ["html5", "flv", "mse", "javascript"],
   "main": "src/flv.js",
   "scripts": {
     "dev": "gulp watch",
@@ -29,5 +30,6 @@
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.7.0"
   },
-  "author": "zheng qian <xqq@xqq.im>"
+  "author": "zheng qian <xqq@xqq.im>",
+  "license": "Apache-2.0"
 }

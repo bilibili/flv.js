@@ -1,14 +1,14 @@
-
 flv.js
 ======
-HTML5 Flash Video(FLV) Player, written in pure JavaScript without Flash. LONG LIVE FLV!
+An HTML5 Flash Video (FLV) Player written in pure JavaScript without Flash. LONG LIVE FLV!
 
-This project relies on [Media Source Extensions][], and inspired by [hls.js][].
+This project, inspired by [hls.js][], relies on [Media Source Extensions][] to work.
 
-### Overview
-A JavaScript library which implements Flash Video(FLV) format playback in HTML5 video. It works by transmuxing FLV file stream into ISO BMFF (Fragmented MP4) segments, then feed mp4 segments into browser through [Media Source Extensions][] API.
+Overview
+--------
+flv.js works by transmuxing FLV file stream into ISO BMFF (Fragmented MP4) segments, followed by feeding mp4 segments into an HTML5 `<video>` element through [Media Source Extensions][] API.
 
-flv.js is written in [ECMAScript 6][], and transpiled into ECMAScript 5 by [Babel Compiler][], bundled with [Browserify][].
+flv.js is written in [ECMAScript 6][], transpiled into ECMAScript 5 by [Babel Compiler][], and bundled with [Browserify][].
 
 [Media Source Extensions]: https://w3c.github.io/media-source/
 [hls.js]: https://github.com/dailymotion/hls.js
@@ -16,7 +16,8 @@ flv.js is written in [ECMAScript 6][], and transpiled into ECMAScript 5 by [Babe
 [Babel Compiler]: https://babeljs.io/
 [Browserify]: http://browserify.org/
 
-### Features
+Features
+--------
 - FLV container with H.264 + AAC codec playback
 - Multipart segmented video playback
 - HTTP FLV low latency live stream playback
@@ -24,7 +25,8 @@ flv.js is written in [ECMAScript 6][], and transpiled into ECMAScript 5 by [Babe
 - Compatible with Chrome, FireFox, Safari 10, IE11 and Edge
 - Extermely low overhead, and hardware accelerated by your browser!
 
-### Build
+Build
+-----
 ```bash
 npm install          # install dev-dependences
 npm install -g gulp  # install build tool
@@ -33,7 +35,8 @@ gulp release         # packaged & minimized js will be emitted in dist folder
 
 [cnpm](https://github.com/cnpm/cnpm) mirror is recommended if you are in Mainland China.
 
-### Getting Started
+Getting Started
+---------------
 ```js
 <script src="flv.min.js"></script>
 <video id="videoElement"></video>
@@ -51,7 +54,8 @@ gulp release         # packaged & minimized js will be emitted in dist folder
 </script>
 ```
 
-### License
+License
+-------
 ```
 Copyright (C) 2016 Bilibili. All Rights Reserved.
 

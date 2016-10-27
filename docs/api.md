@@ -11,19 +11,19 @@ flv.js exports all the interfaces through `flvjs` object which exposed in global
 
 
 Functions:
-- [flvjs.createPlayer()](#createplayer)
-- [flvjs.isSupported()](#issupported)
-- [flvjs.getFeatureList()](#getfeaturelist)
+- [flvjs.createPlayer()](#flvjscreateplayer)
+- [flvjs.isSupported()](#flvjsissupported)
+- [flvjs.getFeatureList()](#flvjsgetfeaturelist)
 
 Classes:
-- [flvjs.FlvPlayer](#flvplayer)
-- [flvjs.NativePlayer](#nativeplayer)
-- [flvjs.LoggingControl](#loggingcontrol)
+- [flvjs.FlvPlayer](#flvjsflvplayer)
+- [flvjs.NativePlayer](#flvjsnativeplayer)
+- [flvjs.LoggingControl](#flvjsloggingcontrol)
 
 Enums:
-- [flvjs.Events](#events)
-- [flvjs.ErrorTypes](#errortypes)
-- [flvjs.ErrorDetails](#errordetails)
+- [flvjs.Events](#flvjsevents)
+- [flvjs.ErrorTypes](#flvjserrortypes)
+- [flvjs.ErrorDetails](#flvjserrordetails)
 
 
 

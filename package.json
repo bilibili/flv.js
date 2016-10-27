@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "description": "HTML5 FLV Player",
   "keywords": ["html5", "flv", "mse", "javascript"],
-  "main": "src/flv.js",
+  "main": "./src/flv.js",
+  "types": "./d.ts/flv.d.ts",
   "scripts": {
     "dev": "gulp watch",
     "build": "gulp release",

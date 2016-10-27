@@ -34,7 +34,7 @@ gulp release         # packaged & minimized js will be emitted in dist folder
 [cnpm](https://github.com/cnpm/cnpm) mirror is recommended if you are in Mainland China.
 
 ### Getting Started
-```js
+```html
 <script src="flv.min.js"></script>
 <video id="videoElement"></video>
 <script>

@@ -1,6 +1,6 @@
 
-flv.js
-======
+<h1><a href="https://github.com/Bilibili/flv.js" target="_blank"><img width="225" src="./logo.png"></a></h1>
+
 An HTML5 Flash Video (FLV) Player written in pure JavaScript without Flash. LONG LIVE FLV!
 
 This project, inspired by [hls.js][], relies on [Media Source Extensions][] to work.

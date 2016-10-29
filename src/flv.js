@@ -62,20 +62,17 @@ function getFeatureList() {
 
 
 // interfaces
-let flvjs = {};
-
-flvjs.createPlayer = createPlayer;
-flvjs.isSupported = isSupported;
-flvjs.getFeatureList = getFeatureList;
-
-flvjs.Events = PlayerEvents;
-flvjs.ErrorTypes = ErrorTypes;
-flvjs.ErrorDetails = ErrorDetails;
-
-flvjs.FlvPlayer = FlvPlayer;
-flvjs.NativePlayer = NativePlayer;
-flvjs.LoggingControl = LoggingControl;
-
+let flvjs = {
+    createPlayer,
+    isSupported,
+    getFeatureList,
+    Events: PlayerEvents,
+    ErrorTypes,
+    ErrorDetails,
+    FlvPlayer,
+    NativePlayer,
+    LoggingControl
+};
 
 // export interfaces to global context
 window.flvjs = flvjs;

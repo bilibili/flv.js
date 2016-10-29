@@ -5,7 +5,7 @@ When you create FlvPlayer instance, the `MediaDataSource` structure is passing t
 
 You need to provide a playlist for `MediaDataSource` in following format:
 
-```json
+```js
 {
     // Required
     "type": "flv",  // Only flv type supports multipart playback

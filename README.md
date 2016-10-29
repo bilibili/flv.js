@@ -56,6 +56,9 @@ See [cors.md](docs/cors.md) for more details.
 </script>
 ```
 
+## Multipart playback
+You only have to provide a playlist for `MediaDataSource`. See [multipart.md](docs/multipart.md)
+
 ## API and Configuration
 See [api.md](docs/api.md)
 

@@ -33,6 +33,11 @@ gulp release         # packaged & minimized js will be emitted in dist folder
 
 [cnpm](https://github.com/cnpm/cnpm) mirror is recommended if you are in Mainland China.
 
+## CORS
+If you use standalone video server for FLV stream, `Access-Control-Allow-Origin` header must be configured correctly on video server for cross-origin resource fetching.
+
+See [cors.md](docs/cors.md) for more details.
+
 ## Getting Started
 ```html
 <script src="flv.min.js"></script>

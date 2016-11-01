@@ -16,14 +16,14 @@
  * limitations under the License.
  */
 
-let Browser = {};
+const Browser = {};
 
-function detect() {
+(()=> {
     // modified from jquery-browser-plugin
 
-    let ua = self.navigator.userAgent.toLowerCase();
+    const ua = self.navigator.userAgent.toLowerCase();
 
-    let match = /(edge)\/([\w.]+)/.exec(ua) ||
+    const match = /(edge)\/([\w.]+)/.exec(ua) ||
         /(opr)[\/]([\w.]+)/.exec(ua) ||
         /(chrome)[ \/]([\w.]+)/.exec(ua) ||
         /(iemobile)[\/]([\w.]+)/.exec(ua) ||
@@ -36,7 +36,7 @@ function detect() {
         ua.indexOf('compatible') < 0 && /(mozilla)(?:.*? rv:([\w.]+)|)/.exec(ua) ||
         [];
 
-    let platform_match = /(ipad)/.exec(ua) ||
+    const platform_match = /(ipad)/.exec(ua) ||
         /(ipod)/.exec(ua) ||
         /(windows phone)/.exec(ua) ||
         /(iphone)/.exec(ua) ||
@@ -48,18 +48,18 @@ function detect() {
         /(cros)/.exec(ua) ||
         [];
 
-    let matched = {
+    const matched = {
         browser: match[5] || match[3] || match[1] || '',
         version: match[2] || match[4] || '0',
         majorVersion: match[4] || match[2] || '0',
         platform: platform_match[0] || ''
     };
 
-    let browser = {};
+    const browser = {};
     if (matched.browser) {
         browser[matched.browser] = true;
 
-        let versionArray = matched.majorVersion.split('.');
+        const versionArray = matched.majorVersion.split('.');
         browser.version = {
             major: parseInt(matched.majorVersion, 10),
             string: matched.version
@@ -115,14 +115,12 @@ function detect() {
     browser.name = matched.browser;
     browser.platform = matched.platform;
 
-    for (let key in Browser) {
+    for (const key in Browser) {
         if (Browser.hasOwnProperty(key)) {
             delete Browser[key];
         }
     }
     Object.assign(Browser, browser);
-}
-
-detect();
+})();
 
 export default Browser;

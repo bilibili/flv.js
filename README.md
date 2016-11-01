@@ -1,5 +1,5 @@
 
-flv.js
+flv.js  [![npm](https://img.shields.io/npm/v/flv.js.svg?style=flat)](https://www.npmjs.com/package/flv.js)
 ======
 An HTML5 Flash Video (FLV) Player written in pure JavaScript without Flash. LONG LIVE FLV!
 
@@ -23,6 +23,11 @@ flv.js is written in [ECMAScript 6][], transpiled into ECMAScript 5 by [Babel Co
 - FLV over WebSocket live stream playback
 - Compatible with Chrome, FireFox, Safari 10, IE11 and Edge
 - Extermely low overhead, and hardware accelerated by your browser!
+
+## Installation
+```bash
+npm install --save flv.js
+```
 
 ## Build
 ```bash

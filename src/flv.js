@@ -25,7 +25,7 @@ import {ErrorTypes, ErrorDetails} from './player/player-errors.js';
 import LoggingControl from './utils/logging-control.js';
 import {InvalidArgumentException} from './utils/exception.js';
 
-// entry/index file
+// here are all the interfaces
 
 // install polyfills
 Polyfill.install();
@@ -77,6 +77,4 @@ flvjs.NativePlayer = NativePlayer;
 flvjs.LoggingControl = LoggingControl;
 
 
-// export interfaces to global context
-window.flvjs = flvjs;
 export default flvjs;

@@ -2,13 +2,18 @@
   "name": "flv.js",
   "version": "1.0.0",
   "description": "HTML5 FLV Player",
-  "keywords": ["html5", "flv", "mse", "javascript"],
   "main": "./dist/flv.js",
   "types": "./d.ts/flv.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/Bilibili/flv.js"
   },
+  "keywords": [
+    "html5",
+    "flv",
+    "mse",
+    "javascript"
+  ],
   "scripts": {
     "dev": "gulp watch",
     "build": "gulp release",
@@ -22,6 +27,7 @@
     "babel-preset-es2015": "^6.18.0",
     "babelify": "^7.3.0",
     "browserify": "^13.1.1",
+    "browserify-derequire": "^0.9.4",
     "del": "^2.2.0",
     "gulp": "^3.9.1",
     "gulp-cli": "^1.2.2",

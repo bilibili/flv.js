@@ -22,7 +22,7 @@ flv.js is written in [ECMAScript 6][], transpiled into ECMAScript 5 by [Babel Co
 - HTTP FLV low latency live stream playback
 - FLV over WebSocket live stream playback
 - Compatible with Chrome, FireFox, Safari 10, IE11 and Edge
-- Extermely low overhead, and hardware accelerated by your browser!
+- Extremely low overhead, and hardware accelerated by your browser!
 
 ## Installation
 ```bash

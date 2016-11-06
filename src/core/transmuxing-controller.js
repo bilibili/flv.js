@@ -200,6 +200,7 @@ class TransmuxingController {
                 this._demuxer.timestampBase = this._mediaDataSource.segments[targetSegmentIndex].timestampBase;
                 this._loadSegment(targetSegmentIndex, keyframe.fileposition);
                 this._pendingResolveSeekPoint = keyframe.milliseconds;
+                this._reportSegmentMediaInfo(targetSegmentIndex);
             }
         }
     }
@@ -274,19 +275,14 @@ class TransmuxingController {
             this._mediaInfo.segments = [];
             this._mediaInfo.segmentCount = this._mediaDataSource.segments.length;
             Object.setPrototypeOf(this._mediaInfo, MediaInfo.prototype);
-
-            let exportInfo = Object.assign({}, this._mediaInfo);
-            delete exportInfo.segments;
-            delete exportInfo.keyframesIndex;
-            this._emitter.emit(TransmuxingEvents.MEDIA_INFO, exportInfo);
         }
 
-        if (this._mediaInfo.segments[this._currentSegmentIndex] == undefined) {
-            let segmentInfo = Object.assign({}, mediaInfo);
-            Object.setPrototypeOf(segmentInfo, MediaInfo.prototype);
+        let segmentInfo = Object.assign({}, mediaInfo);
+        Object.setPrototypeOf(segmentInfo, MediaInfo.prototype);
+        this._mediaInfo.segments[this._currentSegmentIndex] = segmentInfo;
 
-            this._mediaInfo.segments[this._currentSegmentIndex] = segmentInfo;
-        }
+        // notify mediaInfo update
+        this._reportSegmentMediaInfo(this._currentSegmentIndex);
 
         if (this._pendingSeekTime != null) {
             Promise.resolve().then(() => {
@@ -357,8 +353,20 @@ class TransmuxingController {
         }
     }
 
+    _reportSegmentMediaInfo(segmentIndex) {
+        let segmentInfo = this._mediaInfo.segments[segmentIndex];
+        let exportInfo = Object.assign({}, segmentInfo);
+
+        exportInfo.duration = this._mediaInfo.duration;
+        exportInfo.segmentCount = this._mediaInfo.segmentCount;
+        delete exportInfo.keyframesIndex;
+
+        this._emitter.emit(TransmuxingEvents.MEDIA_INFO, exportInfo);
+    }
+
     _reportStatisticsInfo() {
         let info = {};
+
         info.url = this._ioctl.currentUrl;
         info.speed = this._ioctl.currentSpeed;
         info.loaderType = this._ioctl.loaderType;

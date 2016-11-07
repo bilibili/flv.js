@@ -347,6 +347,7 @@ class TransmuxingController {
         }
         this._emitter.emit(TransmuxingEvents.MEDIA_SEGMENT, type, mediaSegment);
 
+        // Resolve pending seekPoint
         if (this._pendingResolveSeekPoint != null && type === 'video') {
             let syncPoints = mediaSegment.info.syncPoints;
             let seekpoint = this._pendingResolveSeekPoint;
@@ -383,6 +384,7 @@ class TransmuxingController {
 
         exportInfo.duration = this._mediaInfo.duration;
         exportInfo.segmentCount = this._mediaInfo.segmentCount;
+        delete exportInfo.segments;
         delete exportInfo.keyframesIndex;
 
         this._emitter.emit(TransmuxingEvents.MEDIA_INFO, exportInfo);

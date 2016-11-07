@@ -31,7 +31,7 @@ import {InvalidArgumentException, IllegalStateException} from '../utils/exceptio
 class FlvPlayer {
 
     constructor(mediaDataSource, config) {
-        this.TAG = this.constructor.name;
+        this.TAG = 'FlvPlayer';
         this._type = 'FlvPlayer';
         this._emitter = new EventEmitter();
 

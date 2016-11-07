@@ -25,7 +25,7 @@ import {InvalidArgumentException, IllegalStateException} from '../utils/exceptio
 class NativePlayer {
 
     constructor(mediaDataSource, config) {
-        this.TAG = this.constructor.name;
+        this.TAG = 'NativePlayer';
         this._type = 'NativePlayer';
         this._emitter = new EventEmitter();
 

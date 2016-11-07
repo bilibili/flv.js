@@ -22,7 +22,7 @@ import {IllegalStateException, InvalidArgumentException} from '../utils/exceptio
 class ExpGolomb {
 
     constructor(uint8array) {
-        this.TAG = this.constructor.name;
+        this.TAG = 'ExpGolomb';
 
         this._buffer = uint8array;
         this._buffer_index = 0;

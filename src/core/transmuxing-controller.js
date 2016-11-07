@@ -31,7 +31,7 @@ import {LoaderStatus, LoaderErrors} from '../io/loader.js';
 class TransmuxingController {
 
     constructor(mediaDataSource, config) {
-        this.TAG = this.constructor.name;
+        this.TAG = 'TransmuxingController';
         this._emitter = new EventEmitter();
 
         this._config = config;

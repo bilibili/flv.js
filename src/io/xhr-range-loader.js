@@ -38,7 +38,7 @@ class RangeLoader extends BaseLoader {
 
     constructor(seekHandler) {
         super('xhr-range-loader');
-        this.TAG = this.constructor.name;
+        this.TAG = 'RangeLoader';
 
         this._seekHandler = seekHandler;
         this._needStash = false;

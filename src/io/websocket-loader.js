@@ -33,7 +33,7 @@ class WebSocketLoader extends BaseLoader {
 
     constructor() {
         super('websocket-loader');
-        this.TAG = this.constructor.name;
+        this.TAG = 'WebSocketLoader';
 
         this._needStash = true;
 

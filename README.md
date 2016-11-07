@@ -64,6 +64,9 @@ See [cors.md](docs/cors.md) for more details.
 ## Multipart playback
 You only have to provide a playlist for `MediaDataSource`. See [multipart.md](docs/multipart.md)
 
+## Livestream playback
+See [livestream.md](docs/livestream.md)
+
 ## API and Configuration
 See [api.md](docs/api.md)
 

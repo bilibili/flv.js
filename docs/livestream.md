@@ -30,7 +30,7 @@ Or a WebSocket source:
 ### CORS
 You must configure `Access-Control-Allow-Origin` header correctly on your stream server.
 
-See [cors.md](docs/cors.md) for details.
+See [cors.md](../docs/cors.md) for details.
 
 ### Compatibility
 Due to IO restrictions, flv.js can support HTTP FLV live stream on `Chrome 43+` and `FireFox 42+` for now.

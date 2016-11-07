@@ -59,11 +59,16 @@ class SpeedSampler {
     }
 
     get currentKBps() {
+        this.addBytes(0);
+
         let durationSeconds = (this._now() - this._lastCheckpoint) / 1000;
+        if (durationSeconds == 0) durationSeconds = 1;
         return (this._intervalBytes / durationSeconds) / 1024;
     }
 
     get lastSecondKBps() {
+        this.addBytes(0);
+
         if (this._lastSecondBytes !== 0) {
             return this._lastSecondBytes / 1024;
         } else {  // lastSecondBytes === 0

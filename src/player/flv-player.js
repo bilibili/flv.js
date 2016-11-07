@@ -336,6 +336,10 @@ class FlvPlayer {
     _fillStatisticsInfo(statInfo) {
         statInfo.playerType = this._type;
 
+        if (!(this._mediaElement instanceof HTMLVideoElement)) {
+            return statInfo;
+        }
+
         let hasQualityInfo = true;
         let decoded = 0;
         let dropped = 0;

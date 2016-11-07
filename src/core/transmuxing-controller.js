@@ -77,12 +77,17 @@ class TransmuxingController {
 
         this._pendingSeekTime = null;
         this._pendingResolveSeekPoint = null;
+
+        this._statisticsReporter = null;
     }
 
     destroy() {
         this._mediaInfo = null;
         this._mediaDataSource = null;
 
+        if (this._statisticsReporter) {
+            this._disableStatisticsReporter();
+        }
         if (this._ioctl) {
             this._ioctl.destroy();
             this._ioctl = null;
@@ -110,6 +115,7 @@ class TransmuxingController {
 
     start() {
         this._loadSegment(0);
+        this._enableStatisticsReporter();
     }
 
     _loadSegment(segmentIndex, optionalFrom) {
@@ -133,6 +139,7 @@ class TransmuxingController {
 
     stop() {
         this._internalAbort();
+        this._disableStatisticsReporter();
     }
 
     _internalAbort() {
@@ -145,12 +152,14 @@ class TransmuxingController {
     pause() {  // take a rest
         if (this._ioctl && this._ioctl.isWorking()) {
             this._ioctl.pause();
+            this._disableStatisticsReporter();
         }
     }
 
     resume() {
         if (this._ioctl && this._ioctl.isPaused()) {
             this._ioctl.resume();
+            this._enableStatisticsReporter();
         }
     }
 
@@ -203,6 +212,8 @@ class TransmuxingController {
                 this._reportSegmentMediaInfo(targetSegmentIndex);
             }
         }
+
+        this._enableStatisticsReporter();
     }
 
     _searchSegmentIndexContains(milliseconds) {
@@ -306,6 +317,7 @@ class TransmuxingController {
             this._loadSegment(nextSegmentIndex);
         } else {
             this._emitter.emit(TransmuxingEvents.LOADING_COMPLETE);
+            this._disableStatisticsReporter();
         }
     }
 
@@ -316,6 +328,7 @@ class TransmuxingController {
     _onIOException(type, info) {
         Log.e(this.TAG, `IOException: type = ${type}, code = ${info.code}, msg = ${info.msg}`);
         this._emitter.emit(TransmuxingEvents.IO_ERROR, type, info);
+        this._disableStatisticsReporter();
     }
 
     _onDemuxException(type, info) {
@@ -347,9 +360,20 @@ class TransmuxingController {
 
             this._emitter.emit(TransmuxingEvents.RECOMMEND_SEEKPOINT, seekpoint);
         }
+    }
 
-        if (type === 'video') {
-            this._reportStatisticsInfo();
+    _enableStatisticsReporter() {
+        if (this._statisticsReporter == null) {
+            this._statisticsReporter = self.setInterval(
+                this._reportStatisticsInfo.bind(this),
+            this._config.statisticsInfoReportInterval);
+        }
+    }
+
+    _disableStatisticsReporter() {
+        if (this._statisticsReporter) {
+            self.clearInterval(this._statisticsReporter);
+            this._statisticsReporter = null;
         }
     }
 

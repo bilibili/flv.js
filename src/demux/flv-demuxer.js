@@ -199,6 +199,10 @@ class FLVDemuxer {
         this._mediaInfo.duration = duration;
     }
 
+    resetMediaInfo() {
+        this._mediaInfo = new MediaInfo();
+    }
+
     _isInitialMetadataDispatched() {
         if (this._hasAudio && this._hasVideo) {  // both audio & video
             return this._audioInitialMetadataDispatched && this._videoInitialMetadataDispatched;

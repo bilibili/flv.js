@@ -164,10 +164,7 @@ class TransmuxingController {
     }
 
     seek(milliseconds) {
-        if (this._mediaInfo == null) {
-            return;
-        }
-        if (!this._mediaInfo.isSeekable()) {
+        if (this._mediaInfo == null || !this._mediaInfo.isSeekable()) {
             return;
         }
 
@@ -206,6 +203,7 @@ class TransmuxingController {
                 this._internalAbort();
                 this._remuxer.seek(milliseconds);
                 this._remuxer.insertDiscontinuity();
+                this._demuxer.resetMediaInfo();
                 this._demuxer.timestampBase = this._mediaDataSource.segments[targetSegmentIndex].timestampBase;
                 this._loadSegment(targetSegmentIndex, keyframe.fileposition);
                 this._pendingResolveSeekPoint = keyframe.milliseconds;

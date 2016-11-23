@@ -51,30 +51,17 @@ function createPlayer(mediaDataSource, optionalConfig) {
 }
 
 
-// feature detection
-function isSupported() {
-    return Features.supportMSEH264Playback();
-}
-
-function getFeatureList() {
-    return Features.getFeatureList();
-}
-
-
 // interfaces
-let flvjs = {};
-
-flvjs.createPlayer = createPlayer;
-flvjs.isSupported = isSupported;
-flvjs.getFeatureList = getFeatureList;
-
-flvjs.Events = PlayerEvents;
-flvjs.ErrorTypes = ErrorTypes;
-flvjs.ErrorDetails = ErrorDetails;
-
-flvjs.FlvPlayer = FlvPlayer;
-flvjs.NativePlayer = NativePlayer;
-flvjs.LoggingControl = LoggingControl;
-
+const flvjs = {
+    createPlayer,
+    isSupported: () => Features.supportMSEH264Playback(),
+    getFeatureList: () => Features.getFeatureList(),
+    Events: PlayerEvents,
+    ErrorTypes,
+    ErrorDetails,
+    FlvPlayer,
+    NativePlayer,
+    LoggingControl
+};
 
 export default flvjs;

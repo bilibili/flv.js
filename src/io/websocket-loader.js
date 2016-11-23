@@ -101,7 +101,28 @@ class WebSocketLoader extends BaseLoader {
     }
 
     _onWebSocketMessage(e) {
-        let chunk = e.data;
+        if (e.data instanceof ArrayBuffer) {
+            this._dispatchArrayBuffer(e.data);
+        } else if (e.data instanceof Blob) {
+            let reader = new FileReader();
+            reader.onload = () => {
+                this._dispatchArrayBuffer(reader.result);
+            };
+            reader.readAsArrayBuffer(e.data);
+        } else {
+            this._status = LoaderStatus.kError;
+            let info = {code: -1, msg: 'Unsupported WebSocket message type: ' + e.data.constructor.name};
+
+            if (this._onError) {
+                this._onError(LoaderErrors.EXCEPTION, info);
+            } else {
+                throw new RuntimeException(info.msg);
+            }
+        }
+    }
+
+    _dispatchArrayBuffer(arraybuffer) {
+        let chunk = arraybuffer;
         let byteStart = this._receivedLength;
         this._receivedLength += chunk.byteLength;
 

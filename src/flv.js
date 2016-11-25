@@ -76,5 +76,12 @@ flvjs.FlvPlayer = FlvPlayer;
 flvjs.NativePlayer = NativePlayer;
 flvjs.LoggingControl = LoggingControl;
 
+Object.defineProperty(flvjs, 'version', {
+    enumerable: true,
+    get: function () {
+        // replaced by browserify-versionify transform
+        return '__VERSION__';
+    }
+});
 
 export default flvjs;

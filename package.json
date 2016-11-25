@@ -1,6 +1,6 @@
 {
   "name": "flv.js",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "HTML5 FLV Player",
   "main": "./dist/flv.js",
   "types": "./d.ts/flv.d.ts",
@@ -28,6 +28,7 @@
     "babelify": "^7.3.0",
     "browserify": "^13.1.1",
     "browserify-derequire": "^0.9.4",
+    "browserify-versionify": "^1.0.6",
     "del": "^2.2.0",
     "gulp": "^3.9.1",
     "gulp-cli": "^1.2.2",

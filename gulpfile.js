@@ -36,7 +36,7 @@ function doWatchify() {
         entries: 'src/index.js',
         standalone: 'flvjs',
         debug: true,
-        transform: [babelify],
+        transform: ['babelify', 'browserify-versionify'],
         plugin: ['browserify-derequire']
     };
 
@@ -96,7 +96,7 @@ gulp.task('build', ['clean', 'lint'], function () {
         entries: 'src/index.js',
         standalone: 'flvjs',
         debug: true,
-        transform: [babelify],
+        transform: ['babelify', 'browserify-versionify'],
         plugin: ['browserify-derequire']
     });
 

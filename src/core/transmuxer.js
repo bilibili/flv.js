@@ -27,7 +27,7 @@ import MediaInfo from './media-info.js';
 class Transmuxer {
 
     constructor(mediaDataSource, config) {
-        this.TAG = this.constructor.name;
+        this.TAG = 'Transmuxer';
         this._emitter = new EventEmitter();
 
         if (config.enableWorker && typeof (Worker) !== 'undefined') {

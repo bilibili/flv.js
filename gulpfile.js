@@ -33,9 +33,11 @@ const source = require('vinyl-source-stream');
 
 function doWatchify() {
     let customOpts = {
-        entries: 'src/flv.js',
+        entries: 'src/index.js',
+        standalone: 'flvjs',
         debug: true,
-        transform: [babelify]
+        transform: ['babelify', 'browserify-versionify'],
+        plugin: ['browserify-derequire']
     };
 
     let opts = Object.assign({}, watchify.args, customOpts);
@@ -91,9 +93,11 @@ gulp.task('lint', function () {
 
 gulp.task('build', ['clean', 'lint'], function () {
     let b = browserify({
-        entries: 'src/flv.js',
+        entries: 'src/index.js',
+        standalone: 'flvjs',
         debug: true,
-        transform: [babelify]
+        transform: ['babelify', 'browserify-versionify'],
+        plugin: ['browserify-derequire']
     });
 
     return doBundle(b);

@@ -46,7 +46,7 @@ function ReadBig32(array, index) {
 class FLVDemuxer {
 
     constructor(probeData, config) {
-        this.TAG = this.constructor.name;
+        this.TAG = 'FLVDemuxer';
 
         this._config = config;
 
@@ -197,6 +197,10 @@ class FLVDemuxer {
         this._durationOverrided = true;
         this._duration = duration;
         this._mediaInfo.duration = duration;
+    }
+
+    resetMediaInfo() {
+        this._mediaInfo = new MediaInfo();
     }
 
     _isInitialMetadataDispatched() {

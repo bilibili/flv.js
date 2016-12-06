@@ -51,7 +51,7 @@ class MSStreamLoader extends BaseLoader {
 
     constructor(seekHandler) {
         super('xhr-msstream-loader');
-        this.TAG = this.constructor.name;
+        this.TAG = 'MSStreamLoader';
 
         this._seekHandler = seekHandler;
         this._needStash = true;

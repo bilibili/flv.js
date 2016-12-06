@@ -27,7 +27,7 @@ import {IllegalStateException} from '../utils/exception.js';
 class MSEController {
 
     constructor() {
-        this.TAG = this.constructor.name;
+        this.TAG = 'MSEController';
 
         this._emitter = new EventEmitter();
 

@@ -25,7 +25,7 @@ import {InvalidArgumentException, IllegalStateException} from '../utils/exceptio
 class NativePlayer {
 
     constructor(mediaDataSource, config) {
-        this.TAG = this.constructor.name;
+        this.TAG = 'NativePlayer';
         this._type = 'NativePlayer';
         this._emitter = new EventEmitter();
 
@@ -192,13 +192,16 @@ class NativePlayer {
     }
 
     get mediaInfo() {
+        let mediaPrefix = (this._mediaElement instanceof HTMLAudioElement) ? 'audio/' : 'video/';
         let info = {
-            mimeType: 'video/' + this._mediaDataSource.type
+            mimeType: mediaPrefix + this._mediaDataSource.type
         };
         if (this._mediaElement) {
             info.duration = Math.floor(this._mediaElement.duration * 1000);
-            info.width = this._mediaElement.videoWidth;
-            info.height = this._mediaElement.videoHeight;
+            if (this._mediaElement instanceof HTMLVideoElement) {
+                info.width = this._mediaElement.videoWidth;
+                info.height = this._mediaElement.videoHeight;
+            }
         }
         return info;
     }
@@ -208,6 +211,10 @@ class NativePlayer {
             playerType: this._type,
             url: this._mediaDataSource.url
         };
+
+        if (!(this._mediaElement instanceof HTMLVideoElement)) {
+            return info;
+        }
 
         let hasQualityInfo = true;
         let decoded = 0;

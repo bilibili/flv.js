@@ -28,7 +28,7 @@ import {IllegalStateException} from '../utils/exception.js';
 class MP4Remuxer {
 
     constructor(config) {
-        this.TAG = this.constructor.name;
+        this.TAG = 'MP4Remuxer';
 
         this._config = config;
         this._isLive = (config.isLive === true) ? true : false;

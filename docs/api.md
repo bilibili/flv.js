@@ -68,7 +68,7 @@ In multipart mode, `duration` `filesize` `url` field in `MediaDataSource` struct
 | -------------------------- | --------- | ------------- | ---------------------------------------- |
 | `enableWorker?`            | `boolean` | `false`       | Enable separated thread for transmuxing (unstable for now) |
 | `enableStashBuffer?`       | `boolean` | `true`        | Enable IO stash buffer. Set to false if you need realtime (minimal latency) for live stream playback, but may stalled if there's network jittering. |
-| `stashInitialSize?`        | `number`  | `384KB/512KB` | Indicates IO stash buffer initial size. Default is `384KB` for VOD, `512KB` for live stream. Indicate a suitable size can improve video load/seek time. |
+| `stashInitialSize?`        | `number`  | `384KB`       | Indicates IO stash buffer initial size. Default is `384KB`. Indicate a suitable size can improve video load/seek time. |
 | `isLive?`                  | `boolean` | `false`       | Same to `isLive` in **MediaDataSource**, ignored if has been set in MediaDataSource structure. |
 | `lazyLoad?`                | `boolean` | `true`        | Abort the http connection if there's enough data for playback. |
 | `lazyLoadMaxDuration`      | `number`  | `3 * 60`      | Indicates how many seconds of data to be kept for `lazyLoad`. |

@@ -48,9 +48,6 @@ class IOController {
         this._extraData = extraData;
 
         this._stashInitialSize = 1024 * 384;  // default initial size: 384KB
-        if (config.isLive === true) {
-            this._stashInitialSize = 1024 * 512;  // default live initial size: 512KB
-        }
         if (config.stashInitialSize != undefined && config.stashInitialSize > 0) {
             // apply from config
             this._stashInitialSize = config.stashInitialSize;

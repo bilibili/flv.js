@@ -57,6 +57,8 @@ class RangeLoader extends BaseLoader {
         this._waitForTotalLength = false;
         this._totalLengthReceived = false;
 
+        this._currentRequestURL = null;
+        this._currentRedirectedURL = null;
         this._currentRequestRange = null;
         this._totalLength = null;  // size of the entire file
         this._contentLength = null;  // Content-Length of entire request range
@@ -117,6 +119,7 @@ class RangeLoader extends BaseLoader {
         this._lastTimeLoaded = 0;
 
         let seekConfig = this._seekHandler.getConfig(dataSource.url, range);
+        this._currentRequestURL = seekConfig.url;
 
         let xhr = this._xhr = new XMLHttpRequest();
         xhr.open('GET', seekConfig.url, true);
@@ -164,7 +167,17 @@ class RangeLoader extends BaseLoader {
         let xhr = e.target;
 
         if (xhr.readyState === 2) {  // HEADERS_RECEIVED
-            if ((xhr.status >= 200 && xhr.status < 300)) {
+            if (xhr.responseURL != undefined) {  // if the browser support this property
+                let redirectedURL = this._seekHandler.removeURLParameters(xhr.responseURL);
+                if (xhr.responseURL !== this._currentRequestURL && redirectedURL !== this._currentRedirectedURL) {
+                    this._currentRedirectedURL = redirectedURL;
+                    if (this._onURLRedirect) {
+                        this._onURLRedirect(redirectedURL);
+                    }
+                }
+            }
+
+            if ((xhr.status >= 200 && xhr.status <= 299)) {
                 if (this._waitForTotalLength) {
                     return;
                 }

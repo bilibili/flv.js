@@ -391,7 +391,12 @@ class TransmuxingController {
     _reportStatisticsInfo() {
         let info = {};
 
-        info.url = this._ioctl.currentUrl;
+        info.url = this._ioctl.currentURL;
+        info.hasRedirect = this._ioctl.hasRedirect;
+        if (info.hasRedirect) {
+            info.redirectedURL = this._ioctl.currentRedirectedURL;
+        }
+
         info.speed = this._ioctl.currentSpeed;
         info.loaderType = this._ioctl.loaderType;
         info.currentSegmentIndex = this._currentSegmentIndex;

@@ -73,6 +73,7 @@ class IOController {
         this._totalLength = this._refTotalLength;
         this._fullRequestFlag = false;
         this._currentRange = null;
+        this._redirectedURL = null;
 
         this._speedNormalized = 0;
         this._speedSampler = new SpeedSampler();
@@ -180,8 +181,16 @@ class IOController {
         this._onRecoveredEarlyEof = callback;
     }
 
-    get currentUrl() {
+    get currentURL() {
         return this._dataSource.url;
+    }
+
+    get hasRedirect() {
+        return (this._redirectedURL != null);
+    }
+
+    get currentRedirectedURL() {
+        return this._redirectedURL;
     }
 
     // in KB/s
@@ -237,6 +246,7 @@ class IOController {
             this._enableStash = false;
         }
         this._loader.onContentLengthKnown = this._onContentLengthKnown.bind(this);
+        this._loader.onURLRedirect = this._onURLRedirect.bind(this);
         this._loader.onDataArrival = this._onLoaderChunkArrival.bind(this);
         this._loader.onComplete = this._onLoaderComplete.bind(this);
         this._loader.onError = this._onLoaderError.bind(this);
@@ -414,6 +424,10 @@ class IOController {
     _dispatchChunks(chunks, byteStart) {
         this._currentRange.to = byteStart + chunks.byteLength - 1;
         return this._onDataArrival(chunks, byteStart);
+    }
+
+    _onURLRedirect(redirectedURL) {
+        this._redirectedURL = redirectedURL;
     }
 
     _onContentLengthKnown(contentLength) {

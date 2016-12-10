@@ -37,6 +37,7 @@ export const LoaderErrors = {
 
 /* Loader has callbacks which have following prototypes:
  *     function onContentLengthKnown(contentLength: number): void
+ *     function onURLRedirect(url: string): void
  *     function onDataArrival(chunk: ArrayBuffer, byteStart: number, receivedLength: number): void
  *     function onError(errorType: number, errorInfo: {code: number, msg: string}): void
  *     function onComplete(rangeFrom: number, rangeTo: number): void
@@ -49,6 +50,7 @@ export class BaseLoader {
         this._needStash = false;
         // callbacks
         this._onContentLengthKnown = null;
+        this._onURLRedirect = null;
         this._onDataArrival = null;
         this._onError = null;
         this._onComplete = null;
@@ -57,6 +59,7 @@ export class BaseLoader {
     destroy() {
         this._status = LoaderStatus.kIdle;
         this._onContentLengthKnown = null;
+        this._onURLRedirect = null;
         this._onDataArrival = null;
         this._onError = null;
         this._onComplete = null;
@@ -84,6 +87,14 @@ export class BaseLoader {
 
     set onContentLengthKnown(callback) {
         this._onContentLengthKnown = callback;
+    }
+
+    get onURLRedirect() {
+        return this._onURLRedirect;
+    }
+
+    set onURLRedirect(callback) {
+        this._onURLRedirect = callback;
     }
 
     get onDataArrival() {

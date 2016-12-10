@@ -68,6 +68,7 @@ class MozChunkedLoader extends BaseLoader {
         this._range = range;
 
         let seekConfig = this._seekHandler.getConfig(dataSource.url, range);
+        this._requestURL = seekConfig.url;
 
         let xhr = this._xhr = new XMLHttpRequest();
         xhr.open('GET', seekConfig.url, true);
@@ -110,6 +111,13 @@ class MozChunkedLoader extends BaseLoader {
         let xhr = e.target;
 
         if (xhr.readyState === 2) {  // HEADERS_RECEIVED
+            if (xhr.responseURL != undefined && xhr.responseURL !== this._requestURL) {
+                if (this._onURLRedirect) {
+                    let redirectedURL = this._seekHandler.removeURLParameters(xhr.responseURL);
+                    this._onURLRedirect(redirectedURL);
+                }
+            }
+
             if (xhr.status !== 0 && (xhr.status < 200 || xhr.status > 299)) {
                 this._status = LoaderStatus.kError;
                 if (this._onError) {

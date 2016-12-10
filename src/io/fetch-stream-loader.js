@@ -75,7 +75,6 @@ class FetchStreamLoader extends BaseLoader {
             }
         }
 
-        let url = seekConfig.url;
         let params = {
             method: 'GET',
             headers: headers,
@@ -95,13 +94,20 @@ class FetchStreamLoader extends BaseLoader {
         }
 
         this._status = LoaderStatus.kConnecting;
-        self.fetch(url, params).then((res) => {
+        self.fetch(seekConfig.url, params).then((res) => {
             if (this._requestAbort) {
                 this._requestAbort = false;
                 this._status = LoaderStatus.kIdle;
                 return;
             }
             if (res.ok && (res.status >= 200 && res.status <= 299)) {
+                if (res.url !== seekConfig.url) {
+                    if (this._onURLRedirect) {
+                        let redirectedURL = this._seekHandler.removeURLParameters(res.url);
+                        this._onURLRedirect(redirectedURL);
+                    }
+                }
+
                 let lengthHeader = res.headers.get('Content-Length');
                 if (lengthHeader != null) {
                     this._contentLength = parseInt(lengthHeader);
@@ -111,6 +117,7 @@ class FetchStreamLoader extends BaseLoader {
                         }
                     }
                 }
+
                 return this._pump.call(this, res.body.getReader());
             } else {
                 this._status = LoaderStatus.kError;

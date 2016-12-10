@@ -62,6 +62,9 @@ class MSStreamLoader extends BaseLoader {
         this._totalRange = null;
         this._currentRange = null;
 
+        this._currentRequestURL = null;
+        this._currentRedirectedURL = null;
+
         this._contentLength = null;
         this._receivedLength = 0;
 
@@ -101,6 +104,7 @@ class MSStreamLoader extends BaseLoader {
         }
 
         let seekConfig = this._seekHandler.getConfig(dataSource.url, range);
+        this._currentRequestURL = seekConfig.url;
 
         let reader = this._reader = new self.MSStreamReader();
         reader.onprogress = this._msrOnProgress.bind(this);
@@ -160,9 +164,19 @@ class MSStreamLoader extends BaseLoader {
     _xhrOnReadyStateChange(e) {
         let xhr = e.target;
 
-        if (xhr.readyState === 3) {
+        if (xhr.readyState === 2) {  // HEADERS_RECEIVED
             if (xhr.status >= 200 && xhr.status <= 299) {
                 this._status = LoaderStatus.kBuffering;
+
+                if (xhr.responseURL != undefined) {
+                    let redirectedURL = this._seekHandler.removeURLParameters(xhr.responseURL);
+                    if (xhr.responseURL !== this._currentRequestURL && redirectedURL !== this._currentRedirectedURL) {
+                        this._currentRedirectedURL = redirectedURL;
+                        if (this._onURLRedirect) {
+                            this._onURLRedirect(redirectedURL);
+                        }
+                    }
+                }
 
                 let lengthHeader = xhr.getResponseHeader('Content-Length');
                 if (lengthHeader != null && this._contentLength == null) {
@@ -174,9 +188,6 @@ class MSStreamLoader extends BaseLoader {
                         }
                     }
                 }
-
-                let msstream = xhr.response;
-                this._reader.readAsArrayBuffer(msstream);
             } else {
                 this._status = LoaderStatus.kError;
                 if (this._onError) {
@@ -184,6 +195,13 @@ class MSStreamLoader extends BaseLoader {
                 } else {
                     throw new RuntimeException('MSStreamLoader: Http code invalid, ' + xhr.status + ' ' + xhr.statusText);
                 }
+            }
+        } else if (xhr.readyState === 3) {  // LOADING
+            if (xhr.status >= 200 && xhr.status <= 299) {
+                this._status = LoaderStatus.kBuffering;
+
+                let msstream = xhr.response;
+                this._reader.readAsArrayBuffer(msstream);
             }
         }
     }

@@ -34,7 +34,8 @@ export const defaultConfig = {
     seekParamStart: 'bstart',
     seekParamEnd: 'bend',
     rangeLoadZeroStart: false,
-    customSeekHandler: undefined
+    customSeekHandler: undefined,
+    reuseRedirectedURL: false
 };
 
 export function createDefaultConfig() {

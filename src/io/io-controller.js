@@ -88,6 +88,7 @@ class IOController {
         this._onSeeked = null;
         this._onError = null;
         this._onComplete = null;
+        this._onRedirect = null;
         this._onRecoveredEarlyEof = null;
 
         this._selectSeekHandler();
@@ -114,6 +115,7 @@ class IOController {
         this._onSeeked = null;
         this._onError = null;
         this._onComplete = null;
+        this._onRedirect = null;
         this._onRecoveredEarlyEof = null;
 
         this._extraData = null;
@@ -173,6 +175,14 @@ class IOController {
         this._onComplete = callback;
     }
 
+    get onRedirect() {
+        return this._onRedirect;
+    }
+
+    set onRedirect(callback) {
+        this._onRedirect = callback;
+    }
+
     get onRecoveredEarlyEof() {
         return this._onRecoveredEarlyEof;
     }
@@ -186,11 +196,11 @@ class IOController {
     }
 
     get hasRedirect() {
-        return (this._redirectedURL != null);
+        return (this._redirectedURL != null || this._dataSource.redirectedURL != undefined);
     }
 
     get currentRedirectedURL() {
-        return this._redirectedURL;
+        return this._redirectedURL || this._dataSource.redirectedURL;
     }
 
     // in KB/s
@@ -241,7 +251,7 @@ class IOController {
     }
 
     _createLoader() {
-        this._loader = new this._loaderClass(this._seekHandler);
+        this._loader = new this._loaderClass(this._seekHandler, this._config);
         if (this._loader.needStashBuffer === false) {
             this._enableStash = false;
         }
@@ -428,6 +438,9 @@ class IOController {
 
     _onURLRedirect(redirectedURL) {
         this._redirectedURL = redirectedURL;
+        if (this._onRedirect) {
+            this._onRedirect(redirectedURL);
+        }
     }
 
     _onContentLengthKnown(contentLength) {

@@ -39,11 +39,12 @@ class FetchStreamLoader extends BaseLoader {
         }
     }
 
-    constructor(seekHandler) {
+    constructor(seekHandler, config) {
         super('fetch-stream-loader');
         this.TAG = 'FetchStreamLoader';
 
         this._seekHandler = seekHandler;
+        this._config = config;
         this._needStash = true;
 
         this._requestAbort = false;
@@ -62,7 +63,12 @@ class FetchStreamLoader extends BaseLoader {
         this._dataSource = dataSource;
         this._range = range;
 
-        let seekConfig = this._seekHandler.getConfig(dataSource.url, range);
+        let sourceURL = dataSource.url;
+        if (this._config.reuseRedirectedURL && dataSource.redirectedURL != undefined) {
+            sourceURL = dataSource.redirectedURL;
+        }
+
+        let seekConfig = this._seekHandler.getConfig(sourceURL, range);
 
         let headers = new self.Headers();
 

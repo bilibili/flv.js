@@ -126,6 +126,7 @@ class TransmuxingController {
         ioctl.onError = this._onIOException.bind(this);
         ioctl.onSeeked = this._onIOSeeked.bind(this);
         ioctl.onComplete = this._onIOComplete.bind(this);
+        ioctl.onRedirect = this._onIORedirect.bind(this);
         ioctl.onRecoveredEarlyEof = this._onIORecoveredEarlyEof.bind(this);
 
         if (optionalFrom) {
@@ -317,6 +318,11 @@ class TransmuxingController {
             this._emitter.emit(TransmuxingEvents.LOADING_COMPLETE);
             this._disableStatisticsReporter();
         }
+    }
+
+    _onIORedirect(redirectedURL) {
+        let segmentIndex = this._ioctl.extraData;
+        this._mediaDataSource.segments[segmentIndex].redirectedURL = redirectedURL;
     }
 
     _onIORecoveredEarlyEof() {

@@ -36,11 +36,12 @@ class RangeLoader extends BaseLoader {
         }
     }
 
-    constructor(seekHandler) {
+    constructor(seekHandler, config) {
         super('xhr-range-loader');
         this.TAG = 'RangeLoader';
 
         this._seekHandler = seekHandler;
+        this._config = config;
         this._needStash = false;
 
         this._chunkSizeKBList = [
@@ -118,7 +119,16 @@ class RangeLoader extends BaseLoader {
     _internalOpen(dataSource, range) {
         this._lastTimeLoaded = 0;
 
-        let seekConfig = this._seekHandler.getConfig(dataSource.url, range);
+        let sourceURL = dataSource.url;
+        if (this._config.reuseRedirectedURL) {
+            if (this._currentRedirectedURL != undefined) {
+                sourceURL = this._currentRedirectedURL;
+            } else if (dataSource.redirectedURL != undefined) {
+                sourceURL = dataSource.redirectedURL;
+            }
+        }
+
+        let seekConfig = this._seekHandler.getConfig(sourceURL, range);
         this._currentRequestURL = seekConfig.url;
 
         let xhr = this._xhr = new XMLHttpRequest();

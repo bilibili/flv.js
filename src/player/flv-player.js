@@ -416,7 +416,7 @@ class FlvPlayer {
             let from = buffered.start(i);
             let to = buffered.end(i);
             if (currentTime >= from && currentTime < to) {
-                if (currentTime >= to - 30) {
+                if (currentTime >= to - this._config.lazyLoadRecoverDuration) {
                     needResume = true;
                 }
                 break;

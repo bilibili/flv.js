@@ -48,6 +48,7 @@ declare namespace FlvJs {
 
         lazyLoad?: boolean,
         lazyLoadMaxDuration?: number,
+        lazyLoadRecoverDuration?: number,
         deferLoadAfterSourceOpen?: boolean,
 
         statisticsInfoReportInterval?: number,

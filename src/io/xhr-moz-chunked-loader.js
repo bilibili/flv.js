@@ -94,11 +94,9 @@ class MozChunkedLoader extends BaseLoader {
         if (typeof seekConfig.headers === 'object') {
             let headers = seekConfig.headers;
 
-            for (let key in headers) {
-                if (headers.hasOwnProperty(key)) {
-                    xhr.setRequestHeader(key, headers[key]);
-                }
-            }
+            Object.keys(headers).forEach(function (key) {
+                xhr.setRequestHeader(key, headers[key]);
+            });
         }
 
         this._status = LoaderStatus.kConnecting;

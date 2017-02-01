@@ -178,7 +178,7 @@ class FetchStreamLoader extends BaseLoader {
             let type = 0;
             let info = null;
 
-            if (e.code === 19 && // NETWORK_ERR
+            if ((e.code === 19 || e.message === 'network error') && // NETWORK_ERR
                 (this._contentLength === null ||
                 (this._contentLength !== null && this._receivedLength < this._contentLength))) {
                 type = LoaderErrors.EARLY_EOF;

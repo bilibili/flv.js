@@ -715,9 +715,11 @@ class FLVDemuxer {
         }
 
         let spsCount = v.getUint8(5) & 31;  // numOfSequenceParameterSets
-        if (spsCount === 0 || spsCount > 1) {
-            this._onError(DemuxErrors.FORMAT_ERROR, `Flv: Invalid H264 SPS count: ${spsCount}`);
+        if (spsCount === 0) {
+            this._onError(DemuxErrors.FORMAT_ERROR, 'Flv: Invalid AVCDecoderConfigurationRecord: No SPS');
             return;
+        } else if (spsCount > 1) {
+            Log.w(this.TAG, `Flv: Strange AVCDecoderConfigurationRecord: SPS Count = ${spsCount}`);
         }
 
         let offset = 6;
@@ -735,6 +737,11 @@ class FLVDemuxer {
             offset += len;
 
             let config = SPSParser.parseSPS(sps);
+            if (i !== 0) {
+                // ignore other sps's config
+                continue;
+            }
+
             meta.codecWidth = config.codec_size.width;
             meta.codecHeight = config.codec_size.height;
             meta.presentWidth = config.present_size.width;
@@ -792,9 +799,11 @@ class FLVDemuxer {
         }
 
         let ppsCount = v.getUint8(offset);  // numOfPictureParameterSets
-        if (ppsCount === 0 || ppsCount > 1) {
-            this._onError(DemuxErrors.FORMAT_ERROR, `Flv: Invalid H264 PPS count: ${ppsCount}`);
+        if (ppsCount === 0) {
+            this._onError(DemuxErrors.FORMAT_ERROR, 'Flv: Invalid AVCDecoderConfigurationRecord: No PPS');
             return;
+        } else if (ppsCount > 1) {
+            Log.w(this.TAG, `Flv: Strange AVCDecoderConfigurationRecord: PPS Count = ${ppsCount}`);
         }
 
         offset++;

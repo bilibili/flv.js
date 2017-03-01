@@ -273,7 +273,16 @@ class IOController {
             this._fullRequestFlag = true;
         }
 
-        this._loader.open(this._dataSource, Object.assign({}, this._currentRange));
+        if (this._dataSource.url instanceof Promise) {
+            let self = this;
+
+            this._dataSource.url.then((url) => {
+                self._dataSource.url = url;
+                self._loader.open(self._dataSource, Object.assign({}, self._currentRange));
+            });
+        } else {
+            this._loader.open(this._dataSource, Object.assign({}, this._currentRange));
+        }
     }
 
     abort() {

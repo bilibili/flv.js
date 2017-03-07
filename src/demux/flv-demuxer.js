@@ -475,7 +475,6 @@ class FLVDemuxer {
                 meta.channelCount = misc.channelCount;
                 meta.codec = misc.codec;
                 meta.config = misc.config;
-                meta.esdsSubType = 0x40;  // Audio 14496-3 AAC Main
                 // The decode result of an aac sample is 1024 PCM samples
                 meta.refSampleDuration = Math.floor(1024 / meta.audioSampleRate * meta.timescale);
                 Log.v(this.TAG, 'Parsed AudioSpecificConfig');
@@ -516,6 +515,7 @@ class FLVDemuxer {
             }
         } else if (soundFormat === 2) {  // MP3
             if (!meta.codec) {
+                // We need metadata for mp3 audio track, extract info from frame header
                 let misc = this._parseMP3AudioData(arrayBuffer, dataOffset + 1, dataSize - 1, true);
                 if (misc == undefined) {
                     return;
@@ -523,9 +523,9 @@ class FLVDemuxer {
                 meta.audioSampleRate = misc.samplingRate;
                 meta.channelConfig = misc.channelCount;
                 meta.codec = misc.codec;
-                meta.esdsSubType = 0x6B;
+                // The decode result of an mp3 sample is 1152 PCM samples
                 meta.refSampleDuration = Math.floor(1152 / meta.audioSampleRate * meta.timescale);
-                Log.v(this.TAG, 'Parsed MP3 frame header');
+                Log.v(this.TAG, 'Parsed MPEG Audio Frame Header');
 
                 this._audioInitialMetadataDispatched = true;
                 this._onTrackMetadata('audio', meta);
@@ -534,7 +534,7 @@ class FLVDemuxer {
                 mi.audioCodec = meta.codec;
                 mi.audioSampleRate = meta.audioSampleRate;
                 mi.audioChannelCount = meta.channelCount;
-                mi.audioBitrate = misc.bitRate;
+                mi.audioDataRate = misc.bitRate;
                 if (mi.hasVideo) {
                     if (mi.videoCodec != null) {
                         mi.mimeType = 'video/x-flv; codecs="' + mi.videoCodec + ',' + mi.audioCodec + '"';
@@ -545,16 +545,17 @@ class FLVDemuxer {
                 if (mi.isComplete()) {
                     this._onMediaInfo(mi);
                 }
-            } else {
-                let data = this._parseMP3AudioData(arrayBuffer, dataOffset + 1, dataSize - 1, false);
-                if (data == undefined) {
-                    return;
-                }
-                let dts = this._timestampBase + tagTimestamp;
-                let mp3Sample = {unit: data, dts: dts, pts: dts};
-                track.samples.push(mp3Sample);
-                track.length += data.length;
             }
+
+            // This packet is always a valid audio packet, extract it
+            let data = this._parseMP3AudioData(arrayBuffer, dataOffset + 1, dataSize - 1, false);
+            if (data == undefined) {
+                return;
+            }
+            let dts = this._timestampBase + tagTimestamp;
+            let mp3Sample = {unit: data, dts: dts, pts: dts};
+            track.samples.push(mp3Sample);
+            track.length += data.length;
         }
     }
 
@@ -706,6 +707,8 @@ class FLVDemuxer {
             let bit_rate = 0;
             let object_type = 34;  // Layer-3, listed in MPEG-4 Audio Object Types
 
+            let codec = 'mp3';
+
             switch (ver) {
                 case 0:  // MPEG 2.5
                     sample_rate = this._mpegAudioV25SampleRateTable[sampling_freq_index];
@@ -743,7 +746,7 @@ class FLVDemuxer {
                 bitRate: bit_rate,
                 samplingRate: sample_rate,
                 channelCount: channel_count,
-                codec: 'mp4a.40.' + object_type
+                codec: codec
             };
         } else {
             result = array;

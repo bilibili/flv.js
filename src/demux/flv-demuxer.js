@@ -507,7 +507,7 @@ class FLVDemuxer {
                     this._onMediaInfo(mi);
                 }
             } else if (aacData.packetType === 1) {  // AAC raw frame data
-                let dts = tagTimestamp;
+                let dts = this._timestampBase + tagTimestamp;
                 let aacSample = {unit: aacData.data, dts: dts, pts: dts};
                 track.samples.push(aacSample);
                 track.length += aacData.data.length;
@@ -550,7 +550,7 @@ class FLVDemuxer {
                 if (data == undefined) {
                     return;
                 }
-                let dts = tagTimestamp;
+                let dts = this._timestampBase + tagTimestamp;
                 let mp3Sample = {unit: data, dts: dts, pts: dts};
                 track.samples.push(mp3Sample);
                 track.length += data.length;

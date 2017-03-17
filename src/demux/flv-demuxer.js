@@ -119,10 +119,6 @@ class FLVDemuxer {
         let hasAudio = ((data[4] & 4) >>> 2) !== 0;
         let hasVideo = (data[4] & 1) !== 0;
 
-        if (!hasAudio && !hasVideo) {
-            return mismatch;
-        }
-
         let offset = ReadBig32(data, 5);
 
         if (offset < 9) {

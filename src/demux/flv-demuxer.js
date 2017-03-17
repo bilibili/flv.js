@@ -209,6 +209,7 @@ class FLVDemuxer {
         if (!this._hasAudio && this._hasVideo) {  // video only
             return this._videoInitialMetadataDispatched;
         }
+        return false;
     }
 
     // function parseChunks(chunk: ArrayBuffer, byteStart: number): number;
@@ -407,6 +408,11 @@ class FLVDemuxer {
         let track = this._audioTrack;
 
         if (!meta || !meta.codec) {
+            if (this._hasAudio === false) {
+                this._hasAudio = true;
+                this._mediaInfo.hasAudio = true;
+            }
+
             // initial metadata
             meta = this._audioMetadata = {};
             meta.type = 'audio';
@@ -683,6 +689,11 @@ class FLVDemuxer {
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
 
         if (!meta) {
+            if (this._hasVideo === false) {
+                this._hasVideo = true;
+                this._mediaInfo.hasVideo = true;
+            }
+
             meta = this._videoMetadata = {};
             meta.type = 'video';
             meta.id = track.id;

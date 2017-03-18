@@ -162,7 +162,11 @@ class MSEController {
         }
 
         let is = initSegment;
-        let mimeType = `${is.container};codecs=${is.codec}`;
+        let mimeType = `${is.container}`;
+        if (is.codec && is.codec.length > 0) {
+            mimeType += `;codecs=${is.codec}`;
+        }
+
         let firstInitSegment = false;
 
         Log.v(this.TAG, 'Received Initialization Segment, mimeType: ' + mimeType);
@@ -314,8 +318,29 @@ class MSEController {
             if (!this._sourceBuffers[type] || this._sourceBuffers[type].updating) {
                 continue;
             }
+
             if (pendingSegments[type].length > 0) {
                 let segment = pendingSegments[type].shift();
+
+                if (segment.timestampOffset) {
+                    // For MPEG audio stream in MSE, if unbuffered-seeking occurred
+                    // We need explicitly set timestampOffset to the desired point in timeline for mpeg SourceBuffer.
+                    let currentOffset = this._sourceBuffers[type].timestampOffset;
+                    let targetOffset = segment.timestampOffset / 1000;  // in seconds
+
+                    let delta = Math.abs(currentOffset - targetOffset);
+                    if (delta > 0.1) {  // If time delta > 100ms
+                        Log.v(this.TAG, `Update MPEG audio timestampOffset from ${currentOffset} to ${targetOffset}`);
+                        this._sourceBuffers[type].timestampOffset = targetOffset;
+                    }
+                    delete segment.timestampOffset;
+                }
+
+                if (!segment.data || segment.data.byteLength === 0) {
+                    // Ignore empty buffer
+                    continue;
+                }
+
                 try {
                     this._sourceBuffers[type].appendBuffer(segment.data);
                     this._isBufferFull = false;

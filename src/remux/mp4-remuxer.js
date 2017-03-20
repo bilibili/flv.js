@@ -58,6 +58,9 @@ class MP4Remuxer {
         // Workaround for IE11/Edge: Fill silent aac frame after keyframe-seeking
         // Make audio beginDts equals with video beginDts, in order to fix seek freeze
         this._fillSilentAfterSeek = (Browser.msedge || Browser.msie);
+
+        // While only FireFox supports 'audio/mp4, codecs="mp3"', use 'audio/mpeg' for chrome, safari, ...
+        this._mp3UseMpegAudio = !Browser.firefox;
     }
 
     destroy() {
@@ -134,9 +137,20 @@ class MP4Remuxer {
     _onTrackMetadataReceived(type, metadata) {
         let metabox = null;
 
+        let container = 'mp4';
+        let codec = metadata.codec;
+
         if (type === 'audio') {
             this._audioMeta = metadata;
-            metabox = MP4.generateInitSegment(metadata);
+            if (metadata.codec === 'mp3' && this._mp3UseMpegAudio) {
+                // 'audio/mpeg' for MP3 audio track
+                container = 'mpeg';
+                codec = '';
+                metabox = new Uint8Array();
+            } else {
+                // 'audio/mp4, codecs="codec"'
+                metabox = MP4.generateInitSegment(metadata);
+            }
         } else if (type === 'video') {
             this._videoMeta = metadata;
             metabox = MP4.generateInitSegment(metadata);
@@ -151,8 +165,9 @@ class MP4Remuxer {
         this._onInitSegment(type, {
             type: type,
             data: metabox.buffer,
-            codec: metadata.codec,
-            container: `${type}/mp4`
+            codec: codec,
+            container: `${type}/${container}`,
+            mediaDuration: metadata.duration  // in timescale 1000 (milliseconds)
         });
     }
 
@@ -178,6 +193,9 @@ class MP4Remuxer {
         let dtsCorrection = undefined;
         let firstDts = -1, lastDts = -1, lastPts = -1;
 
+        let mpegRawTrack = this._audioMeta.codec === 'mp3' && this._mp3UseMpegAudio;
+        let firstSegmentAfterSeek = this._dtsBaseInited && this._audioNextDts === undefined;
+
         let remuxSilentFrame = false;
         let silentFrameDuration = -1;
 
@@ -185,16 +203,29 @@ class MP4Remuxer {
             return;
         }
 
-        let bytes = 8 + track.length;
-        let mdatbox = new Uint8Array(bytes);
-        mdatbox[0] = (bytes >>> 24) & 0xFF;
-        mdatbox[1] = (bytes >>> 16) & 0xFF;
-        mdatbox[2] = (bytes >>>  8) & 0xFF;
-        mdatbox[3] = (bytes) & 0xFF;
+        let bytes = 0;
+        let offset = 0;
+        let mdatbox = null;
 
-        mdatbox.set(MP4.types.mdat, 4);
+        if (mpegRawTrack) {
+            // allocate for raw mpeg buffer
+            bytes = track.length;
+            offset = 0;
+            mdatbox = new Uint8Array(bytes);
+        } else {
+            // allocate for fmp4 mdat box
+            bytes = 8 + track.length;
+            offset = 8;  // size + type
+            mdatbox = new Uint8Array(bytes);
+            // size field
+            mdatbox[0] = (bytes >>> 24) & 0xFF;
+            mdatbox[1] = (bytes >>> 16) & 0xFF;
+            mdatbox[2] = (bytes >>>  8) & 0xFF;
+            mdatbox[3] = (bytes) & 0xFF;
+            // type field (fourCC)
+            mdatbox.set(MP4.types.mdat, 4);
+        }
 
-        let offset = 8;  // size + type
         let mp4Samples = [];
 
         while (samples.length) {
@@ -207,7 +238,9 @@ class MP4Remuxer {
                     if (this._audioSegmentInfoList.isEmpty()) {
                         dtsCorrection = 0;
                         if (this._fillSilentAfterSeek && !this._videoSegmentInfoList.isEmpty()) {
-                            remuxSilentFrame = true;
+                            if (this._audioMeta.codec !== 'mp3') {
+                                remuxSilentFrame = true;
+                            }
                         }
                     } else {
                         let lastSample = this._audioSegmentInfoList.getLastSampleBefore(originalDts);
@@ -330,16 +363,33 @@ class MP4Remuxer {
         track.samples = mp4Samples;
         track.sequenceNumber++;
 
-        let moofbox = MP4.moof(track, firstDts);
+        let moofbox = null;
+
+        if (mpegRawTrack) {
+            // Generate empty buffer, because useless for raw mpeg
+            moofbox = new Uint8Array();
+        } else {
+            // Generate moof for fmp4 segment
+            moofbox = MP4.moof(track, firstDts);
+        }
+
         track.samples = [];
         track.length = 0;
 
-        this._onMediaSegment('audio', {
+        let segment = {
             type: 'audio',
             data: this._mergeBoxes(moofbox, mdatbox).buffer,
             sampleCount: mp4Samples.length,
             info: info
-        });
+        };
+
+        if (mpegRawTrack && firstSegmentAfterSeek) {
+            // For MPEG audio stream in MSE, if seeking occurred, before appending new buffer
+            // We need explicitly set timestampOffset to the desired point in timeline for mpeg SourceBuffer.
+            segment.timestampOffset = firstDts;
+        }
+
+        this._onMediaSegment('audio', segment);
     }
 
     _generateSilentAudio(dts, frameDuration) {

@@ -17,7 +17,7 @@ flv.js is written in [ECMAScript 6][], transpiled into ECMAScript 5 by [Babel Co
 [Browserify]: http://browserify.org/
 
 ## Features
-- FLV container with H.264 + AAC codec playback
+- FLV container with H.264 + AAC / MP3 codec playback
 - Multipart segmented video playback
 - HTTP FLV low latency live stream playback
 - FLV over WebSocket live stream playback
@@ -60,6 +60,10 @@ See [cors.md](docs/cors.md) for more details.
     }
 </script>
 ```
+
+## Limitations
+- MP3 audio codec is currently not working on IE11 / Edge
+- HTTP FLV live stream is not currently working on all browsers, see [livestream.md](docs/livestream.md)
 
 ## Multipart playback
 You only have to provide a playlist for `MediaDataSource`. See [multipart.md](docs/multipart.md)

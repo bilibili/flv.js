@@ -46,6 +46,9 @@ class MSEController {
         this._isBufferFull = false;
         this._hasPendingEos = false;
 
+        this._requireSetMediaDuration = false;
+        this._pendingMediaDuration = 0;
+
         this._pendingSourceBufferInit = [];
         this._mimeTypes = {
             video: null,
@@ -162,7 +165,11 @@ class MSEController {
         }
 
         let is = initSegment;
-        let mimeType = `${is.container};codecs=${is.codec}`;
+        let mimeType = `${is.container}`;
+        if (is.codec && is.codec.length > 0) {
+            mimeType += `;codecs=${is.codec}`;
+        }
+
         let firstInitSegment = false;
 
         Log.v(this.TAG, 'Received Initialization Segment, mimeType: ' + mimeType);
@@ -194,6 +201,13 @@ class MSEController {
             if (this._sourceBuffers[is.type] && !this._sourceBuffers[is.type].updating) {
                 this._doAppendSegments();
             }
+        }
+        if (Browser.safari && is.container === 'audio/mpeg' && is.mediaDuration > 0) {
+            // 'audio/mpeg' track under Safari may cause MediaElement's duration to be NaN
+            // Manually correct MediaSource.duration to make progress bar seekable, and report right duration
+            this._requireSetMediaDuration = true;
+            this._pendingMediaDuration = is.mediaDuration / 1000;  // in seconds
+            this._updateMediaSourceDuration();
         }
     }
 
@@ -293,6 +307,27 @@ class MSEController {
         return this._idrList.getLastSyncPointBeforeDts(dts);
     }
 
+    _updateMediaSourceDuration() {
+        let sb = this._sourceBuffers;
+        if (this._mediaElement.readyState === 0 || this._mediaSource.readyState !== 'open') {
+            return;
+        }
+        if ((sb.video && sb.video.updating) || (sb.audio && sb.audio.updating)) {
+            return;
+        }
+
+        let current = this._mediaSource.duration;
+        let target = this._pendingMediaDuration;
+
+        if (target > 0 && (isNaN(current) || target > current)) {
+            Log.v(this.TAG, `Update MediaSource duration from ${current} to ${target}`);
+            this._mediaSource.duration = target;
+        }
+
+        this._requireSetMediaDuration = false;
+        this._pendingMediaDuration = 0;
+    }
+
     _doRemoveRanges() {
         for (let type in this._pendingRemoveRanges) {
             if (!this._sourceBuffers[type] || this._sourceBuffers[type].updating) {
@@ -314,8 +349,29 @@ class MSEController {
             if (!this._sourceBuffers[type] || this._sourceBuffers[type].updating) {
                 continue;
             }
+
             if (pendingSegments[type].length > 0) {
                 let segment = pendingSegments[type].shift();
+
+                if (segment.timestampOffset) {
+                    // For MPEG audio stream in MSE, if unbuffered-seeking occurred
+                    // We need explicitly set timestampOffset to the desired point in timeline for mpeg SourceBuffer.
+                    let currentOffset = this._sourceBuffers[type].timestampOffset;
+                    let targetOffset = segment.timestampOffset / 1000;  // in seconds
+
+                    let delta = Math.abs(currentOffset - targetOffset);
+                    if (delta > 0.1) {  // If time delta > 100ms
+                        Log.v(this.TAG, `Update MPEG audio timestampOffset from ${currentOffset} to ${targetOffset}`);
+                        this._sourceBuffers[type].timestampOffset = targetOffset;
+                    }
+                    delete segment.timestampOffset;
+                }
+
+                if (!segment.data || segment.data.byteLength === 0) {
+                    // Ignore empty buffer
+                    continue;
+                }
+
                 try {
                     this._sourceBuffers[type].appendBuffer(segment.data);
                     this._isBufferFull = false;
@@ -392,7 +448,9 @@ class MSEController {
     }
 
     _onSourceBufferUpdateEnd() {
-        if (this._hasPendingRemoveRanges()) {
+        if (this._requireSetMediaDuration) {
+            this._updateMediaSourceDuration();
+        } else if (this._hasPendingRemoveRanges()) {
             this._doRemoveRanges();
         } else if (this._hasPendingSegments()) {
             this._doAppendSegments();

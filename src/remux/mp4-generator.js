@@ -30,7 +30,7 @@ class MP4 {
             stco: [], stsc: [], stsd: [], stsz: [],
             stts: [], tfdt: [], tfhd: [], traf: [],
             trak: [], trun: [], trex: [], tkhd: [],
-            vmhd: [], smhd: []
+            vmhd: [], smhd: [], '.mp3': []
         };
 
         for (let name in MP4.types) {
@@ -318,10 +318,34 @@ class MP4 {
     // Sample description box
     static stsd(meta) {
         if (meta.type === 'audio') {
+            if (meta.codec === 'mp3') {
+                return MP4.box(MP4.types.stsd, MP4.constants.STSD_PREFIX, MP4.mp3(meta));
+            }
+            // else: aac -> mp4a
             return MP4.box(MP4.types.stsd, MP4.constants.STSD_PREFIX, MP4.mp4a(meta));
         } else {
             return MP4.box(MP4.types.stsd, MP4.constants.STSD_PREFIX, MP4.avc1(meta));
         }
+    }
+
+    static mp3(meta) {
+        let channelCount = meta.channelCount;
+        let sampleRate = meta.audioSampleRate;
+
+        let data = new Uint8Array([
+            0x00, 0x00, 0x00, 0x00,  // reserved(4)
+            0x00, 0x00, 0x00, 0x01,  // reserved(2) + data_reference_index(2)
+            0x00, 0x00, 0x00, 0x00,  // reserved: 2 * 4 bytes
+            0x00, 0x00, 0x00, 0x00,
+            0x00, channelCount,      // channelCount(2)
+            0x00, 0x10,              // sampleSize(2)
+            0x00, 0x00, 0x00, 0x00,  // reserved(4)
+            (sampleRate >>> 8) & 0xFF,  // Audio sample rate
+            (sampleRate) & 0xFF,
+            0x00, 0x00
+        ]);
+
+        return MP4.box(MP4.types['.mp3'], data);
     }
 
     static mp4a(meta) {
@@ -345,7 +369,7 @@ class MP4 {
     }
 
     static esds(meta) {
-        let config = meta.config;
+        let config = meta.config || [];
         let configSize = config.length;
         let data = new Uint8Array([
             0x00, 0x00, 0x00, 0x00,  // version 0 + flags

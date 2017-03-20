@@ -33,13 +33,13 @@ You must configure `Access-Control-Allow-Origin` header correctly on your stream
 See [cors.md](../docs/cors.md) for details.
 
 ### Compatibility
-Due to IO restrictions, flv.js can support HTTP FLV live stream on `Chrome 43+` and `FireFox 42+` for now.
+Due to IO restrictions, flv.js can support HTTP FLV live stream on `Chrome 43+`, `FireFox 42+` and `Edge 15.15048+` for now.
 
 HTTP FLV live stream relies on stream IO, which has been introduced in [fetch][] and [stream][] spec. but `FetchStreamLoader` only works well on a few browsers for now:
 
 - Chrome: `FetchStreamLoader` works well on Chrome 43+
 - FireFox: FireFox has `fetch` support but `stream` is missing, `moz-chunked-arraybuffer` xhr extension is used
-- Edge: `fetch + stream` is broken on Microsoft Edge, see [Fetch API with ReadableStream has bug with data pumping][]
+- Edge: `fetch + stream` is broken on old version of Microsoft Edge, see [Fetch API with ReadableStream has bug with data pumping][]
 - Safari: `fetch` has not been supported on current version 10, but available in [Safari Technology Preview][]
 
 [fetch]: https://fetch.spec.whatwg.org/

@@ -240,7 +240,6 @@ class FLVDemuxer {
             if (chunk.byteLength > 13) {
                 let probeData = FLVDemuxer.probe(chunk);
                 offset = probeData.dataOffset;
-                byteStart = probeData.dataOffset;
             } else {
                 return 0;
             }
@@ -248,7 +247,7 @@ class FLVDemuxer {
 
         if (this._firstParse) {  // handle PreviousTagSize0 before Tag1
             this._firstParse = false;
-            if (byteStart !== this._dataOffset) {
+            if (byteStart + offset !== this._dataOffset) {
                 Log.w(this.TAG, 'First time parsing but chunk byteStart invalid!');
             }
 

@@ -332,6 +332,10 @@ class FLVDemuxer {
         let scriptData = AMF.parseScriptData(arrayBuffer, dataOffset, dataSize);
 
         if (scriptData.hasOwnProperty('onMetaData')) {
+            if (scriptData.onMetaData == null || typeof scriptData.onMetaData !== 'object') {
+                Log.w(this.TAG, 'Invalid onMetaData structure!');
+                return;
+            }
             if (this._metadata) {
                 Log.w(this.TAG, 'Found another onMetaData tag!');
             }

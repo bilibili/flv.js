@@ -62,6 +62,9 @@ class FLVDemuxer {
         this._hasAudio = probeData.hasAudioTrack;
         this._hasVideo = probeData.hasVideoTrack;
 
+        this._hasAudioFlagOverrided = false;
+        this._hasVideoFlagOverrided = false;
+
         this._audioInitialMetadataDispatched = false;
         this._videoInitialMetadataDispatched = false;
 
@@ -210,6 +213,20 @@ class FLVDemuxer {
         this._mediaInfo.duration = duration;
     }
 
+    // Force-override audio track present flag, boolean
+    set overridedHasAudio(hasAudio) {
+        this._hasAudioFlagOverrided = true;
+        this._hasAudio = hasAudio;
+        this._mediaInfo.hasAudio = hasAudio;
+    }
+
+    // Force-override video track present flag, boolean
+    set overridedHasVideo(hasVideo) {
+        this._hasVideoFlagOverrided = true;
+        this._hasVideo = hasVideo;
+        this._mediaInfo.hasVideo = hasVideo;
+    }
+
     resetMediaInfo() {
         this._mediaInfo = new MediaInfo();
     }
@@ -343,12 +360,16 @@ class FLVDemuxer {
             let onMetaData = this._metadata.onMetaData;
 
             if (typeof onMetaData.hasAudio === 'boolean') {  // hasAudio
-                this._hasAudio = onMetaData.hasAudio;
-                this._mediaInfo.hasAudio = this._hasAudio;
+                if (this._hasAudioFlagOverrided === false) {
+                    this._hasAudio = onMetaData.hasAudio;
+                    this._mediaInfo.hasAudio = this._hasAudio;
+                }
             }
             if (typeof onMetaData.hasVideo === 'boolean') {  // hasVideo
-                this._hasVideo = onMetaData.hasVideo;
-                this._mediaInfo.hasVideo = this._hasVideo;
+                if (this._hasVideoFlagOverrided === false) {
+                    this._hasVideo = onMetaData.hasVideo;
+                    this._mediaInfo.hasVideo = this._hasVideo;
+                }
             }
             if (typeof onMetaData.audiodatarate === 'number') {  // audiodatarate
                 this._mediaInfo.audioDataRate = onMetaData.audiodatarate;
@@ -422,6 +443,12 @@ class FLVDemuxer {
             return;
         }
 
+        if (this._hasAudioFlagOverrided === true && this._hasAudio === false) {
+            // If hasAudio: false indicated explicitly in MediaDataSource,
+            // Ignore all the audio packets
+            return;
+        }
+
         let le = this._littleEndian;
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
 
@@ -450,7 +477,7 @@ class FLVDemuxer {
         let track = this._audioTrack;
 
         if (!meta) {
-            if (this._hasAudio === false) {
+            if (this._hasAudio === false && this._hasAudioFlagOverrided === false) {
                 this._hasAudio = true;
                 this._mediaInfo.hasAudio = true;
             }
@@ -766,6 +793,12 @@ class FLVDemuxer {
             return;
         }
 
+        if (this._hasVideoFlagOverrided === true && this._hasVideo === false) {
+            // If hasVideo: false indicated explicitly in MediaDataSource,
+            // Ignore all the video packets
+            return;
+        }
+
         let spec = (new Uint8Array(arrayBuffer, dataOffset, dataSize))[0];
 
         let frameType = (spec & 240) >>> 4;
@@ -815,7 +848,7 @@ class FLVDemuxer {
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
 
         if (!meta) {
-            if (this._hasVideo === false) {
+            if (this._hasVideo === false && this._hasVideoFlagOverrided === false) {
                 this._hasVideo = true;
                 this._mediaInfo.hasVideo = true;
             }

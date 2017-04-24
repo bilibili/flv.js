@@ -250,6 +250,13 @@ class TransmuxingController {
             if (mds.duration != undefined && !isNaN(mds.duration)) {
                 this._demuxer.overridedDuration = mds.duration;
             }
+            if (typeof mds.hasAudio === 'boolean') {
+                this._demuxer.overridedHasAudio = mds.hasAudio;
+            }
+            if (typeof mds.hasVideo === 'boolean') {
+                this._demuxer.overridedHasVideo = mds.hasVideo;
+            }
+
             this._demuxer.timestampBase = mds.segments[this._currentSegmentIndex].timestampBase;
 
             this._demuxer.onError = this._onDemuxException.bind(this);

@@ -32,6 +32,9 @@ declare namespace FlvJs {
         cors?: boolean,
         withCredentials?: boolean,
 
+        hasAudio?: boolean,
+        hasVideo?: boolean,
+
         duration?: number;
         filesize?: number;
         url?: string;

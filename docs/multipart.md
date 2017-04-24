@@ -16,7 +16,7 @@ You need to provide a playlist for `MediaDataSource` in following format:
     "withCredentials": false,
 
     // Optional
-    // true by default, do not indicate if you have to deal with audio-only or video-only stream
+    // true by default, do not indicate unless you have to deal with audio-only or video-only stream
     "hasAudio": true,
     "hasVideo": true,
 

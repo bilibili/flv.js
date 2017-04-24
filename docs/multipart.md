@@ -15,6 +15,11 @@ You need to provide a playlist for `MediaDataSource` in following format:
     "cors": true,
     "withCredentials": false,
 
+    // Optional
+    // true by default, do not indicate if you have to deal with audio-only or video-only stream
+    "hasAudio": true,
+    "hasVideo": true,
+
     // Required
     "segments": [
         {

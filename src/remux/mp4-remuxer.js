@@ -188,6 +188,10 @@ class MP4Remuxer {
     }
 
     _remuxAudio(audioTrack) {
+        if (this._audioMeta == null) {
+            return;
+        }
+
         let track = audioTrack;
         let samples = track.samples;
         let dtsCorrection = undefined;
@@ -423,6 +427,10 @@ class MP4Remuxer {
     }
 
     _remuxVideo(videoTrack) {
+        if (this._videoMeta == null) {
+            return;
+        }
+
         let track = videoTrack;
         let samples = track.samples;
         let dtsCorrection = undefined;

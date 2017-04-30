@@ -553,7 +553,7 @@ class FLVDemuxer {
                     return;
                 }
                 meta.audioSampleRate = misc.samplingRate;
-                meta.channelConfig = misc.channelCount;
+                meta.channelCount = misc.channelCount;
                 meta.codec = misc.codec;
                 // The decode result of an mp3 sample is 1152 PCM samples
                 meta.refSampleDuration = Math.floor(1152 / meta.audioSampleRate * meta.timescale);

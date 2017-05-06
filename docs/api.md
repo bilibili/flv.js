@@ -66,26 +66,27 @@ In multipart mode, `duration` `filesize` `url` field in `MediaDataSource` struct
 
 ### Config
 
-| Field                       | Type      | Default     | Description                              |
-| --------------------------- | --------- | ----------- | ---------------------------------------- |
-| `enableWorker?`             | `boolean` | `false`     | Enable separated thread for transmuxing (unstable for now) |
-| `enableStashBuffer?`        | `boolean` | `true`      | Enable IO stash buffer. Set to false if you need realtime (minimal latency) for live stream playback, but may stalled if there's network jittering. |
-| `stashInitialSize?`         | `number`  | `384KB`     | Indicates IO stash buffer initial size. Default is `384KB`. Indicate a suitable size can improve video load/seek time. |
-| `isLive?`                   | `boolean` | `false`     | Same to `isLive` in **MediaDataSource**, ignored if has been set in MediaDataSource structure. |
-| `lazyLoad?`                 | `boolean` | `true`      | Abort the http connection if there's enough data for playback. |
-| `lazyLoadMaxDuration?`      | `number`  | `3 * 60`    | Indicates how many seconds of data to be kept for `lazyLoad`. |
-| `lazyLoadRecoverDuration?`  | `number`  | `30`        | Indicates the `lazyLoad` recover time boundary in seconds. |
-| `deferLoadAfterSourceOpen?` | `boolean` | `true`      | Do load after MediaSource `sourceopen` event triggered. On Chrome, tabs which be opened in background may not trigger `sourceopen` event until switched to that tab. |
-| `accurateSeek?`             | `boolean` | `false`     | Accurate seek to any frame, not limited to video IDR frame, but may a bit slower. Available on `Chrome > 50`, `FireFox` and `Safari`. |
-| `seekType?`                 | `string`  | `'range'`   | `'range'` use range request to seek, or `'param'` add params into url to indicate request range. |
-| `seekParamStart?`           | `string`  | `'bstart'`  | Indicates seek start parameter name for `seekType = 'param'` |
-| `seekParamEnd?`             | `string`  | `'bend'`    | Indicates seek end parameter name for `seekType = 'param'` |
-| `rangeLoadZeroStart?`       | `boolean` | `false`     | Send `Range: bytes=0-` for first time load if use Range seek |
-| `customSeekHandler?`        | `object`  | `undefined` | Indicates a custom seek handler          |
-| `reuseRedirectedURL?`       | `boolean` | `false`     | Reuse 301/302 redirected url for subsequence request like seek, reconnect, etc. |
+| Field                       | Type      | Default                       | Description                              |
+| --------------------------- | --------- | ----------------------------- | ---------------------------------------- |
+| `enableWorker?`             | `boolean` | `false`                       | Enable separated thread for transmuxing (unstable for now) |
+| `enableStashBuffer?`        | `boolean` | `true`                        | Enable IO stash buffer. Set to false if you need realtime (minimal latency) for live stream playback, but may stalled if there's network jittering. |
+| `stashInitialSize?`         | `number`  | `384KB`                       | Indicates IO stash buffer initial size. Default is `384KB`. Indicate a suitable size can improve video load/seek time. |
+| `isLive?`                   | `boolean` | `false`                       | Same to `isLive` in **MediaDataSource**, ignored if has been set in MediaDataSource structure. |
+| `lazyLoad?`                 | `boolean` | `true`                        | Abort the http connection if there's enough data for playback. |
+| `lazyLoadMaxDuration?`      | `number`  | `3 * 60`                      | Indicates how many seconds of data to be kept for `lazyLoad`. |
+| `lazyLoadRecoverDuration?`  | `number`  | `30`                          | Indicates the `lazyLoad` recover time boundary in seconds. |
+| `deferLoadAfterSourceOpen?` | `boolean` | `true`                        | Do load after MediaSource `sourceopen` event triggered. On Chrome, tabs which be opened in background may not trigger `sourceopen` event until switched to that tab. |
+| `accurateSeek?`             | `boolean` | `false`                       | Accurate seek to any frame, not limited to video IDR frame, but may a bit slower. Available on `Chrome > 50`, `FireFox` and `Safari`. |
+| `seekType?`                 | `string`  | `'range'`                     | `'range'` use range request to seek, or `'param'` add params into url to indicate request range. |
+| `seekParamStart?`           | `string`  | `'bstart'`                    | Indicates seek start parameter name for `seekType = 'param'` |
+| `seekParamEnd?`             | `string`  | `'bend'`                      | Indicates seek end parameter name for `seekType = 'param'` |
+| `rangeLoadZeroStart?`       | `boolean` | `false`                       | Send `Range: bytes=0-` for first time load if use Range seek |
+| `customSeekHandler?`        | `object`  | `undefined`                   | Indicates a custom seek handler          |
+| `reuseRedirectedURL?`       | `boolean` | `false`                       | Reuse 301/302 redirected url for subsequence request like seek, reconnect, etc. |
+| `referrerPolicy?`           | `string`  | `no-referrer-when-downgrade`  | Indicates the [Referrer Policy][] when using FetchStreamLoader |
 
 
-
+[Referrer Policy]: https://w3c.github.io/webappsec-referrer-policy/#referrer-policy
 
 ### flvjs.isSupported()
 ```js

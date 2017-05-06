@@ -64,6 +64,10 @@ class TransmuxingController {
             // params needed by IOController
             segment.cors = mediaDataSource.cors;
             segment.withCredentials = mediaDataSource.withCredentials;
+            // referrer policy control, if exist
+            if (config.referrerPolicy) {
+                segment.referrerPolicy = config.referrerPolicy;
+            }
         });
 
         if (!isNaN(totalDuration) && this._mediaDataSource.duration !== totalDuration) {

@@ -88,7 +88,10 @@ class FetchStreamLoader extends BaseLoader {
             method: 'GET',
             headers: headers,
             mode: 'cors',
-            cache: 'default'
+            cache: 'default',
+            // The default policy of Fetch API in the whatwg standard
+            // Safari incorrectly indicates 'no-referrer' as default policy, fuck it
+            referrerPolicy: 'no-referrer-when-downgrade',
         };
 
         // cors is enabled by default
@@ -100,6 +103,11 @@ class FetchStreamLoader extends BaseLoader {
         // withCredentials is disabled by default
         if (dataSource.withCredentials) {
             params.credentials = 'include';
+        }
+
+        // referrerPolicy from config
+        if (dataSource.referrerPolicy) {
+            params.referrerPolicy = dataSource.referrerPolicy;
         }
 
         this._status = LoaderStatus.kConnecting;

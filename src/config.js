@@ -37,6 +37,7 @@ export const defaultConfig = {
     rangeLoadZeroStart: false,
     customSeekHandler: undefined,
     reuseRedirectedURL: false
+    // referrerPolicy: leave as unspecified
 };
 
 export function createDefaultConfig() {

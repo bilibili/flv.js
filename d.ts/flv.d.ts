@@ -62,7 +62,8 @@ declare namespace FlvJs {
         seekParamEnd?: string,
         rangeLoadZeroStart?: boolean,
         customSeekHandler?: any,
-        reuseRedirectedURL?: boolean
+        reuseRedirectedURL?: boolean,
+        referrerPolicy?: string
     }
 
     interface FeatureList {

@@ -3,6 +3,7 @@
   "version": "1.2.0",
   "description": "HTML5 FLV Player",
   "main": "./dist/flv.js",
+  "jsnext:main": "./src/flv.js",
   "types": "./d.ts/flv.d.ts",
   "repository": {
     "type": "git",

@@ -509,7 +509,7 @@ class FLVDemuxer {
                 meta.originalCodec = 'mp4a.40.' + misc.originalAudioObjectType;
                 meta.config = misc.config;
                 // The decode result of an aac sample is 1024 PCM samples
-                meta.refSampleDuration = Math.floor(1024 / meta.audioSampleRate * meta.timescale);
+                meta.refSampleDuration = 1024 / meta.audioSampleRate * meta.timescale;
                 Log.v(this.TAG, 'Parsed AudioSpecificConfig');
 
                 if (this._isInitialMetadataDispatched()) {
@@ -557,7 +557,7 @@ class FLVDemuxer {
                 meta.channelCount = misc.channelCount;
                 meta.codec = misc.codec;
                 // The decode result of an mp3 sample is 1152 PCM samples
-                meta.refSampleDuration = Math.floor(1152 / meta.audioSampleRate * meta.timescale);
+                meta.refSampleDuration = 1152 / meta.audioSampleRate * meta.timescale;
                 Log.v(this.TAG, 'Parsed MPEG Audio Frame Header');
 
                 this._audioInitialMetadataDispatched = true;
@@ -929,7 +929,7 @@ class FLVDemuxer {
 
             let fps_den = meta.frameRate.fps_den;
             let fps_num = meta.frameRate.fps_num;
-            meta.refSampleDuration = Math.floor(meta.timescale * (fps_den / fps_num));
+            meta.refSampleDuration = meta.timescale * (fps_den / fps_num);
 
             let codecArray = sps.subarray(1, 4);
             let codecString = 'avc1.';

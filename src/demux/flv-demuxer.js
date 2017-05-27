@@ -506,6 +506,7 @@ class FLVDemuxer {
                 meta.audioSampleRate = misc.samplingRate;
                 meta.channelCount = misc.channelCount;
                 meta.codec = misc.codec;
+                meta.originalCodec = 'mp4a.40.' + misc.originalAudioObjectType;
                 meta.config = misc.config;
                 // The decode result of an aac sample is 1024 PCM samples
                 meta.refSampleDuration = Math.floor(1024 / meta.audioSampleRate * meta.timescale);
@@ -524,7 +525,7 @@ class FLVDemuxer {
                 this._onTrackMetadata('audio', meta);
 
                 let mi = this._mediaInfo;
-                mi.audioCodec = 'mp4a.40.' + misc.originalAudioObjectType;
+                mi.audioCodec = meta.originalCodec;
                 mi.audioSampleRate = meta.audioSampleRate;
                 mi.audioChannelCount = meta.channelCount;
                 if (mi.hasVideo) {

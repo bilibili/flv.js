@@ -399,7 +399,7 @@ class MP4Remuxer {
     _generateSilentAudio(dts, frameDuration) {
         Log.v(this.TAG, `GenerateSilentAudio: dts = ${dts}, duration = ${frameDuration}`);
 
-        let unit = AAC.getSilentFrame(this._audioMeta.channelCount);
+        let unit = AAC.getSilentFrame(this._audioMeta.originalCodec, this._audioMeta.channelCount);
         if (unit == null) {
             Log.w(this.TAG, `Cannot generate silent aac frame for channelCount = ${this._audioMeta.channelCount}`);
             return null;

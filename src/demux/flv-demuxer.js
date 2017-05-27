@@ -506,7 +506,7 @@ class FLVDemuxer {
                 meta.audioSampleRate = misc.samplingRate;
                 meta.channelCount = misc.channelCount;
                 meta.codec = misc.codec;
-                meta.originalCodec = 'mp4a.40.' + misc.originalAudioObjectType;
+                meta.originalCodec = misc.originalCodec;
                 meta.config = misc.config;
                 // The decode result of an aac sample is 1024 PCM samples
                 meta.refSampleDuration = 1024 / meta.audioSampleRate * meta.timescale;
@@ -556,6 +556,7 @@ class FLVDemuxer {
                 meta.audioSampleRate = misc.samplingRate;
                 meta.channelCount = misc.channelCount;
                 meta.codec = misc.codec;
+                meta.originalCodec = misc.originalCodec;
                 // The decode result of an mp3 sample is 1152 PCM samples
                 meta.refSampleDuration = 1152 / meta.audioSampleRate * meta.timescale;
                 Log.v(this.TAG, 'Parsed MPEG Audio Frame Header');
@@ -709,7 +710,7 @@ class FLVDemuxer {
             samplingRate: samplingFrequence,
             channelCount: channelConfig,
             codec: 'mp4a.40.' + audioObjectType,
-            originalAudioObjectType: originalAudioObjectType
+            originalCodec: 'mp4a.40.' + originalAudioObjectType
         };
     }
 
@@ -779,7 +780,8 @@ class FLVDemuxer {
                 bitRate: bit_rate,
                 samplingRate: sample_rate,
                 channelCount: channel_count,
-                codec: codec
+                codec: codec,
+                originalCodec: codec
             };
         } else {
             result = array;

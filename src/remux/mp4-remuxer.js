@@ -196,6 +196,7 @@ class MP4Remuxer {
         let samples = track.samples;
         let dtsCorrection = undefined;
         let firstDts = -1, lastDts = -1, lastPts = -1;
+        let refSampleDuration = this._audioMeta.refSampleDuration;
 
         let mpegRawTrack = this._audioMeta.codec === 'mp3' && this._mp3UseMpegAudio;
         let firstSegmentAfterSeek = this._dtsBaseInited && this._audioNextDts === undefined;
@@ -254,10 +255,14 @@ class MP4Remuxer {
             let firstSampleDts = firstSampleOriginalDts - dtsCorrection;
             let videoSegment = this._videoSegmentInfoList.getLastSegmentBefore(firstSampleOriginalDts);
             if (videoSegment != null && videoSegment.beginDts < firstSampleDts) {
-                let silentFrameDuration = firstSampleDts - videoSegment.beginDts;
-                let frame = this._generateSilentAudio(videoSegment.beginDts, silentFrameDuration);
-                samples.unshift({unit: frame.unit, dts: frame.dts, pts: frame.pts});
-                mdatBytes += frame.unit.byteLength;
+                let silentUnit = AAC.getSilentFrame(this._audioMeta.originalCodec, this._audioMeta.channelCount);
+                if (silentUnit) {
+                    let dts = videoSegment.beginDts;
+                    let silentFrameDuration = firstSampleDts - videoSegment.beginDts;
+                    Log.v(this.TAG, `InsertPrefixSilentAudio: dts: ${dts}, duration: ${silentFrameDuration}`);
+                    samples.unshift({unit: silentUnit, dts: dts, pts: dts});
+                    mdatBytes += silentUnit.byteLength;
+                }  // silentUnit == null: Cannot generate, skip
             } else {
                 insertPrefixSilentFrame = false;
             }
@@ -285,8 +290,72 @@ class MP4Remuxer {
                 if (mp4Samples.length >= 1) {  // use second last sample duration
                     sampleDuration = mp4Samples[mp4Samples.length - 1].duration;
                 } else {  // the only one sample, use reference sample duration
-                    sampleDuration = Math.floor(this._audioMeta.refSampleDuration);
+                    sampleDuration = Math.floor(refSampleDuration);
                 }
+            }
+
+            let needFillSilentFrames = false;
+            let silentFrames = null;
+
+            // Silent frame generation, if large timestamp gap detected
+            if (sampleDuration > refSampleDuration * 1.5 && this._audioMeta.codec !== 'mp3') {
+                // We need to insert silent frames to fill timestamp gap
+                needFillSilentFrames = true;
+                let delta = Math.abs(sampleDuration - refSampleDuration);
+                let frameCount = Math.ceil(delta / refSampleDuration);
+                let currentDts = dts + refSampleDuration;  // Notice: in float
+
+                Log.w(this.TAG, 'Large audio timestamp gap detected, may cause AV sync to drift. ' +
+                                'Silent frames will be generated to avoid unsync.\n' +
+                                `dts: ${dts + sampleDuration} ms, expected: ${dts + Math.round(refSampleDuration)} ms, ` +
+                                `delta: ${Math.round(delta)} ms, generate: ${frameCount} frames`);
+
+                let silentUnit = AAC.getSilentFrame(this._audioMeta.originalCodec, this._audioMeta.channelCount);
+                if (silentUnit == null) {
+                    Log.w(this.TAG, 'Unable to generate silent frame for ' +
+                                    `${this._audioMeta.originalCodec} with ${this._audioMeta.channelCount} channels, repeat last frame`);
+                    // Repeat last frame
+                    silentUnit = unit;
+                }
+                silentFrames = [];
+
+                for (let j = 0; j < frameCount; j++) {
+                    let intDts = Math.round(currentDts);  // round to integer
+                    if (silentFrames.length > 0) {
+                        // Set previous frame sample duration
+                        let previousFrame = silentFrames[silentFrames.length - 1];
+                        previousFrame.duration = intDts - previousFrame.dts;
+                    }
+                    let frame = {
+                        dts: intDts,
+                        pts: intDts,
+                        cts: 0,
+                        unit: silentUnit,
+                        size: silentUnit.byteLength,
+                        duration: 0,  // wait for next sample
+                        originalDts: originalDts,
+                        flags: {
+                            isLeading: 0,
+                            dependsOn: 1,
+                            isDependedOn: 0,
+                            hasRedundancy: 0
+                        }
+                    };
+                    silentFrames.push(frame);
+                    mdatBytes += unit.byteLength;
+                    currentDts += refSampleDuration;
+                }
+
+                // last frame: align end time to next frame dts
+                let lastFrame = silentFrames[silentFrames.length - 1];
+                lastFrame.duration = dts + sampleDuration - lastFrame.dts;
+
+                // silentFrames.forEach((frame) => {
+                //     Log.w(this.TAG, `SilentAudio: dts: ${frame.dts}, duration: ${frame.duration}`);
+                // });
+
+                // Set correct sample duration for current frame
+                sampleDuration = Math.round(refSampleDuration);
             }
 
             mp4Samples.push({
@@ -304,6 +373,11 @@ class MP4Remuxer {
                     hasRedundancy: 0
                 }
             });
+
+            if (needFillSilentFrames) {
+                // Silent frames should be inserted after wrong-duration frame
+                mp4Samples.push.apply(mp4Samples, silentFrames);
+            }
         }
 
         // allocate mdatbox
@@ -385,32 +459,6 @@ class MP4Remuxer {
         }
 
         this._onMediaSegment('audio', segment);
-    }
-
-    _generateSilentAudio(dts, frameDuration) {
-        Log.v(this.TAG, `GenerateSilentAudio: dts = ${dts}, duration = ${frameDuration}`);
-
-        let unit = AAC.getSilentFrame(this._audioMeta.originalCodec, this._audioMeta.channelCount);
-        if (unit == null) {
-            Log.w(this.TAG, `Cannot generate silent aac frame for channelCount = ${this._audioMeta.channelCount}`);
-            return null;
-        }
-
-        return {
-            unit,
-            dts: dts,
-            pts: dts,
-            cts: 0,
-            size: unit.byteLength,
-            duration: frameDuration,
-            originalDts: dts,
-            flags: {
-                isLeading: 0,
-                dependsOn: 1,
-                isDependedOn: 0,
-                hasRedundancy: 0
-            }
-        };
     }
 
     _remuxVideo(videoTrack) {

@@ -33,15 +33,13 @@ class MP4 {
             vmhd: [], smhd: [], '.mp3': []
         };
 
-        for (let name in MP4.types) {
-            if (MP4.types.hasOwnProperty(name)) {
-                MP4.types[name] = [
-                    name.charCodeAt(0),
-                    name.charCodeAt(1),
-                    name.charCodeAt(2),
-                    name.charCodeAt(3)
-                ];
-            }
+        for (let name of MP4.types) {
+            MP4.types[name] = [
+                name.charCodeAt(0),
+                name.charCodeAt(1),
+                name.charCodeAt(2),
+                name.charCodeAt(3)
+            ];
         }
 
         let constants = MP4.constants = {};
@@ -311,8 +309,8 @@ class MP4 {
             MP4.box(MP4.types.stsc, MP4.constants.STSC),  // Sample-To-Chunk
             MP4.box(MP4.types.stsz, MP4.constants.STSZ),  // Sample size
             MP4.box(MP4.types.stco, MP4.constants.STCO)   // Chunk offset
-        ); 
-        return result; 
+        );
+        return result;
     }
 
     // Sample description box

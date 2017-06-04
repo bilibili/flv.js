@@ -107,7 +107,7 @@ class MSEController {
     detachMediaElement() {
         if (this._mediaSource) {
             let ms = this._mediaSource;
-            for (let type in this._sourceBuffers) {
+            for (let type of this._sourceBuffers) {
                 // pending segments should be discard
                 let ps = this._pendingSegments[type];
                 ps.splice(0, ps.length);
@@ -223,7 +223,7 @@ class MSEController {
 
     seek(seconds) {
         // remove all appended buffers
-        for (let type in this._sourceBuffers) {
+        for (let type of this._sourceBuffers) {
             if (!this._sourceBuffers[type]) {
                 continue;
             }
@@ -329,7 +329,7 @@ class MSEController {
     }
 
     _doRemoveRanges() {
-        for (let type in this._pendingRemoveRanges) {
+        for (let type of this._pendingRemoveRanges) {
             if (!this._sourceBuffers[type] || this._sourceBuffers[type].updating) {
                 continue;
             }
@@ -345,7 +345,7 @@ class MSEController {
     _doAppendSegments() {
         let pendingSegments = this._pendingSegments;
 
-        for (let type in pendingSegments) {
+        for (let type of pendingSegments) {
             if (!this._sourceBuffers[type] || this._sourceBuffers[type].updating) {
                 continue;
             }

@@ -538,7 +538,7 @@ class MP4Remuxer {
             mp4Samples.push(mp4Sample);
         }
         let latest = mp4Samples[mp4Samples.length - 1];
-        lastDts = latest.dts + latest.duration;
+        lastDts = latest.originalDts + latest.duration;
         lastPts = latest.pts + latest.duration;
         this._videoNextDts = lastDts;
 

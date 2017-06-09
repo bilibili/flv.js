@@ -26,8 +26,10 @@ import {IllegalStateException} from '../utils/exception.js';
 // Media Source Extensions controller
 class MSEController {
 
-    constructor() {
+    constructor(config) {
         this.TAG = 'MSEController';
+
+        this._config = config;
 
         this._emitter = new EventEmitter();
 
@@ -80,6 +82,7 @@ class MSEController {
         this.e = null;
         this._emitter.removeAllListeners();
         this._emitter = null;
+        clearInterval(this._checkRemoveInterval);
     }
 
     on(event, listener) {
@@ -209,6 +212,12 @@ class MSEController {
             this._pendingMediaDuration = is.mediaDuration / 1000;  // in seconds
             this._updateMediaSourceDuration();
         }
+
+        // When live streaming, check buffer every 10s to free memory
+        if (this._config.isLive) {
+            clearInterval(this._checkRemoveInterval);
+            this._checkRemoveInterval = setInterval(this._checkRemoveRanges.bind(this), 10000);
+        }
     }
 
     appendMediaSegment(mediaSegment) {
@@ -326,6 +335,26 @@ class MSEController {
 
         this._requireSetMediaDuration = false;
         this._pendingMediaDuration = 0;
+    }
+
+    // remove buffer to free memory
+    _checkRemoveRanges() {
+        // How much buffer to remain
+        let max = 30;
+        for (let type in this._sourceBuffers) {
+            let sb = this._sourceBuffers[type];
+            let buffered = sb.buffered;
+            if (buffered.length > 0) {
+                let start = buffered.start(0);
+                let end = buffered.end(0);
+                // SourceBuffer.remove may not accuracy, leave some buffer prevent from playing stuck
+                if (end - start > max * 2) {
+                    this._pendingRemoveRanges[type] = [ { start: 0, end: (end - max) } ];
+                    if (!sb.updating)
+                        this._doRemoveRanges();                 
+                }
+            }
+        }
     }
 
     _doRemoveRanges() {

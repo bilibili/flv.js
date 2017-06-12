@@ -26,10 +26,16 @@ import {IllegalStateException} from '../utils/exception.js';
 // Media Source Extensions controller
 class MSEController {
 
-    constructor() {
+    constructor(config) {
         this.TAG = 'MSEController';
 
+        this._config = config;
         this._emitter = new EventEmitter();
+
+        if (this._config.isLive && this._config.autoCleanupSourceBuffer == undefined) {
+            // For live stream, do auto cleanup by default
+            this._config.autoCleanupSourceBuffer = true;
+        }
 
         this.e = {
             onSourceOpen: this._onSourceOpen.bind(this),
@@ -215,6 +221,10 @@ class MSEController {
         let ms = mediaSegment;
         this._pendingSegments[ms.type].push(ms);
 
+        if (this._config.autoCleanupSourceBuffer && this._needCleanupSourceBuffer()) {
+            this._doCleanupSourceBuffer();
+        }
+
         let sb = this._sourceBuffers[ms.type];
         if (sb && !sb.updating && !this._hasPendingRemoveRanges()) {
             this._doAppendSegments();
@@ -305,6 +315,60 @@ class MSEController {
 
     getNearestKeyframe(dts) {
         return this._idrList.getLastSyncPointBeforeDts(dts);
+    }
+
+    _needCleanupSourceBuffer() {
+        if (!this._config.autoCleanupSourceBuffer) {
+            return false;
+        }
+
+        let currentTime = this._mediaElement.currentTime;
+
+        for (let type in this._sourceBuffers) {
+            let sb = this._sourceBuffers[type];
+            if (sb) {
+                let buffered = sb.buffered;
+                if (buffered.length >= 1) {
+                    if (currentTime - buffered.start(0) >= this._config.autoCleanupMaxBackwardDuration) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    _doCleanupSourceBuffer() {
+        let currentTime = this._mediaElement.currentTime;
+
+        for (let type in this._sourceBuffers) {
+            let sb = this._sourceBuffers[type];
+            if (sb) {
+                let buffered = sb.buffered;
+                let doRemove = false;
+
+                for (let i = 0; i < buffered.length; i++) {
+                    let start = buffered.start(i);
+                    let end = buffered.end(i);
+
+                    if (start <= currentTime && currentTime < end + 3) {  // padding 3 seconds
+                        if (currentTime - start >= this._config.autoCleanupMaxBackwardDuration) {
+                            doRemove = true;
+                            let removeEnd = currentTime - this._config.autoCleanupMinBackwardDuration;
+                            this._pendingRemoveRanges[type].push({start: start, end: removeEnd});
+                        }
+                    } else if (end < currentTime) {
+                        doRemove = true;
+                        this._pendingRemoveRanges[type].push({start: start, end: end});
+                    }
+                }
+
+                if (doRemove && !sb.updating) {
+                    this._doRemoveRanges();
+                }
+            }
+        }
     }
 
     _updateMediaSourceDuration() {

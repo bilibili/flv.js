@@ -141,7 +141,7 @@ class NativePlayer {
     }
 
     play() {
-        this._mediaElement.play();
+        return this._mediaElement.play();
     }
 
     pause() {

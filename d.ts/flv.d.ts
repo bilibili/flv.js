@@ -93,7 +93,7 @@ declare namespace FlvJs {
         detachMediaElement(): void;
         load(): void;
         unload(): void;
-        play(): void;
+        play(): Promise<void>;
         pause(): void;
         type: string;
         buffered: TimeRanges;

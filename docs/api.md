@@ -144,7 +144,7 @@ interface Player {
     detachMediaElement(): void;
     load(): void;
     unload(): void;
-    play(): Promise;
+    play(): Promise<void>;
     pause(): void;
     type: string;
     buffered: TimeRanges;

@@ -298,7 +298,7 @@ class MP4Remuxer {
             let silentFrames = null;
 
             // Silent frame generation, if large timestamp gap detected
-            if (sampleDuration > refSampleDuration * 1.5 && this._audioMeta.codec !== 'mp3') {
+            if (sampleDuration > refSampleDuration * 1.5 && this._audioMeta.codec !== 'mp3' && !Browser.safari) {
                 // We need to insert silent frames to fill timestamp gap
                 needFillSilentFrames = true;
                 let delta = Math.abs(sampleDuration - refSampleDuration);

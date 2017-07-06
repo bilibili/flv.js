@@ -167,15 +167,17 @@ A global interface which include several static getter/setter to set flv.js logc
 
 ```typescript
 interface LoggingControl {
-    forceGlobalTag: boolean,
-    globalTag: string,
-    enableAll: boolean,
-    enableDebug: boolean,
-    enableVerbose: boolean,
-    enableInfo: boolean,
-    enableWarn: boolean,
-    enableError: boolean,
-    getConfig: Object,
-    applyConfig: Object,
+    forceGlobalTag: boolean;
+    globalTag: string;
+    enableAll: boolean;
+    enableDebug: boolean;
+    enableVerbose: boolean;
+    enableInfo: boolean;
+    enableWarn: boolean;
+    enableError: boolean;
+    getConfig(): Object;
+    applyConfig(config: Object): void;
+    addLogListener(listener: Function): void;
+    removeLogListener(listener: Function): void;
 }
 ```

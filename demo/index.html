@@ -37,6 +37,19 @@
             text-align: left;
             margin-left: auto;
             margin-right: auto;
+            margin-top: 8px;
+            margin-bottom: 10px;
+        }
+
+        .logcatBox {
+            border-color: #CCCCCC;
+            font-size: 11px;
+            font-family: Menlo, Consolas, monospace;
+            display: block;
+            width: 100%;
+            text-align: left;
+            margin-left: auto;
+            margin-right: auto;
         }
     </style>
 </head>
@@ -48,7 +61,6 @@
         <video name="videoElement" class="centeredVideo" controls autoplay width="1024" height="576">
             Your browser is too old which doesn't support HTML5 video.
         </video>
-        <br>
         <div class="controls">
             <button onclick="flv_load()">Load</button>
             <button onclick="flv_start()">Start</button>
@@ -57,6 +69,7 @@
             <input style="width:100px" type="text" name="seekpoint"/>
             <button onclick="flv_seekto()">SeekTo</button>
         </div>
+        <textarea name="logcatbox" class="logcatBox" rows="10" readonly></textarea>
     </div>
 
     <script src="../dist/flv.js"></script>
@@ -127,7 +140,14 @@
         var urlInputBox = document.getElementsByName('urlinput')[0];
         var url = decodeURIComponent(getUrlParam('src', urlInputBox.value));
         urlInputBox.value = url;
-        
+
+        var logcatbox = document.getElementsByName('logcatbox')[0];
+        flvjs.LoggingControl.enableAll = false;
+        flvjs.LoggingControl.addLogListener(function(type, str) {
+            logcatbox.value = logcatbox.value + `${str}\n`;
+            logcatbox.scrollTop = logcatbox.scrollHeight;
+        });
+
         document.addEventListener('DOMContentLoaded', function () {
             flv_load();
         });

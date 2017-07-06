@@ -16,17 +16,23 @@
  * limitations under the License.
  */
 
+import EventEmitter from 'events';
+
 class Log {
 
     static e(tag, msg) {
-        if (!Log.ENABLE_ERROR) {
-            return;
-        }
-
         if (!tag || Log.FORCE_GLOBAL_TAG)
             tag = Log.GLOBAL_TAG;
 
         let str = `[${tag}] > ${msg}`;
+
+        if (Log.ENABLE_CALLBACK) {
+            Log.emitter.emit('log', 'error', str);
+        }
+
+        if (!Log.ENABLE_ERROR) {
+            return;
+        }
 
         if (console.error) {
             console.error(str);
@@ -38,14 +44,18 @@ class Log {
     }
 
     static i(tag, msg) {
-        if (!Log.ENABLE_INFO) {
-            return;
-        }
-
         if (!tag || Log.FORCE_GLOBAL_TAG)
             tag = Log.GLOBAL_TAG;
 
         let str = `[${tag}] > ${msg}`;
+
+        if (Log.ENABLE_CALLBACK) {
+            Log.emitter.emit('log', 'info', str);
+        }
+
+        if (!Log.ENABLE_INFO) {
+            return;
+        }
 
         if (console.info) {
             console.info(str);
@@ -55,14 +65,18 @@ class Log {
     }
 
     static w(tag, msg) {
-        if (!Log.ENABLE_WARN) {
-            return;
-        }
-
         if (!tag || Log.FORCE_GLOBAL_TAG)
             tag = Log.GLOBAL_TAG;
 
         let str = `[${tag}] > ${msg}`;
+
+        if (Log.ENABLE_CALLBACK) {
+            Log.emitter.emit('log', 'warn', str);
+        }
+
+        if (!Log.ENABLE_WARN) {
+            return;
+        }
 
         if (console.warn) {
             console.warn(str);
@@ -72,14 +86,18 @@ class Log {
     }
 
     static d(tag, msg) {
-        if (!Log.ENABLE_DEBUG) {
-            return;
-        }
-
         if (!tag || Log.FORCE_GLOBAL_TAG)
             tag = Log.GLOBAL_TAG;
 
         let str = `[${tag}] > ${msg}`;
+
+        if (Log.ENABLE_CALLBACK) {
+            Log.emitter.emit('log', 'debug', str);
+        }
+
+        if (!Log.ENABLE_DEBUG) {
+            return;
+        }
 
         if (console.debug) {
             console.debug(str);
@@ -89,14 +107,20 @@ class Log {
     }
 
     static v(tag, msg) {
+        if (!tag || Log.FORCE_GLOBAL_TAG)
+            tag = Log.GLOBAL_TAG;
+
+        let str = `[${tag}] > ${msg}`;
+
+        if (Log.ENABLE_CALLBACK) {
+            Log.emitter.emit('log', 'verbose', str);
+        }
+
         if (!Log.ENABLE_VERBOSE) {
             return;
         }
 
-        if (!tag || Log.FORCE_GLOBAL_TAG)
-            tag = Log.GLOBAL_TAG;
-
-        console.log(`[${tag}] > ${msg}`);
+        console.log(str);
     }
 
 }
@@ -108,5 +132,9 @@ Log.ENABLE_INFO = true;
 Log.ENABLE_WARN = true;
 Log.ENABLE_DEBUG = true;
 Log.ENABLE_VERBOSE = true;
+
+Log.ENABLE_CALLBACK = false;
+
+Log.emitter = new EventEmitter();
 
 export default Log;

@@ -228,6 +228,9 @@ class Transmuxer {
             case TransmuxingEvents.RECOMMEND_SEEKPOINT:
                 this._emitter.emit(message.msg, data);
                 break;
+            case 'logcat_callback':
+                Log.emitter.emit('log', data.type, data.logcat);
+                break;
             default:
                 break;
         }

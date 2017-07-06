@@ -143,7 +143,7 @@
 
         var logcatbox = document.getElementsByName('logcatbox')[0];
         flvjs.LoggingControl.addLogListener(function(type, str) {
-            logcatbox.value = logcatbox.value + `${str}\n`;
+            logcatbox.value = logcatbox.value + str + '\n';
             logcatbox.scrollTop = logcatbox.scrollHeight;
         });
 

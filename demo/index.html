@@ -142,7 +142,6 @@
         urlInputBox.value = url;
 
         var logcatbox = document.getElementsByName('logcatbox')[0];
-        flvjs.LoggingControl.enableAll = false;
         flvjs.LoggingControl.addLogListener(function(type, str) {
             logcatbox.value = logcatbox.value + `${str}\n`;
             logcatbox.scrollTop = logcatbox.scrollHeight;

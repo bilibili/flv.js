@@ -79,6 +79,7 @@ In multipart mode, `duration` `filesize` `url` field in `MediaDataSource` struct
 | `autoCleanupSourceBuffer`        | `boolean` | `false`                      | Do auto cleanup for SourceBuffer         |
 | `autoCleanupMaxBackwardDuration` | `number`  | `3 * 60`                     | When backward buffer duration exceeded this value (in seconds), do auto cleanup for SourceBuffer |
 | `autoCleanupMinBackwardDuration` | `number`  | `2 * 60`                     | Indicates the duration in seconds to reserve for backward buffer when doing auto cleanup. |
+| `fixAudioTimestampGap`           | `boolean` | `true`                       | Fill silent audio frames to avoid a/v unsync when detect large audio timestamp gap. |
 | `accurateSeek?`                  | `boolean` | `false`                      | Accurate seek to any frame, not limited to video IDR frame, but may a bit slower. Available on `Chrome > 50`, `FireFox` and `Safari`. |
 | `seekType?`                      | `string`  | `'range'`                    | `'range'` use range request to seek, or `'param'` add params into url to indicate request range. |
 | `seekParamStart?`                | `string`  | `'bstart'`                   | Indicates seek start parameter name for `seekType = 'param'` |
@@ -163,16 +164,18 @@ A global interface which include several static getter/setter to set flv.js logc
 
 ```typescript
 interface LoggingControl {
-    forceGlobalTag: boolean,
-    globalTag: string,
-    enableAll: boolean,
-    enableDebug: boolean,
-    enableVerbose: boolean,
-    enableInfo: boolean,
-    enableWarn: boolean,
-    enableError: boolean,
-    getConfig: Object,
-    applyConfig: Object,
+    forceGlobalTag: boolean;
+    globalTag: string;
+    enableAll: boolean;
+    enableDebug: boolean;
+    enableVerbose: boolean;
+    enableInfo: boolean;
+    enableWarn: boolean;
+    enableError: boolean;
+    getConfig(): Object;
+    applyConfig(config: Object): void;
+    addLogListener(listener: Function): void;
+    removeLogListener(listener: Function): void;
 }
 ```
 

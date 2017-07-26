@@ -61,6 +61,8 @@ class MP4Remuxer {
 
         // While only FireFox supports 'audio/mp4, codecs="mp3"', use 'audio/mpeg' for chrome, safari, ...
         this._mp3UseMpegAudio = !Browser.firefox;
+
+        this._fillAudioTimestampGap = this._config.fixAudioTimestampGap;
     }
 
     destroy() {
@@ -297,8 +299,8 @@ class MP4Remuxer {
             let needFillSilentFrames = false;
             let silentFrames = null;
 
-            // Silent frame generation, if large timestamp gap detected
-            if (sampleDuration > refSampleDuration * 1.5 && this._audioMeta.codec !== 'mp3') {
+            // Silent frame generation, if large timestamp gap detected && config.fixAudioTimestampGap
+            if (sampleDuration > refSampleDuration * 1.5 && this._audioMeta.codec !== 'mp3' && this._fillAudioTimestampGap && !Browser.safari) {
                 // We need to insert silent frames to fill timestamp gap
                 needFillSilentFrames = true;
                 let delta = Math.abs(sampleDuration - refSampleDuration);

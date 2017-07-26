@@ -39,6 +39,7 @@ let TransmuxingWorker = function (self) {
 
     let TAG = 'TransmuxingWorker';
     let controller = null;
+    let logcatListener = onLogcatCallback.bind(this);
 
     Polyfill.install();
 
@@ -78,9 +79,17 @@ let TransmuxingWorker = function (self) {
             case 'resume':
                 controller.resume();
                 break;
-            case 'logging_config':
-                LoggingControl.applyConfig(e.data.param);
+            case 'logging_config': {
+                let config = e.data.param;
+                LoggingControl.applyConfig(config);
+
+                if (config.enableCallback === true) {
+                    LoggingControl.addLogListener(logcatListener);
+                } else {
+                    LoggingControl.removeLogListener(logcatListener);
+                }
                 break;
+            }
         }
     });
 
@@ -160,6 +169,16 @@ let TransmuxingWorker = function (self) {
         self.postMessage({
             msg: TransmuxingEvents.RECOMMEND_SEEKPOINT,
             data: milliseconds
+        });
+    }
+
+    function onLogcatCallback(type, str) {
+        self.postMessage({
+            msg: 'logcat_callback',
+            data: {
+                type: type,
+                logcat: str
+            }
         });
     }
 

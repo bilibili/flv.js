@@ -109,7 +109,8 @@ class LoggingControl {
             enableDebug: Log.ENABLE_DEBUG,
             enableInfo: Log.ENABLE_INFO,
             enableWarn: Log.ENABLE_WARN,
-            enableError: Log.ENABLE_ERROR
+            enableError: Log.ENABLE_ERROR,
+            enableCallback: Log.ENABLE_CALLBACK
         };
     }
 
@@ -121,6 +122,7 @@ class LoggingControl {
         Log.ENABLE_INFO = config.enableInfo;
         Log.ENABLE_WARN = config.enableWarn;
         Log.ENABLE_ERROR = config.enableError;
+        Log.ENABLE_CALLBACK = config.enableCallback;
     }
 
     static _notifyChange() {
@@ -138,6 +140,22 @@ class LoggingControl {
 
     static removeListener(listener) {
         LoggingControl.emitter.removeListener('change', listener);
+    }
+
+    static addLogListener(listener) {
+        Log.emitter.addListener('log', listener);
+        if (Log.emitter.listenerCount('log') > 0) {
+            Log.ENABLE_CALLBACK = true;
+            LoggingControl._notifyChange();
+        }
+    }
+
+    static removeLogListener(listener) {
+        Log.emitter.removeListener('log', listener);
+        if (Log.emitter.listenerCount('log') === 0) {
+            Log.ENABLE_CALLBACK = false;
+            LoggingControl._notifyChange();
+        }
     }
 
 }

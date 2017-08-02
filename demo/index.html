@@ -51,6 +51,14 @@
             margin-left: auto;
             margin-right: auto;
         }
+
+        .big-flash-cls {
+            width: 80vw;
+            height: 80vh;
+            position: absolute;
+            top: -100vh;
+            left: 0;
+        }
     </style>
 </head>
 
@@ -74,6 +82,14 @@
 
     <script src="../dist/flv.js"></script>
     
+    <object type="application/x-shockwave-flash" class="big-flash-cls" data="../as3/bin/FlashStreamLoader.swf" id="flashstreamloader">
+        <param name="allowfullscreen" value="true">
+        <param name="allowscriptaccess" value="always">
+        <param name="quality" value="high">
+        <param name="wmode" value="transparent">
+        <param name="flashvars" value="">
+    </object>
+
     <script>
         function flv_load() {
             console.log('isSupported: ' + flvjs.isSupported());
@@ -148,7 +164,7 @@
         });
 
         document.addEventListener('DOMContentLoaded', function () {
-            flv_load();
+            // flv_load();
         });
     </script>
     

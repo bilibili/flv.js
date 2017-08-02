@@ -30,7 +30,7 @@ class Features {
         let ioctl = new IOController({}, createDefaultConfig());
         let loaderType = ioctl.loaderType;
         ioctl.destroy();
-        return loaderType == 'fetch-stream-loader' || loaderType == 'xhr-moz-chunked-loader';
+        return loaderType == 'fetch-stream-loader' || loaderType == 'flash-stream-loader' || loaderType == 'xhr-moz-chunked-loader';
     }
 
     static getNetworkLoaderTypeName() {

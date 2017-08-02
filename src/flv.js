@@ -24,12 +24,14 @@ import PlayerEvents from './player/player-events.js';
 import {ErrorTypes, ErrorDetails} from './player/player-errors.js';
 import LoggingControl from './utils/logging-control.js';
 import {InvalidArgumentException} from './utils/exception.js';
+import {InjectFlashBridge} from './utils/flash-bridge.js';
 
 // here are all the interfaces
 
 // install polyfills
 Polyfill.install();
 
+InjectFlashBridge();
 
 // factory method
 function createPlayer(mediaDataSource, optionalConfig) {

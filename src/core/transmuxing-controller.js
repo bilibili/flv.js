@@ -326,6 +326,7 @@ class TransmuxingController {
             this._internalAbort();
             this._loadSegment(nextSegmentIndex);
         } else {
+            this._remuxer.flushStashedSamples();
             this._emitter.emit(TransmuxingEvents.LOADING_COMPLETE);
             this._disableStatisticsReporter();
         }

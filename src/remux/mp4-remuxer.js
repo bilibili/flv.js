@@ -39,6 +39,8 @@ class MP4Remuxer {
         this._videoDtsBase = Infinity;
         this._audioNextDts = undefined;
         this._videoNextDts = undefined;
+        this._audioStashedLastSample = null;
+        this._videoStashedLastSample = null;
 
         this._audioMeta = null;
         this._videoMeta = null;
@@ -121,6 +123,8 @@ class MP4Remuxer {
     }
 
     seek(originalDts) {
+        this._audioStashedLastSample = null;
+        this._videoStashedLastSample = null;
         this._videoSegmentInfoList.clear();
         this._audioSegmentInfoList.clear();
     }
@@ -189,6 +193,32 @@ class MP4Remuxer {
         this._dtsBaseInited = true;
     }
 
+    flushStashedSamples() {
+        let videoSample = this._videoStashedLastSample;
+        let audioSample = this._audioStashedLastSample;
+
+        let videoTrack = {
+            type: 'video',
+            id: 1,
+            sequenceNumber: 0,
+            samples: [videoSample],
+            length: videoSample.length
+        };
+
+        let audioTrack = {
+            type: 'audio',
+            id: 2,
+            sequenceNumber: 0,
+            samples: [audioSample],
+            length: audioSample.length
+        };
+
+        this._videoStashedLastSample = null;
+        this._audioStashedLastSample = null;
+
+        this.remux(audioTrack, videoTrack);
+    }
+
     _remuxAudio(audioTrack) {
         if (this._audioMeta == null) {
             return;
@@ -223,6 +253,29 @@ class MP4Remuxer {
             offset = 8;  // size + type
             mdatBytes = 8 + track.length;
         }
+
+
+        let lastSample = null;
+
+        // Pop the lastSample and waiting for stash
+        if (samples.length > 1) {
+            lastSample = samples.pop();
+            mdatBytes -= lastSample.length;
+        }
+
+        // Insert [stashed lastSample in the previous batch] to the front
+        if (this._audioStashedLastSample != null) {
+            let sample = this._audioStashedLastSample;
+            this._audioStashedLastSample = null;
+            samples.unshift(sample);
+            mdatBytes += sample.length;
+        }
+
+        // Stash the lastSample of current batch, waiting for next batch
+        if (lastSample != null) {
+            this._audioStashedLastSample = lastSample;
+        }
+
 
         let firstSampleOriginalDts = samples[0].dts - this._dtsBase;
 
@@ -289,7 +342,10 @@ class MP4Remuxer {
                 let nextDts = samples[i + 1].dts - this._dtsBase - dtsCorrection;
                 sampleDuration = nextDts - dts;
             } else {  // the last sample
-                if (mp4Samples.length >= 1) {  // use second last sample duration
+                if (lastSample != null) {  // use stashed sample's dts to calculate sample duration
+                    let nextDts = lastSample.dts - this._dtsBase - dtsCorrection;
+                    sampleDuration = nextDts - dts;
+                } else if (mp4Samples.length >= 1) {  // use second last sample duration
                     sampleDuration = mp4Samples[mp4Samples.length - 1].duration;
                 } else {  // the only one sample, use reference sample duration
                     sampleDuration = Math.floor(refSampleDuration);
@@ -479,13 +535,31 @@ class MP4Remuxer {
         }
 
         let offset = 8;
+        let mdatbox = null;
         let mdatBytes = 8 + videoTrack.length;
-        let mdatbox = new Uint8Array(mdatBytes);
-        mdatbox[0] = (mdatBytes >>> 24) & 0xFF;
-        mdatbox[1] = (mdatBytes >>> 16) & 0xFF;
-        mdatbox[2] = (mdatBytes >>>  8) & 0xFF;
-        mdatbox[3] = (mdatBytes) & 0xFF;
-        mdatbox.set(MP4.types.mdat, 4);
+
+
+        let lastSample = null;
+
+        // Pop the lastSample and waiting for stash
+        if (samples.length > 1) {
+            lastSample = samples.pop();
+            mdatBytes -= lastSample.length;
+        }
+
+        // Insert [stashed lastSample in the previous batch] to the front
+        if (this._videoStashedLastSample != null) {
+            let sample = this._videoStashedLastSample;
+            this._videoStashedLastSample = null;
+            samples.unshift(sample);
+            mdatBytes += sample.length;
+        }
+
+        // Stash the lastSample of current batch, waiting for next batch
+        if (lastSample != null) {
+            this._videoStashedLastSample = lastSample;
+        }
+
 
         let firstSampleOriginalDts = samples[0].dts - this._dtsBase;
 
@@ -533,7 +607,10 @@ class MP4Remuxer {
                 let nextDts = samples[i + 1].dts - this._dtsBase - dtsCorrection;
                 sampleDuration = nextDts - dts;
             } else {  // the last sample
-                if (mp4Samples.length >= 1) {  // use second last sample duration
+                if (lastSample != null) {  // use stashed sample's dts to calculate sample duration
+                    let nextDts = lastSample.dts - this._dtsBase - dtsCorrection;
+                    sampleDuration = nextDts - dts;
+                } else if (mp4Samples.length >= 1) {  // use second last sample duration
                     sampleDuration = mp4Samples[mp4Samples.length - 1].duration;
                 } else {  // the only one sample, use reference sample duration
                     sampleDuration = Math.floor(this._videoMeta.refSampleDuration);
@@ -564,6 +641,14 @@ class MP4Remuxer {
                 }
             });
         }
+
+        // allocate mdatbox
+        mdatbox = new Uint8Array(mdatBytes);
+        mdatbox[0] = (mdatBytes >>> 24) & 0xFF;
+        mdatbox[1] = (mdatBytes >>> 16) & 0xFF;
+        mdatbox[2] = (mdatBytes >>>  8) & 0xFF;
+        mdatbox[3] = (mdatBytes) & 0xFF;
+        mdatbox.set(MP4.types.mdat, 4);
 
         // Write samples into mdatbox
         for (let i = 0; i < mp4Samples.length; i++) {

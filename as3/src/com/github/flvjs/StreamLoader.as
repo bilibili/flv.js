@@ -28,7 +28,7 @@ package com.github.flvjs {
     import flash.utils.ByteArray;
     import flash.utils.setTimeout;
 
-	public class StreamLoader extends EventDispatcher {
+    public class StreamLoader extends EventDispatcher {
 
         private var _handle:int;
         private var _stream:URLStream;
@@ -36,15 +36,15 @@ package com.github.flvjs {
         private var _httpStatusCode:int = -1;
         private var _firstChunkReceived:Boolean = false;
 
-		public function StreamLoader() {
+        public function StreamLoader() {
 
-		}
+        }
 
-		public function dispose():void {
-			if (this._stream !== null) {
+        public function dispose():void {
+            if (this._stream !== null) {
                 this.abort();
             }
-		}
+        }
 
         public function get handle():int {
             return this._handle;
@@ -152,6 +152,6 @@ package com.github.flvjs {
             }
             super.dispatchEvent(new StreamLoaderEvent(StreamLoaderEvent.ERROR, code, event.text));
         }
-	}
+    }
 
 }

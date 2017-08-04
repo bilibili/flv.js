@@ -181,38 +181,38 @@ interface LoggingControl {
 
 ### flvjs.Events
 
-A series of constants that can be used with `addEventListener`. They require the prefix `flvjs.Events`.
+A series of constants that can be used with `Player.on()` / `Player.off()`. They require the prefix `flvjs.Events`.
 
-| Event               | Description                                                                                   | 
-| ------------------- | --------------------------------------------------------------------------------------------- | 
-| ERROR               | An error occurs when flv.js attempts to attach and play a media source                        |
-| LOADING_COMPLETE    | The source specified for the player has been loaded and ready to play                         |
-| RECOVERED_EARLY_EOF | When an unexpected end of file comes up and the player attempts to continue playing the media |
-| MEDIA_INFO          | Provides information such as segment, duration, filesize, etc.                                |
-| STATISTICS_INFO     | Provides information such as URL, speed, current segment, etc.                                |
+| Event               | Description                              |
+| ------------------- | ---------------------------------------- |
+| ERROR               | An error occurred by any cause during the playback |
+| LOADING_COMPLETE    | The input MediaDataSource has been completely buffered to end |
+| RECOVERED_EARLY_EOF | An unexpected network EOF occurred during buffering but automatically recovered |
+| MEDIA_INFO          | Provides technical information of the media like video/audio codec, bitrate, etc. |
+| STATISTICS_INFO     | Provides playback statistics information like dropped frames, current speed, etc. |
 
 ### flvjs.ErrorTypes
 
-The possible errors that can come up when playing FLV media. They require the prefix `flvjs.ErrorTypes`.
+The possible errors that can come up during playback. They require the prefix `flvjs.ErrorTypes`.
 
-| Error         | Description                                                              |
-| ------------- | ------------------------------------------------------------------------ | 
-| NETWORK_ERROR | Related to the network only                                              |
-| MEDIA_ERROR   | Related to the media only (attaching media, unsupported format or codec) |
-| OTHER_ERROR   | Any other unspecified error                                              |
-    
-   
+| Error         | Description                              |
+| ------------- | ---------------------------------------- |
+| NETWORK_ERROR | Errors related to the network            |
+| MEDIA_ERROR   | Errors related to the media (format error, decode issue, etc) |
+| OTHER_ERROR   | Any other unspecified error              |
+
+
 ### flvjs.ErrorDetails
 
 Provide more verbose explanation for Network and Media errors. They require the prefix `flvjs.ErrorDetails`.
 
-| Error                           | Description                                                             | 
-| ------------------------------- | ----------------------------------------------------------------------- | 
-| NETWORK_EXCEPTION               | Related to any issues with the network; contains a `code` and `message` |
-| NETWORK_STATUS_CODE_INVALID     | Related to an invalid HTTP code status                                  |
-| NETWORK_TIMEOUT                 | Related to timeout connection issues                                    |
-| NETWORK_UNRECOVERABLE_EARLY_EOF | Related to unexpected end of file                                       |
-| MEDIA_MSE_ERROR                 | Related to media when it's attached                                     |
-| MEDIA_FORMAT_ERROR              | Related to the demuxer that extracts the content of the FLV file        |
-| MEDIA_FORMAT_UNSUPPORTED        | Any errors when flv.js cannot play due to unsupported media format      |
-| MEDIA_CODEC_UNSUPPORTED         | Any errors when flv.js cannot play due to unsupported media codec       |
+| Error                           | Description                              |
+| ------------------------------- | ---------------------------------------- |
+| NETWORK_EXCEPTION               | Related to any other issues with the network; contains a `message` |
+| NETWORK_STATUS_CODE_INVALID     | Related to an invalid HTTP status code, such as 403, 404, etc. |
+| NETWORK_TIMEOUT                 | Related to timeout request issues        |
+| NETWORK_UNRECOVERABLE_EARLY_EOF | Related to unexpected network EOF which cannot be recovered |
+| MEDIA_MSE_ERROR                 | Related to MediaSource's error such as decode issue |
+| MEDIA_FORMAT_ERROR              | Related to any invalid parameters in the media stream |
+| MEDIA_FORMAT_UNSUPPORTED        | The input MediaDataSource format is not supported by flv.js |
+| MEDIA_CODEC_UNSUPPORTED         | The media stream contains video/audio codec which is not supported |

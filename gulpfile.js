@@ -43,7 +43,9 @@ function doWatchify() {
     let opts = Object.assign({}, watchify.args, customOpts);
     let b = watchify(browserify(opts));
 
-    b.on('update', doBundle.bind(global, b));
+    b.on('update', function () {
+        return doBundle(b).on('end', browserSync.reload);
+    });
     b.on('log', console.log.bind(console));
 
     return b;
@@ -71,25 +73,24 @@ gulp.task('release', ['clean', 'lint', 'build', 'minimize']);
 
 const browserSync = require('browser-sync').create();
 gulp.task('watch', ['clean'], function () {
-    browserSync.init({
-        server: {
-            baseDir: './'
-        },
-        port: 8000,
-        open: false
-    });
-    require('opn')('http://localhost:8000/demo/');
-
     let gulpWatcher = gulp.watch(['gulpfile.js', 'src/**/*.js']);
 
-    gulpWatcher.on('change', function (e, ...args) {
-        browserSync.reload(e, ...args);
+    gulpWatcher.on('change', function (e) {
         if (e.type === 'changed' || e.type === 'added') {
             return doLint(e.path, false);
         }
     });
 
-    return doBundle(doWatchify());
+    return doBundle(doWatchify()).on('end', function () {
+        browserSync.init({
+            server: {
+                baseDir: './'
+            },
+            port: 8000,
+            open: false
+        });
+        require('opn')('http://localhost:8000/demo/');
+    });
 });
 
 gulp.task('clean', function () {

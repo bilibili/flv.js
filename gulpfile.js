@@ -69,10 +69,21 @@ function doLint(paths, exit) {
 gulp.task('default', ['clean', 'lint', 'build']);
 gulp.task('release', ['clean', 'lint', 'build', 'minimize']);
 
+const browserSync = require('browser-sync').create();
 gulp.task('watch', ['clean'], function () {
+    browserSync.init({
+        server: {
+            baseDir: './'
+        },
+        port: 8000,
+        open: false
+    });
+    require('opn')('http://localhost:8000/demo/');
+
     let gulpWatcher = gulp.watch(['gulpfile.js', 'src/**/*.js']);
 
-    gulpWatcher.on('change', function (e) {
+    gulpWatcher.on('change', function (e, ...args) {
+        browserSync.reload(e, ...args);
         if (e.type === 'changed' || e.type === 'added') {
             return doLint(e.path, false);
         }

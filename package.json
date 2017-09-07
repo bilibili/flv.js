@@ -18,8 +18,7 @@
   ],
   "scripts": {
     "dev": "gulp watch",
-    "build": "gulp release",
-    "serve": "http-server -p 8000 ."
+    "build": "gulp release"
   },
   "dependencies": {
     "es6-promise": "^4.1.0",
@@ -28,10 +27,12 @@
   "devDependencies": {
     "babel-preset-es2015": "^6.24.0",
     "babelify": "^7.3.0",
+    "browser-sync": "^2.18.13",
     "browserify": "^13.1.1",
     "browserify-derequire": "^0.9.4",
     "browserify-versionify": "^1.0.6",
     "del": "^2.2.0",
+    "opn": "^5.1.0",
     "gulp": "^3.9.1",
     "gulp-cli": "^1.2.2",
     "gulp-eslint": "^3.0.1",

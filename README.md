@@ -74,6 +74,13 @@ See [livestream.md](docs/livestream.md)
 ## API and Configuration
 See [api.md](docs/api.md)
 
+## Debug
+```bash
+npm install          # install dev-dependences
+npm install -g gulp  # install build tool
+npm run dev
+```
+
 ## Design
 See [design.md](docs/design.md)
 

@@ -78,7 +78,7 @@ See [api.md](docs/api.md)
 ```bash
 npm install          # install dev-dependences
 npm install -g gulp  # install build tool
-npm run dev
+npm run dev          # with incremental compile and auto reload
 ```
 
 ## Design

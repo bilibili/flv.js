@@ -30,6 +30,7 @@ const watchify = require('watchify');
 const buffer = require('vinyl-buffer');
 const source = require('vinyl-source-stream');
 
+const browserSync = require('browser-sync').create();
 
 function doWatchify() {
     let customOpts = {
@@ -44,7 +45,7 @@ function doWatchify() {
     let b = watchify(browserify(opts));
 
     b.on('update', function () {
-        return doBundle(b).on('end', browserSync.reload);
+        return doBundle(b).on('end', browserSync.reload.bind(browserSync));
     });
     b.on('log', console.log.bind(console));
 
@@ -71,7 +72,6 @@ function doLint(paths, exit) {
 gulp.task('default', ['clean', 'lint', 'build']);
 gulp.task('release', ['clean', 'lint', 'build', 'minimize']);
 
-const browserSync = require('browser-sync').create();
 gulp.task('watch', ['clean'], function () {
     let gulpWatcher = gulp.watch(['gulpfile.js', 'src/**/*.js']);
 
@@ -89,7 +89,7 @@ gulp.task('watch', ['clean'], function () {
             port: 8000,
             open: false
         });
-        require('opn')('http://localhost:8000/demo/');
+        require('opn')('http://localhost:8000/demo/index.html');
     });
 });
 

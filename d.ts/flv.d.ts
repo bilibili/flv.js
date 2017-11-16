@@ -170,3 +170,5 @@ declare var flvjs: {
     NativePlayer: FlvJs.PlayerConstructor,
     LoggingControl: FlvJs.LoggingControl
 };
+
+export=flvjs;

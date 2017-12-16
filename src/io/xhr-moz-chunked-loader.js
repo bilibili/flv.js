@@ -138,6 +138,11 @@ class MozChunkedLoader extends BaseLoader {
     }
 
     _onProgress(e) {
+        if (this._status === LoaderStatus.kError) {
+            // Ignore error response
+            return;
+        }
+
         if (this._contentLength === null) {
             if (e.total !== null && e.total !== 0) {
                 this._contentLength = e.total;

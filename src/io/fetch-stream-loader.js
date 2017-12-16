@@ -182,7 +182,7 @@ class FetchStreamLoader extends BaseLoader {
                     this._onDataArrival(chunk, byteStart, this._receivedLength);
                 }
 
-                return this._pump(reader);
+                this._pump(reader);
             }
         }).catch((e) => {
             if (e.code === 11 && Browser.msedge) {  // InvalidStateError on Microsoft Edge

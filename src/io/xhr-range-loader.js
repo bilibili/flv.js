@@ -90,7 +90,13 @@ class RangeLoader extends BaseLoader {
         this._range = range;
         this._status = LoaderStatus.kConnecting;
 
-        if (!this._totalLengthReceived) {
+        let useRefTotalLength = false;
+        if (this._dataSource.filesize != undefined && this._dataSource.filesize !== 0) {
+            useRefTotalLength = true;
+            this._totalLength = this._dataSource.filesize;
+        }
+
+        if (!this._totalLengthReceived && !useRefTotalLength) {
             // We need total filesize
             this._waitForTotalLength = true;
             this._internalOpen(this._dataSource, {from: 0, to: -1});
@@ -204,6 +210,11 @@ class RangeLoader extends BaseLoader {
     }
 
     _onProgress(e) {
+        if (this._status === LoaderStatus.kError) {
+            // Ignore error response
+            return;
+        }
+
         if (this._contentLength === null) {
             let openNextRange = false;
 
@@ -264,6 +275,11 @@ class RangeLoader extends BaseLoader {
     }
 
     _onLoad(e) {
+        if (this._status === LoaderStatus.kError) {
+            // Ignore error response
+            return;
+        }
+
         if (this._waitForTotalLength) {
             this._waitForTotalLength = false;
             return;

@@ -57,7 +57,7 @@
 <body>
     
     <div class="mainContainer">
-        <input name="urlinput" class="urlInput" type="text" value="http://127.0.0.1/flv/7182741.json"/>
+        <input name="urlinput" class="urlInput" type="text" value="http://127.0.0.1/flv/demo.flv"/>
         <video name="videoElement" class="centeredVideo" controls autoplay width="1024" height="576">
             Your browser is too old which doesn't support HTML5 video.
         </video>
@@ -75,33 +75,39 @@
     <script src="../dist/flv.js"></script>
     
     <script>
+        function get_file_type(url) {
+            var pure = url.split('?')[0];
+            var file = pure.substr(url.lastIndexOf('/') + 1);
+            if (file.lastIndexOf('.') >= 0) {
+                return pure.substr(url.lastIndexOf('.') + 1);
+            }
+            return 'flv';
+        }
+
         function flv_load() {
             console.log('isSupported: ' + flvjs.isSupported());
             var urlinput = document.getElementsByName('urlinput')[0];
+            console.log('urlinput: ' + urlinput.value);
 
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', urlinput.value, true);
-            xhr.onload = function (e) {
-                var mediaDataSource = JSON.parse(xhr.response);
-
-                var element = document.getElementsByName('videoElement')[0];
-                if (typeof player !== "undefined") {
-                    if (player != null) {
-                        player.unload();
-                        player.detachMediaElement();
-                        player.destroy();
-                        player = null;
-                    }
+            var element = document.getElementsByName('videoElement')[0];
+            if (typeof player !== "undefined") {
+                if (player != null) {
+                    player.unload();
+                    player.detachMediaElement();
+                    player.destroy();
+                    player = null;
                 }
-                player = flvjs.createPlayer(mediaDataSource, {
-                    enableWorker: false,
-                    lazyLoadMaxDuration: 3 * 60,
-                    seekType: 'range',
-                });
-                player.attachMediaElement(element);
-                player.load();
             }
-            xhr.send();
+            player = flvjs.createPlayer({
+                type: get_file_type(urlinput.value),
+                url: urlinput.value
+            }, {
+                enableWorker: false,
+                lazyLoadMaxDuration: 3 * 60,
+                seekType: 'range',
+            });
+            player.attachMediaElement(element);
+            player.load();
         }
 
         function flv_start() {

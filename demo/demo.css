@@ -15,6 +15,7 @@
 
 .video-container {
     position: relative;
+    margin-top: 8px;
 }
 
 .video-container:before {
@@ -76,6 +77,10 @@
     margin-right: auto;
 }
 
+.url-input , .options {
+    font-size: 13px;
+}
+
 .url-input {
     display: flex;
 }
@@ -90,6 +95,7 @@
 
 .url-input button {
     flex: initial;
+    margin-left: 8px;
 }
 
 .hidden {

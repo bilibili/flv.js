@@ -24,10 +24,16 @@
                     <input id="sURL" type="text" value="http://localhost/output.flv" />
                     <button onclick="switch_mds()">Switch to MediaDataSource</button>
                 </div>
-                <input type="checkbox" name="isLive" onchange="saveSettings()">isLive</input>
-                <input type="checkbox" name="withCredentials" onchange="saveSettings()">withCredentials</input>
-                <input type="checkbox" name="hasAudio" onchange="saveSettings()" checked>hasAudio</input>
-                <input type="checkbox" name="hasVideo" onchange="saveSettings()" checked>hasVideo</input>
+                <div class="options">
+                    <input type="checkbox" id="isLive" onchange="saveSettings()" />
+                    <label for="isLive">isLive</label>
+                    <input type="checkbox" id="withCredentials" onchange="saveSettings()" />
+                    <label for="withCredentials">withCredentials</label>
+                    <input type="checkbox" id="hasAudio" onchange="saveSettings()" checked />
+                    <label for="hasAudio">hasAudio</label>
+                    <input type="checkbox" id="hasVideo" onchange="saveSettings()" checked />
+                    <label for="hasVideo">hasVideo</label>
+                </div>
             </div>
         </div>
         <div class="video-container">
@@ -73,7 +79,7 @@
                 for (i = 0; i < checkBoxFields.length; i++) {
                     var field = checkBoxFields[i];
                     /** @type {HTMLInputElement} */
-                    var checkbox = document.getElementsByName(field)[0];
+                    var checkbox = document.getElementById(field);
                     mediaDataSource[field] = checkbox.checked;
                 }
                 mediaDataSource['url'] = document.getElementById('sURL').value;
@@ -161,7 +167,7 @@
             for (i = 0; i < checkBoxFields.length; i++) {
                 var field = checkBoxFields[i];
                 /** @type {HTMLInputElement} */
-                var checkbox = document.getElementsByName(field)[0];
+                var checkbox = document.getElementById(field);
                 ls_set(field, checkbox.checked ? '1' : '0');
             }
             var msURL = document.getElementById('msURL');
@@ -172,17 +178,11 @@
         }
 
         function loadSettings() {
-            if (ls_get('mode', 'MediaDataSource') === 'MediaDataSource') {
-                switch_mds();
-            } else {
-                switch_url();
-            }
-
             var i;
             for (i = 0; i < checkBoxFields.length; i++) {
                 var field = checkBoxFields[i];
                 /** @type {HTMLInputElement} */
-                var checkbox = document.getElementsByName(field)[0];
+                var checkbox = document.getElementById(field);
                 var c = ls_get(field, checkbox.checked ? '1' : '0');
                 checkbox.checked = c === '1' ? true : false;
             }
@@ -191,6 +191,11 @@
             var sURL = document.getElementById('sURL');
             msURL.value = ls_get('msURL', msURL.value);
             sURL.value = ls_get('sURL', sURL.value);
+            if (ls_get('mode', 'MediaDataSource') === 'MediaDataSource') {
+                switch_mds();
+            } else {
+                switch_url();
+            }
         }
 
         var logcatbox = document.getElementsByName('logcatbox')[0];

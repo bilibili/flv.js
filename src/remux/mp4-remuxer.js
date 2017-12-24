@@ -201,17 +201,27 @@ class MP4Remuxer {
             type: 'video',
             id: 1,
             sequenceNumber: 0,
-            samples: [videoSample],
-            length: videoSample.length
+            samples: [],
+            length: 0
         };
+
+        if (videoSample != null) {
+            videoTrack.samples.push(videoSample);
+            videoTrack.length = videoSample.length;
+        }
 
         let audioTrack = {
             type: 'audio',
             id: 2,
             sequenceNumber: 0,
-            samples: [audioSample],
-            length: audioSample.length
+            samples: [],
+            length: 0
         };
+
+        if (audioSample != null) {
+            audioTrack.samples.push(audioSample);
+            audioTrack.length = audioSample.length;
+        }
 
         this._videoStashedLastSample = null;
         this._audioStashedLastSample = null;

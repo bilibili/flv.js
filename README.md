@@ -16,6 +16,9 @@ flv.js is written in [ECMAScript 6][], transpiled into ECMAScript 5 by [Babel Co
 [Babel Compiler]: https://babeljs.io/
 [Browserify]: http://browserify.org/
 
+## Demo
+http://bilibili.github.io/flv.js/demo/
+
 ## Features
 - FLV container with H.264 + AAC / MP3 codec playback
 - Multipart segmented video playback
@@ -60,9 +63,6 @@ See [cors.md](docs/cors.md) for more details.
     }
 </script>
 ```
-
-## Demo
-http://bilibili.github.io/flv.js/demo/
 
 ## Limitations
 - MP3 audio codec is currently not working on IE11 / Edge

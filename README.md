@@ -61,6 +61,9 @@ See [cors.md](docs/cors.md) for more details.
 </script>
 ```
 
+## Demo
+http://bilibili.github.io/flv.js/demo/
+
 ## Limitations
 - MP3 audio codec is currently not working on IE11 / Edge
 - HTTP FLV live stream is not currently working on all browsers, see [livestream.md](docs/livestream.md)

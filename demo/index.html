@@ -11,17 +11,10 @@
     
     <div class="mainContainer">
         <div>
-            <div id="mediaSourceURL">
-                <div class="url-input">
-                    <label for="msURL">MediaDataSource json:</label>
-                    <input id="msURL" type="text" value="http://127.0.0.1/flv/7182741.json" />
-                    <button onclick="switch_url()">Switch to URL</button>
-                </div>
-            </div>
-            <div class="hidden" id="streamURL">
+            <div id="streamURL">
                 <div class="url-input">
                     <label for="sURL">Stream URL:</label>
-                    <input id="sURL" type="text" value="http://localhost/output.flv" />
+                    <input id="sURL" type="text" value="http://127.0.0.1/flv/7182741-1.flv" />
                     <button onclick="switch_mds()">Switch to MediaDataSource</button>
                 </div>
                 <div class="options">
@@ -33,6 +26,13 @@
                     <label for="hasAudio">hasAudio</label>
                     <input type="checkbox" id="hasVideo" onchange="saveSettings()" checked />
                     <label for="hasVideo">hasVideo</label>
+                </div>
+            </div>
+            <div id="mediaSourceURL" class="hidden">
+                <div class="url-input">
+                    <label for="msURL">MediaDataSource JsonURL:</label>
+                    <input id="msURL" type="text" value="http://127.0.0.1/flv/7182741.json" />
+                    <button onclick="switch_url()">Switch to URL</button>
                 </div>
             </div>
         </div>
@@ -58,7 +58,8 @@
     
     <script>
         var checkBoxFields = ['isLive', 'withCredentials', 'hasAudio', 'hasVideo'];
-        var streamURL, mediaSourceURL
+        var streamURL, mediaSourceURL;
+
         function flv_load() {
             console.log('isSupported: ' + flvjs.isSupported());
             if (mediaSourceURL.className === '') {
@@ -142,26 +143,26 @@
 
         function ls_get(key, def) {
             try {
-                var ret = localStorage.getItem(key);
+                var ret = localStorage.getItem('flvjs_demo.' + key);
                 if (ret === null) {
                     ret = def;
                 }
-                return ret
+                return ret;
             } catch (e) {}
             return def;
         }
 
         function ls_set(key, value) {
             try {
-                localStorage.setItem(key, value);
+                localStorage.setItem('flvjs_demo.' + key, value);
             } catch (e) {}
         }
 
         function saveSettings() {
             if (mediaSourceURL.className === '') {
-                ls_set('mode', 'MediaDataSource');
+                ls_set('inputMode', 'MediaDataSource');
             } else {
-                ls_set('mode', 'StreamURL');
+                ls_set('inputMode', 'StreamURL');
             }
             var i;
             for (i = 0; i < checkBoxFields.length; i++) {
@@ -191,11 +192,16 @@
             var sURL = document.getElementById('sURL');
             msURL.value = ls_get('msURL', msURL.value);
             sURL.value = ls_get('sURL', sURL.value);
-            if (ls_get('mode', 'MediaDataSource') === 'MediaDataSource') {
-                switch_mds();
-            } else {
+            if (ls_get('inputMode', 'StreamURL') === 'StreamURL') {
                 switch_url();
+            } else {
+                switch_mds();
             }
+        }
+
+        function showVersion() {
+            var version = flvjs.version;
+            document.title = document.title + " (v" + version + ")";
         }
 
         var logcatbox = document.getElementsByName('logcatbox')[0];
@@ -208,6 +214,7 @@
             streamURL = document.getElementById('streamURL');
             mediaSourceURL = document.getElementById('mediaSourceURL');
             loadSettings();
+            showVersion();
             flv_load();
         });
     </script>

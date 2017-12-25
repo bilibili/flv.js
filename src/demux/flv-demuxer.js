@@ -42,24 +42,6 @@ function ReadBig32(array, index) {
             (array[index + 3]));
 }
 
-function OverflowPlus(a, b) {
-    let value = a + b;
-    if (value > 0xFFFFFFFF) {
-        value = value - 0xFFFFFFFF - 1;
-    } else if (value < 0) {
-        value = 0xFFFFFFFF + value + 1;
-    }
-    return value;
-}
-
-function ReadBigSI24FromView(v, index) {
-    let val = (v.getUint8(index) << 16)    |
-              (v.getUint8(index + 1) << 8) |
-              (v.getUint8(index + 2));
-    val = OverflowPlus(val, 0xFF800000) ^ 0xFF800000;
-    return val;
-}
-
 
 class FLVDemuxer {
 
@@ -843,7 +825,8 @@ class FLVDemuxer {
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
 
         let packetType = v.getUint8(0);
-        let cts = ReadBigSI24FromView(v, 1);
+        let cts_unsigned = v.getUint32(0, !le) & 0x00FFFFFF;
+        let cts = (cts_unsigned << 8) >> 8;  // convert to 24-bit signed int
 
         if (packetType === 0) {  // AVCDecoderConfigurationRecord
             this._parseAVCDecoderConfigurationRecord(arrayBuffer, dataOffset + 4, dataSize - 4);

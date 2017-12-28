@@ -226,10 +226,11 @@ class MP4Remuxer {
         this._videoStashedLastSample = null;
         this._audioStashedLastSample = null;
 
-        this.remux(audioTrack, videoTrack);
+        this._remuxVideo(videoTrack, true);
+        this._remuxAudio(audioTrack, true);
     }
 
-    _remuxAudio(audioTrack) {
+    _remuxAudio(audioTrack, force) {
         if (this._audioMeta == null) {
             return;
         }
@@ -248,6 +249,11 @@ class MP4Remuxer {
         if (!samples || samples.length === 0) {
             return;
         }
+        if (samples.length === 1 && !force) {
+            // If [sample count in current batch] === 1 && (force != true)
+            // Ignore and keep in demuxer's queue
+            return;
+        }  // else if (force === true) do remux
 
         let offset = 0;
         let mdatbox = null;
@@ -529,7 +535,7 @@ class MP4Remuxer {
         this._onMediaSegment('audio', segment);
     }
 
-    _remuxVideo(videoTrack) {
+    _remuxVideo(videoTrack, force) {
         if (this._videoMeta == null) {
             return;
         }
@@ -543,6 +549,11 @@ class MP4Remuxer {
         if (!samples || samples.length === 0) {
             return;
         }
+        if (samples.length === 1 && !force) {
+            // If [sample count in current batch] === 1 && (force != true)
+            // Ignore and keep in demuxer's queue
+            return;
+        }  // else if (force === true) do remux
 
         let offset = 8;
         let mdatbox = null;

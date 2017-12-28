@@ -951,6 +951,7 @@ class FLVDemuxer {
             mi.fps = meta.frameRate.fps;
             mi.profile = meta.profile;
             mi.level = meta.level;
+            mi.refFrames = config.ref_frames;
             mi.chromaFormat = config.chroma_format_string;
             mi.sarNum = meta.sarRatio.width;
             mi.sarDen = meta.sarRatio.height;

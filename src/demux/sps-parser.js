@@ -99,7 +99,7 @@ class SPSParser {
                 gb.readSEG();  // offset_for_ref_frame
             }
         }
-        gb.readUEG();  // max_num_ref_frames
+        let ref_frames = gb.readUEG();  // max_num_ref_frames
         gb.readBits(1);  // gaps_in_frame_num_value_allowed_flag
 
         let pic_width_in_mbs_minus1 = gb.readUEG();
@@ -198,6 +198,7 @@ class SPSParser {
             profile_string: profile_string,  // baseline, high, high10, ...
             level_string: level_string,  // 3, 3.1, 4, 4.1, 5, 5.1, ...
             bit_depth: bit_depth,  // 8bit, 10bit, ...
+            ref_frames: ref_frames,
             chroma_format: chroma_format,  // 4:2:0, 4:2:2, ...
             chroma_format_string: SPSParser.getChromaFormatString(chroma_format),
 

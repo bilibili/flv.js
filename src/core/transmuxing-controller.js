@@ -324,6 +324,7 @@ class TransmuxingController {
 
         if (nextSegmentIndex < this._mediaDataSource.segments.length) {
             this._internalAbort();
+            this._remuxer.flushStashedSamples();
             this._loadSegment(nextSegmentIndex);
         } else {
             this._remuxer.flushStashedSamples();

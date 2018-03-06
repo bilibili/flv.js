@@ -161,9 +161,23 @@ class FetchStreamLoader extends BaseLoader {
     _pump(reader) {  // ReadableStreamReader
         return reader.read().then((result) => {
             if (result.done) {
-                this._status = LoaderStatus.kComplete;
-                if (this._onComplete) {
-                    this._onComplete(this._range.from, this._range.from + this._receivedLength - 1);
+                // First check received length
+                if (this._contentLength !== null && this._receivedLength < this._contentLength) {
+                    // Report Early-EOF
+                    this._status = LoaderStatus.kError;
+                    let type = LoaderErrors.EARLY_EOF;
+                    let info = {code: -1, msg: 'Fetch stream meet Early-EOF'};
+                    if (this._onError) {
+                        this._onError(type, info);
+                    } else {
+                        throw new RuntimeException(info.msg);
+                    }
+                } else {
+                    // OK. Download complete
+                    this._status = LoaderStatus.kComplete;
+                    if (this._onComplete) {
+                        this._onComplete(this._range.from, this._range.from + this._receivedLength - 1);
+                    }
                 }
             } else {
                 if (this._requestAbort === true) {

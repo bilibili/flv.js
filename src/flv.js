@@ -35,7 +35,7 @@ Polyfill.install();
 function createPlayer(mediaDataSource, optionalConfig) {
     let mds = mediaDataSource;
     if (mds == null || typeof mds !== 'object') {
-        throw new InvalidArgumentException('MediaDataSource must be an javascript object!');
+        throw new InvalidArgumentException('MediaDataSource must be a javascript object!');
     }
 
     if (!mds.hasOwnProperty('type')) {

@@ -71,7 +71,7 @@ declare namespace FlvJs {
         reuseRedirectedURL?: boolean,
         referrerPolicy?: string
 
-        loader?: BaseLoaderConstructor;
+        loader?: BaseLoader;
     }
 
     interface BaseLoaderConstructor {

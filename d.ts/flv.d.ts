@@ -130,7 +130,7 @@ declare namespace FlvJs {
     }
 
     interface PlayerConstructor {
-        new(mediaDataSource: MediaDataSource, config?: Config): Player;
+        new (mediaDataSource: MediaDataSource, config?: Config): Player;
     }
 
     interface Player {

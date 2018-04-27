@@ -265,6 +265,7 @@ class TransmuxingController {
 
             this._demuxer.onError = this._onDemuxException.bind(this);
             this._demuxer.onMediaInfo = this._onMediaInfo.bind(this);
+            this._demuxer.onMetadataArrived = this._onMetadataArrived.bind(this);
 
             this._remuxer.bindDataSource(this._demuxer
                          .bindDataSource(this._ioctl
@@ -312,6 +313,10 @@ class TransmuxingController {
                 this.seek(target);
             });
         }
+    }
+
+    _onMetadataArrived(metadata) {
+        this._emitter.emit(TransmuxingEvents.METADATA_ARRIVED, metadata);
     }
 
     _onIOSeeked() {

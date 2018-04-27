@@ -189,6 +189,7 @@ A series of constants that can be used with `Player.on()` / `Player.off()`. They
 | LOADING_COMPLETE    | The input MediaDataSource has been completely buffered to end |
 | RECOVERED_EARLY_EOF | An unexpected network EOF occurred during buffering but automatically recovered |
 | MEDIA_INFO          | Provides technical information of the media like video/audio codec, bitrate, etc. |
+| METADATA_ARRIVED    | Provides metadata which FLV file(stream) can contain with an "onMetaData" marker.  |
 | STATISTICS_INFO     | Provides playback statistics information like dropped frames, current speed, etc. |
 
 ### flvjs.ErrorTypes

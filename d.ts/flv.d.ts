@@ -72,7 +72,6 @@ declare namespace FlvJs {
         referrerPolicy?: string
 
         customLoader?: CustomLoaderConstructor;
-        customLoaderParameters?: any;
     }
 
     interface BaseLoaderConstructor {

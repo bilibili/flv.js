@@ -71,7 +71,8 @@ declare namespace FlvJs {
         reuseRedirectedURL?: boolean,
         referrerPolicy?: string
 
-        loader?: BaseLoader;
+        customLoader?: CustomLoaderConstructor;
+        customLoaderParameters?: any;
     }
 
     interface BaseLoaderConstructor {
@@ -95,6 +96,10 @@ declare namespace FlvJs {
         onComplete: Function;
         abstract open(dataSource: MediaSegment, range: Range): void;
         abstract abort(): void;
+    }
+
+    interface CustomLoaderConstructor {
+        new(seekHandler: any, config: Config): BaseLoader;
     }
 
     interface Range {
@@ -223,5 +228,6 @@ declare var flvjs: {
 };
 
 export default flvjs;
+export type Config = FlvJs.Config;
 export type MediaSegment = FlvJs.MediaSegment;
 export type Range = FlvJs.Range;

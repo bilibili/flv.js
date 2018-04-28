@@ -237,8 +237,8 @@ class IOController {
     }
 
     _selectLoader() {
-        if (this._config.loader != null) {
-            // NOP
+        if (this._config.customLoader != null) {
+            this._loaderClass = this._config.customLoader;
         } else if (this._isWebSocketURL) {
             this._loaderClass = WebSocketLoader;
         } else if (FetchStreamLoader.isSupported()) {
@@ -253,11 +253,7 @@ class IOController {
     }
 
     _createLoader() {
-        if (this._config.loader != null) {
-            this._loader = this._config.loader;
-        } else {
-            this._loader = new this._loaderClass(this._seekHandler, this._config);
-        }
+        this._loader = new this._loaderClass(this._seekHandler, this._config);
         if (this._loader.needStashBuffer === false) {
             this._enableStash = false;
         }

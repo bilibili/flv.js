@@ -18,6 +18,7 @@
 
 import Polyfill from './utils/polyfill.js';
 import Features from './core/features.js';
+import {BaseLoader, LoaderStatus, LoaderErrors} from './io/loader.js';
 import FlvPlayer from './player/flv-player.js';
 import NativePlayer from './player/native-player.js';
 import PlayerEvents from './player/player-events.js';
@@ -67,6 +68,10 @@ let flvjs = {};
 flvjs.createPlayer = createPlayer;
 flvjs.isSupported = isSupported;
 flvjs.getFeatureList = getFeatureList;
+
+flvjs.BaseLoader = BaseLoader;
+flvjs.LoaderStatus = LoaderStatus;
+flvjs.LoaderErrors = LoaderErrors;
 
 flvjs.Events = PlayerEvents;
 flvjs.ErrorTypes = ErrorTypes;

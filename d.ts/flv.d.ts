@@ -70,7 +70,58 @@ declare namespace FlvJs {
         customSeekHandler?: any,
         reuseRedirectedURL?: boolean,
         referrerPolicy?: string
+
+        customLoader?: CustomLoaderConstructor;
     }
+
+    interface BaseLoaderConstructor {
+        new(typeName: string): BaseLoader;
+    }
+
+    interface BaseLoader {
+        protected _status: number;
+        protected _needStash: boolean;
+
+        constructor: BaseLoaderConstructor;
+        destroy(): void;
+        isWorking(): boolean;
+        readonly type: string;
+        readonly status: number;
+        readonly needStashBuffer: boolean;
+        onContentLengthKnown: Function;
+        onURLRedirect: Function;
+        onDataArrival: Function;
+        onError: Function;
+        onComplete: Function;
+        abstract open(dataSource: MediaSegment, range: Range): void;
+        abstract abort(): void;
+    }
+
+    interface CustomLoaderConstructor {
+        new(seekHandler: any, config: Config): BaseLoader;
+    }
+
+    interface Range {
+        from: nubmer;
+        to: number;
+    }
+
+    declare const LoaderStatus: {
+        kIdle: 0,
+        kConnecting: 1,
+        kBuffering: 2,
+        kError: 3,
+        kComplete: 4
+    };
+
+    declare const LoaderErrors: {
+        OK: 'OK',
+        EXCEPTION: 'Exception',
+        HTTP_STATUS_CODE_INVALID: 'HttpStatusCodeInvalid',
+        CONNECTING_TIMEOUT: 'ConnectingTimeout',
+        EARLY_EOF: 'EarlyEof',
+        UNRECOVERABLE_EARLY_EOF: 'UnrecoverableEarlyEof'
+    };
 
     interface FeatureList {
         mseFlvPlayback: boolean,
@@ -162,6 +213,10 @@ declare var flvjs: {
     isSupported(): boolean,
     getFeatureList(): FlvJs.FeatureList,
 
+    BaseLoader: FlvJs.BaseLoaderConstructor,
+    LoaderStatus: FlvJs.LoaderStatus,
+    LoaderErrors: FlvJS.LoaderErrors,
+
     Events: FlvJs.Events,
     ErrorTypes: FlvJs.ErrorTypes,
     ErrorDetails: FlvJs.ErrorDetails,
@@ -172,3 +227,6 @@ declare var flvjs: {
 };
 
 export default flvjs;
+export type Config = FlvJs.Config;
+export type MediaSegment = FlvJs.MediaSegment;
+export type Range = FlvJs.Range;

@@ -227,6 +227,3 @@ declare var flvjs: {
 };
 
 export default flvjs;
-export type Config = FlvJs.Config;
-export type MediaSegment = FlvJs.MediaSegment;
-export type Range = FlvJs.Range;

@@ -42,8 +42,10 @@ export const defaultConfig = {
     seekParamEnd: 'bend',
     rangeLoadZeroStart: false,
     customSeekHandler: undefined,
-    reuseRedirectedURL: false
+    reuseRedirectedURL: false,
     // referrerPolicy: leave as unspecified
+
+    customLoader: undefined
 };
 
 export function createDefaultConfig() {

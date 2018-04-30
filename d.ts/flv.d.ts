@@ -102,7 +102,7 @@ declare namespace FlvJs {
     }
 
     interface Range {
-        from: nubmer;
+        from: number;
         to: number;
     }
 

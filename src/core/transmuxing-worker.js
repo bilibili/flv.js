@@ -54,7 +54,7 @@ let TransmuxingWorker = function (self) {
                 controller.on(TransmuxingEvents.LOADING_COMPLETE, onLoadingComplete.bind(this));
                 controller.on(TransmuxingEvents.RECOVERED_EARLY_EOF, onRecoveredEarlyEof.bind(this));
                 controller.on(TransmuxingEvents.MEDIA_INFO, onMediaInfo.bind(this));
-                controller.on(TransmuxingEvents.METADATA_ARRIVED, onMetadataArrived.bind(this));
+                controller.on(TransmuxingEvents.METADATA_ARRIVED, onMetaDataArrived.bind(this));
                 controller.on(TransmuxingEvents.STATISTICS_INFO, onStatisticsInfo.bind(this));
                 controller.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, onRecommendSeekpoint.bind(this));
                 break;
@@ -138,7 +138,7 @@ let TransmuxingWorker = function (self) {
         self.postMessage(obj);
     }
 
-    function onMetadataArrived(metadata) {
+    function onMetaDataArrived(metadata) {
         let obj = {
             msg: TransmuxingEvents.METADATA_ARRIVED,
             data: metadata

@@ -184,6 +184,7 @@ declare namespace FlvJs {
         LOADING_COMPLETE: string,
         RECOVERED_EARLY_EOF: string,
         MEDIA_INFO: string,
+        METADATA_ARRIVED: string,
         STATISTICS_INFO: string
     }
 

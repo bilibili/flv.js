@@ -52,7 +52,7 @@ class FLVDemuxer {
 
         this._onError = null;
         this._onMediaInfo = null;
-        this._onMetadataArrived = null;
+        this._onMetaDataArrived = null;
         this._onTrackMetadata = null;
         this._onDataAvailable = null;
 
@@ -123,7 +123,7 @@ class FLVDemuxer {
 
         this._onError = null;
         this._onMediaInfo = null;
-        this._onMetadataArrived = null;
+        this._onMetaDataArrived = null;
         this._onTrackMetadata = null;
         this._onDataAvailable = null;
     }
@@ -177,12 +177,12 @@ class FLVDemuxer {
         this._onMediaInfo = callback;
     }
 
-    get onMetadataArrived() {
-        return this._onMetadataArrived;
+    get onMetaDataArrived() {
+        return this._onMetaDataArrived;
     }
 
-    set onMetadataArrived(callback) {
-        this._onMetadataArrived = callback;
+    set onMetaDataArrived(callback) {
+        this._onMetaDataArrived = callback;
     }
 
     // prototype: function(type: number, info: string): void
@@ -369,6 +369,10 @@ class FLVDemuxer {
             this._metadata = scriptData;
             let onMetaData = this._metadata.onMetaData;
 
+            if (this._onMetaDataArrived) {
+                this._onMetaDataArrived(Object.assign({}, onMetaData));
+            }
+
             if (typeof onMetaData.hasAudio === 'boolean') {  // hasAudio
                 if (this._hasAudioFlagOverrided === false) {
                     this._hasAudio = onMetaData.hasAudio;
@@ -424,9 +428,6 @@ class FLVDemuxer {
             this._dispatch = false;
             this._mediaInfo.metadata = onMetaData;
             Log.v(this.TAG, 'Parsed onMetaData');
-            if(this._onMetadataArrived) {
-                this._onMetadataArrived(Object.assign({}, onMetaData));
-            }
             if (this._mediaInfo.isComplete()) {
                 this._onMediaInfo(this._mediaInfo);
             }

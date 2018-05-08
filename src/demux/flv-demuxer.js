@@ -1050,6 +1050,11 @@ class FLVDemuxer {
 
             let unitType = v.getUint8(offset + lengthSize) & 0x1F;
 
+            if (unitType === 9) {  // access_unit_delimiter_rbsp
+                offset += lengthSize + naluSize;
+                continue;
+            }
+
             if (unitType === 5) {  // IDR
                 keyframe = true;
             }

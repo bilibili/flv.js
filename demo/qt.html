@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+  <title>MediaSource验证Demo</title>
+</head>
+<body>
+<video style="margin:10px 20px 0;width:640px;height:360px;" controls id="videoElement"></video>
+<div>
+  <button onclick="save()">保存视频</button>
+  <button onclick="stop()">结束播放</button>
+</div>
+
+<script src="//cdn.tgp.qq.com/lib/jquery/2.2.2/jquery.min.js"></script>
+<script src="../dist/flv.js"></script>
+<script>
+  //选择一个测试类型，注意将其他类型注释-------------------------------------------------
+  //    test_type = 'third';//第三方直播（虎牙）测试
+  //    test_type = 'live_id';//指定live_id测试
+  //    test_type = 'qt';//电视台直播测试
+  test_type = 'native';//本地test.flv测试
+  //---------------------------------------------------------------------------------
+
+  (function() {
+    if (window.test_type == 'live_id') {
+      var live_id = 80001913;
+      $.getJSON('//qt.qq.com/lua/tgp_live_svr/get_lives_detail', { p: JSON.stringify({ live_ids: live_id }) }).then(function(json) {
+        play(json.data[0].stream_urls.urls[0].url);
+      });
+    } else if (window.test_type == 'third') {
+      var live_type = 8;
+      $.getJSON('//qt.qq.com/lua/tgp_live_svr/get_lives_list?p={"live_type":' + live_type + ',"orderby":1,"page":1,"perpage":1}').then(function(ret) {
+        $.getJSON('//qt.qq.com/lua/tgp_live_svr/get_lives_detail', { p: JSON.stringify({ live_ids: ret.data.lists[0].live_id }) }).then(function(json) {
+          play(json.data[0].stream_urls.urls[0].url);
+        });
+      });
+    } else if (window.test_type == 'qt') {
+      var tag = 764502578;
+      $.getScript('//liveaccess.qt.qq.com/get_video_url_v2?module=' + tag + '&videotype=flv').then(function() {
+        var flvUrl = QT_LIVE_URL.channellist[0].urllist.split(';')[0];
+        play(flvUrl);
+      });
+    } else {
+      play(location.protocol + '//' + location.host + '/demo/aud-test.flv');
+    }
+  })();
+
+  function play(flvUrl) {
+    if (!flvjs.isSupported()) return;
+    window.flvPlayer && flvPlayer.destroy();
+    videoElement = document.getElementById('videoElement');
+    window.flvPlayer = flvjs.createPlayer({
+      type: 'flv',
+      isLive: true,
+      url: flvUrl,
+    }, {
+      enableFlvDebug: true,//缓存flv文件信息，通过save()保存到test.flv
+      enableMp4Debug: true,//缓存mp4文件信息，通过save()保存到test.mp4
+      maxCacheSize: 10 * 1024 * 1024,//最多缓存文件大小10MB
+      //            autoCleanupSourceBuffer: true,
+      //            autoCleanupMaxBackwardDuration: 3*60,
+      //            autoCleanupMinBackwardDuration: 60,
+      //            enableWorker: true,
+      //            enableStashBuffer: false,
+      //            stashInitialSize: 128,
+      //            fixAudioTimestampGap: false,
+    });
+    flvPlayer.on('error', function(e) {
+      console.log('[flvjs]', 'error', e);
+    });
+    var _decodedFrames = 0, _droppedFrames = 0;
+    flvPlayer.on('statistics_info', function(e) {
+      console.log('[flvjs]', 'decodedFrames:', e.decodedFrames - _decodedFrames, 'droppedFrames:', e.droppedFrames - _droppedFrames, 'speed:', Math.round(e.speed));
+      _decodedFrames = e.decodedFrames, _droppedFrames = e.droppedFrames;
+    });
+    flvPlayer.on('media_info', function(e) {
+      console.log('[flvjs]', 'meta', e);
+    });
+    flvPlayer.attachMediaElement(videoElement);
+    flvPlayer.load();
+    flvPlayer.play();
+  }
+
+  function save() {
+    window.flvPlayer && flvPlayer.save();
+  }
+  function stop() {
+    window.flvPlayer && flvPlayer.destroy();
+    window.flvPlayer = null;
+  }
+</script>
+</body>
+</html>

@@ -19,57 +19,60 @@
 // flv.js TypeScript definition file
 
 declare namespace FlvJs {
+    interface AnyObject {
+        [k: string]: any;
+    }
 
     interface MediaSegment {
-        duration: number,
-        filesize?: number,
-        url: string
+        duration: number;
+        filesize?: number;
+        url: string;
     }
 
     interface MediaDataSource {
-        type: string,
-        isLive?: boolean,
-        cors?: boolean,
-        withCredentials?: boolean,
+        type: string;
+        isLive?: boolean;
+        cors?: boolean;
+        withCredentials?: boolean;
 
-        hasAudio?: boolean,
-        hasVideo?: boolean,
+        hasAudio?: boolean;
+        hasVideo?: boolean;
 
         duration?: number;
         filesize?: number;
         url?: string;
 
-        segments?: Array<MediaSegment>
+        segments?: MediaSegment[];
     }
 
     interface Config {
-        enableWorker?: boolean,
-        enableStashBuffer?: boolean,
-        stashInitialSize?: number,
+        enableWorker?: boolean;
+        enableStashBuffer?: boolean;
+        stashInitialSize?: number;
 
-        isLive?: boolean,
+        isLive?: boolean;
 
-        lazyLoad?: boolean,
-        lazyLoadMaxDuration?: number,
-        lazyLoadRecoverDuration?: number,
-        deferLoadAfterSourceOpen?: boolean,
+        lazyLoad?: boolean;
+        lazyLoadMaxDuration?: number;
+        lazyLoadRecoverDuration?: number;
+        deferLoadAfterSourceOpen?: boolean;
 
-        autoCleanupSourceBuffer?: boolean,
-        autoCleanupMaxBackwardDuration?: number,
-        autoCleanupMinBackwardDuration?: number,
+        autoCleanupSourceBuffer?: boolean;
+        autoCleanupMaxBackwardDuration?: number;
+        autoCleanupMinBackwardDuration?: number;
 
-        statisticsInfoReportInterval?: number,
+        statisticsInfoReportInterval?: number;
 
-        fixAudioTimestampGap?: boolean,
+        fixAudioTimestampGap?: boolean;
 
-        accurateSeek?: boolean,
-        seekType?: string,  // [range, param, custom]
-        seekParamStart?: string,
-        seekParamEnd?: string,
-        rangeLoadZeroStart?: boolean,
-        customSeekHandler?: any,
-        reuseRedirectedURL?: boolean,
-        referrerPolicy?: string
+        accurateSeek?: boolean;
+        seekType?: string;  // [range; param; custom]
+        seekParamStart?: string;
+        seekParamEnd?: string;
+        rangeLoadZeroStart?: boolean;
+        customSeekHandler?: any;
+        reuseRedirectedURL?: boolean;
+        referrerPolicy?: string;
 
         customLoader?: CustomLoaderConstructor;
     }
@@ -88,11 +91,11 @@ declare namespace FlvJs {
         readonly type: string;
         readonly status: number;
         readonly needStashBuffer: boolean;
-        onContentLengthKnown: Function;
-        onURLRedirect: Function;
-        onDataArrival: Function;
-        onError: Function;
-        onComplete: Function;
+        onContentLengthKnown: () => void;
+        onURLRedirect: () => void;
+        onDataArrival: () => void;
+        onError: () => void;
+        onComplete: () => void;
         abstract open(dataSource: MediaSegment, range: Range): void;
         abstract abort(): void;
     }
@@ -106,31 +109,31 @@ declare namespace FlvJs {
         to: number;
     }
 
-    declare const LoaderStatus: {
-        kIdle: 0,
-        kConnecting: 1,
-        kBuffering: 2,
-        kError: 3,
-        kComplete: 4
-    };
+    interface LoaderStatus {
+        kIdle: 0;
+        kConnecting: 1;
+        kBuffering: 2;
+        kError: 3;
+        kComplete: 4;
+    }
 
-    declare const LoaderErrors: {
-        OK: 'OK',
-        EXCEPTION: 'Exception',
-        HTTP_STATUS_CODE_INVALID: 'HttpStatusCodeInvalid',
-        CONNECTING_TIMEOUT: 'ConnectingTimeout',
-        EARLY_EOF: 'EarlyEof',
-        UNRECOVERABLE_EARLY_EOF: 'UnrecoverableEarlyEof'
-    };
+    interface LoaderErrors {
+        OK: 'OK';
+        EXCEPTION: 'Exception';
+        HTTP_STATUS_CODE_INVALID: 'HttpStatusCodeInvalid';
+        CONNECTING_TIMEOUT: 'ConnectingTimeout';
+        EARLY_EOF: 'EarlyEof';
+        UNRECOVERABLE_EARLY_EOF: 'UnrecoverableEarlyEof';
+    }
 
     interface FeatureList {
-        mseFlvPlayback: boolean,
-        mseLiveFlvPlayback: boolean,
-        networkStreamIO: boolean,
-        networkLoaderName: string,
-        nativeMP4H264Playback: boolean,
-        nativeWebmVP8Playback: boolean,
-        nativeWebmVP9Playback: boolean
+        mseFlvPlayback: boolean;
+        mseLiveFlvPlayback: boolean;
+        networkStreamIO: boolean;
+        networkLoaderName: string;
+        nativeMP4H264Playback: boolean;
+        nativeWebmVP8Playback: boolean;
+        nativeWebmVP9Playback: boolean;
     }
 
     interface PlayerConstructor {
@@ -140,8 +143,8 @@ declare namespace FlvJs {
     interface Player {
         constructor: PlayerConstructor;
         destroy(): void;
-        on(event: string, listener: Function): void;
-        off(event: string, listener: Function): void;
+        on(event: string, listener: () => void): void;
+        off(event: string, listener: () => void): void;
         attachMediaElement(mediaElement: HTMLMediaElement): void;
         detachMediaElement(): void;
         load(): void;
@@ -154,15 +157,21 @@ declare namespace FlvJs {
         volume: number;
         muted: boolean;
         currentTime: number;
-        mediaInfo: Object;
-        statisticsInfo: Object;
+        mediaInfo: AnyObject;
+        statisticsInfo: AnyObject;
     }
 
-    interface FlvPlayer extends Player {
-    }
+    /**
+     * @deprecated Use FlvJs.Player instead.
+     */
+    // tslint:disable-next-line
+    interface FlvPlayer extends Player {}
 
-    interface NativePlayer extends Player {
-    }
+    /**
+     * @deprecated Use FlvJs.Player instead.
+     */
+    // tslint:disable-next-line
+    interface NativePlayer extends Player {}
 
     interface LoggingControl {
         forceGlobalTag: boolean;
@@ -173,58 +182,57 @@ declare namespace FlvJs {
         enableInfo: boolean;
         enableWarn: boolean;
         enableError: boolean;
-        getConfig(): Object;
-        applyConfig(config: Object): void;
-        addLogListener(listener: Function): void;
-        removeLogListener(listener: Function): void;
+        getConfig(): AnyObject;
+        applyConfig(config: AnyObject): void;
+        addLogListener(listener: () => void): void;
+        removeLogListener(listener: () => void): void;
     }
 
     interface Events {
-        ERROR: string,
-        LOADING_COMPLETE: string,
-        RECOVERED_EARLY_EOF: string,
-        MEDIA_INFO: string,
-        METADATA_ARRIVED: string,
-        STATISTICS_INFO: string
+        ERROR: string;
+        LOADING_COMPLETE: string;
+        RECOVERED_EARLY_EOF: string;
+        MEDIA_INFO: string;
+        METADATA_ARRIVED: string;
+        STATISTICS_INFO: string;
     }
 
     interface ErrorTypes {
-        NETWORK_ERROR: string,
-        MEDIA_ERROR: string,
-        OTHER_ERROR: string
+        NETWORK_ERROR: string;
+        MEDIA_ERROR: string;
+        OTHER_ERROR: string;
     }
 
     interface ErrorDetails {
-        NETWORK_EXCEPTION: string,
-        NETWORK_STATUS_CODE_INVALID: string,
-        NETWORK_TIMEOUT: string,
-        NETWORK_UNRECOVERABLE_EARLY_EOF: string,
+        NETWORK_EXCEPTION: string;
+        NETWORK_STATUS_CODE_INVALID: string;
+        NETWORK_TIMEOUT: string;
+        NETWORK_UNRECOVERABLE_EARLY_EOF: string;
 
-        MEDIA_MSE_ERROR: string,
+        MEDIA_MSE_ERROR: string;
 
-        MEDIA_FORMAT_ERROR: string,
-        MEDIA_FORMAT_UNSUPPORTED: string,
-        MEDIA_CODEC_UNSUPPORTED: string
+        MEDIA_FORMAT_ERROR: string;
+        MEDIA_FORMAT_UNSUPPORTED: string;
+        MEDIA_CODEC_UNSUPPORTED: string;
     }
-
 }
 
 declare var flvjs: {
-    createPlayer(mediaDataSource: FlvJs.MediaDataSource, config?: FlvJs.Config): FlvJs.Player,
-    isSupported(): boolean,
-    getFeatureList(): FlvJs.FeatureList,
+    createPlayer(mediaDataSource: FlvJs.MediaDataSource, config?: FlvJs.Config): FlvJs.Player;
+    isSupported(): boolean;
+    getFeatureList(): FlvJs.FeatureList;
 
-    BaseLoader: FlvJs.BaseLoaderConstructor,
-    LoaderStatus: FlvJs.LoaderStatus,
-    LoaderErrors: FlvJS.LoaderErrors,
+    BaseLoader: FlvJs.BaseLoaderConstructor;
+    LoaderStatus: FlvJs.LoaderStatus;
+    LoaderErrors: FlvJs.LoaderErrors;
 
-    Events: FlvJs.Events,
-    ErrorTypes: FlvJs.ErrorTypes,
-    ErrorDetails: FlvJs.ErrorDetails,
+    Events: FlvJs.Events;
+    ErrorTypes: FlvJs.ErrorTypes;
+    ErrorDetails: FlvJs.ErrorDetails;
 
-    FlvPlayer: FlvJs.PlayerConstructor,
-    NativePlayer: FlvJs.PlayerConstructor,
-    LoggingControl: FlvJs.LoggingControl
+    FlvPlayer: FlvJs.PlayerConstructor;
+    NativePlayer: FlvJs.PlayerConstructor;
+    LoggingControl: FlvJs.LoggingControl;
 };
 
 export default flvjs;

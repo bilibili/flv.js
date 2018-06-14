@@ -66,7 +66,7 @@ declare namespace FlvJs {
         fixAudioTimestampGap?: boolean;
 
         accurateSeek?: boolean;
-        seekType?: string;  // [range; param; custom]
+        seekType?: string;  // [range, param, custom]
         seekParamStart?: string;
         seekParamEnd?: string;
         rangeLoadZeroStart?: boolean;

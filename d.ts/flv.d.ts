@@ -82,8 +82,8 @@ declare namespace FlvJs {
     }
 
     interface BaseLoader {
-        protected _status: number;
-        protected _needStash: boolean;
+        _status: number;
+        _needStash: boolean;
 
         constructor: BaseLoaderConstructor;
         destroy(): void;
@@ -96,8 +96,8 @@ declare namespace FlvJs {
         onDataArrival: () => void;
         onError: () => void;
         onComplete: () => void;
-        abstract open(dataSource: MediaSegment, range: Range): void;
-        abstract abort(): void;
+        open(dataSource: MediaSegment, range: Range): void;
+        abort(): void;
     }
 
     interface CustomLoaderConstructor {

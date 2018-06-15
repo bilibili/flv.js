@@ -19,7 +19,7 @@
   "scripts": {
     "dev": "gulp watch",
     "build": "gulp release",
-    "lint": "dtslint types"
+    "dtslint": "dtslint types"
   },
   "dependencies": {
     "es6-promise": "^4.1.0",

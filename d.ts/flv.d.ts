@@ -259,7 +259,17 @@ declare namespace FlvJs {
         volume: number;
         muted: boolean;
         currentTime: number;
+        /**
+         * @deprecated FlvPlayer/NativePlayer have its own `mediaInfo` field.
+         * @desc Keep it for backwards compatibility
+         * @since 1.4
+         */
         mediaInfo: NativePlayerMediaInfo | FlvPlayerMediaInfo;
+        /**
+         * @deprecated FlvPlayer/NativePlayer have its own `statisticsInfo` field.
+         * @desc Keep it for backwards compatibility
+         * @since 1.4
+         */
         statisticsInfo: NativePlayerStatisticsInfo | FlvPlayerStatisticsInfo;
     }
 
@@ -306,19 +316,15 @@ declare namespace FlvJs {
         [k: string]: any;
     }
 
-    /**
-     * @deprecated Use FlvJs.Player instead.
-     * @since 1.4
-     */
-    // tslint:disable-next-line
-    interface FlvPlayer extends Player {}
+    interface FlvPlayer extends Player {
+        mediaInfo: FlvPlayerMediaInfo;
+        statisticsInfo: FlvPlayerStatisticsInfo;
+    }
 
-    /**
-     * @deprecated Use FlvJs.Player instead.
-     * @since 1.4
-     */
-    // tslint:disable-next-line
-    interface NativePlayer extends Player {}
+    interface NativePlayer extends Player {
+        mediaInfo: NativePlayerMediaInfo;
+        statisticsInfo: NativePlayerStatisticsInfo;
+    }
 
     interface LoggingControlConfig {
         forceGlobalTag: boolean;

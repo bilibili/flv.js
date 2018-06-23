@@ -270,7 +270,17 @@ declare namespace FlvJs {
         droppedFrames?: number;
     }
 
-    interface FlvPlayerStatisticsInfo {
+    interface FlvPlayerReportStatisticsInfo {
+        url: string;
+        hasRedirect: boolean;
+        redirectedURL?: string;
+        speed: number; // KB/s
+        loaderType: string;
+        currentSegmentIndex: number;
+        totalSegmentCount: number;
+    }
+
+    interface FlvPlayerStatisticsInfo extends Partial<FlvPlayerReportStatisticsInfo> {
         playerType: 'FlvPlayer';
         decodedFrames?: number;
         droppedFrames?: number;

@@ -121,6 +121,7 @@ class MP4Remuxer {
 
     insertDiscontinuity() {
         this._audioNextDts = this._videoNextDts = undefined;
+        this._audioNextRefDts = undefined;
     }
 
     seek(originalDts) {

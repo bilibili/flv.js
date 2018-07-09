@@ -242,8 +242,6 @@ class MP4Remuxer {
         let dtsCorrection = undefined;
         let firstDts = -1, lastDts = -1, lastPts = -1;
         let refSampleDuration = this._audioMeta.refSampleDuration;
-        Log.v(this.TAG, `refSampleDuration: ${refSampleDuration}`);
-
 
         let mpegRawTrack = this._audioMeta.codec === 'mp3' && this._mp3UseMpegAudio;
         let firstSegmentAfterSeek = this._dtsBaseInited && this._audioNextDts === undefined;
@@ -386,7 +384,6 @@ class MP4Remuxer {
 
                     dts = Math.floor(curRefDts);
                     sampleDuration = Math.floor(curRefDts + refSampleDuration) - dts;
-                    curRefDts = curRefDts + refSampleDuration;
 
                     let silentUnit = AAC.getSilentFrame(this._audioMeta.originalCodec, this._audioMeta.channelCount);
                     if (silentUnit == null) {
@@ -398,6 +395,7 @@ class MP4Remuxer {
                     silentFrames = [];
 
                     for (let j = 0; j < frameCount; j++) {
+                        curRefDts = curRefDts + refSampleDuration;
                         let intDts = Math.floor(curRefDts);  // change to integer
                         let intDuration = Math.floor(curRefDts + refSampleDuration) - intDts;
                         let frame = {
@@ -417,7 +415,7 @@ class MP4Remuxer {
                         };
                         silentFrames.push(frame);
                         mdatBytes += unit.byteLength;
-                        curRefDts = curRefDts + refSampleDuration;
+
                     }
 
                     this._audioNextRefDts = curRefDts + refSampleDuration;

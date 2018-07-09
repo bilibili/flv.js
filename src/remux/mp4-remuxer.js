@@ -37,7 +37,6 @@ class MP4Remuxer {
         this._dtsBaseInited = false;
         this._audioDtsBase = Infinity;
         this._videoDtsBase = Infinity;
-        this._audioNextRefDts = undefined;
         this._audioNextDts = undefined;
         this._videoNextDts = undefined;
         this._audioStashedLastSample = null;
@@ -121,7 +120,6 @@ class MP4Remuxer {
 
     insertDiscontinuity() {
         this._audioNextDts = this._videoNextDts = undefined;
-        this._audioNextRefDts = undefined;
     }
 
     seek(originalDts) {
@@ -361,17 +359,17 @@ class MP4Remuxer {
                 // for AAC codec, we need to keep dts increase based on refSampleDuration
                 let curRefDts = originalDts;
                 const maxAudioFramesDrift = 3;
-                if (this._audioNextRefDts) {
-                    curRefDts = this._audioNextRefDts;
+                if (this._audioNextDts) {
+                    curRefDts = this._audioNextDts;
                 }
 
-                let delta = originalDts - curRefDts;
-                if (delta <= -maxAudioFramesDrift * refSampleDuration) {
+                dtsCorrection = originalDts - curRefDts;
+                if (dtsCorrection <= -maxAudioFramesDrift * refSampleDuration) {
                     // If we're overlapping by more than maxAudioFramesDrift number of frame, drop this sample
                     Log.w(this.TAG, `Dropping 1 audio frame (originalDts: ${originalDts} ms ,curRefDts: ${curRefDts} ms)  due to delta: ${delta} ms overlap.`);
                     continue;
                 }
-                else if (delta >= maxAudioFramesDrift * refSampleDuration && this._fillAudioTimestampGap && !Browser.safari) {
+                else if (dtsCorrection >= maxAudioFramesDrift * refSampleDuration && this._fillAudioTimestampGap && !Browser.safari) {
                     // Silent frame generation, if large timestamp gap detected && config.fixAudioTimestampGap
                     needFillSilentFrames = true;
                     // We need to insert silent frames to fill timestamp gap
@@ -418,13 +416,13 @@ class MP4Remuxer {
 
                     }
 
-                    this._audioNextRefDts = curRefDts + refSampleDuration;
+                    this._audioNextDts = curRefDts + refSampleDuration;
 
                 } else {
 
                     dts = Math.floor(curRefDts);
                     sampleDuration = Math.floor(curRefDts + refSampleDuration) - dts;
-                    this._audioNextRefDts = curRefDts + refSampleDuration;
+                    this._audioNextDts = curRefDts + refSampleDuration;
 
                 }
             } else {
@@ -445,6 +443,7 @@ class MP4Remuxer {
                         sampleDuration = Math.floor(refSampleDuration);
                     }
                 }
+                this._audioNextDts = dts + sampleDuration;
             }
 
             if (firstDts === -1) {
@@ -504,7 +503,7 @@ class MP4Remuxer {
 
         let latest = mp4Samples[mp4Samples.length - 1];
         lastDts = latest.dts + latest.duration;
-        this._audioNextDts = lastDts;
+        //this._audioNextDts = lastDts;
 
         // fill media segment info & add to info list
         let info = new MediaSegmentInfo();

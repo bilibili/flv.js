@@ -366,18 +366,18 @@ class MP4Remuxer {
                 dtsCorrection = originalDts - curRefDts;
                 if (dtsCorrection <= -maxAudioFramesDrift * refSampleDuration) {
                     // If we're overlapping by more than maxAudioFramesDrift number of frame, drop this sample
-                    Log.w(this.TAG, `Dropping 1 audio frame (originalDts: ${originalDts} ms ,curRefDts: ${curRefDts} ms)  due to delta: ${delta} ms overlap.`);
+                    Log.w(this.TAG, `Dropping 1 audio frame (originalDts: ${originalDts} ms ,curRefDts: ${curRefDts} ms)  due to dtsCorrection: ${dtsCorrection} ms overlap.`);
                     continue;
                 }
                 else if (dtsCorrection >= maxAudioFramesDrift * refSampleDuration && this._fillAudioTimestampGap && !Browser.safari) {
                     // Silent frame generation, if large timestamp gap detected && config.fixAudioTimestampGap
                     needFillSilentFrames = true;
                     // We need to insert silent frames to fill timestamp gap
-                    let frameCount = Math.floor(delta / refSampleDuration);
+                    let frameCount = Math.floor(dtsCorrection / refSampleDuration);
                     Log.w(this.TAG, 'Large audio timestamp gap detected, may cause AV sync to drift. ' +
                         'Silent frames will be generated to avoid unsync.\n' +
                         `originalDts: ${originalDts} ms, curRefDts: ${curRefDts} ms, ` +
-                        `delta: ${Math.round(delta)} ms, generate: ${frameCount} frames`);
+                        `dtsCorrection: ${Math.round(dtsCorrection)} ms, generate: ${frameCount} frames`);
 
 
                     dts = Math.floor(curRefDts);

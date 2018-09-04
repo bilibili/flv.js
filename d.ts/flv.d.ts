@@ -350,6 +350,7 @@ declare namespace FlvJs {
         RECOVERED_EARLY_EOF: string;
         MEDIA_INFO: string;
         METADATA_ARRIVED: string;
+        SCRIPTDATA_ARRIVED: string;
         STATISTICS_INFO: string;
     }
 

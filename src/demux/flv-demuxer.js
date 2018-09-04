@@ -53,6 +53,7 @@ class FLVDemuxer {
         this._onError = null;
         this._onMediaInfo = null;
         this._onMetaDataArrived = null;
+        this._onScriptDataArrived = null;
         this._onTrackMetadata = null;
         this._onDataAvailable = null;
 
@@ -124,6 +125,7 @@ class FLVDemuxer {
         this._onError = null;
         this._onMediaInfo = null;
         this._onMetaDataArrived = null;
+        this._onScriptDataArrived = null;
         this._onTrackMetadata = null;
         this._onDataAvailable = null;
     }
@@ -183,6 +185,14 @@ class FLVDemuxer {
 
     set onMetaDataArrived(callback) {
         this._onMetaDataArrived = callback;
+    }
+
+    get onScriptDataArrived() {
+        return this._onScriptDataArrived;
+    }
+
+    set onScriptDataArrived(callback) {
+        this._onScriptDataArrived = callback;
     }
 
     // prototype: function(type: number, info: string): void
@@ -357,7 +367,30 @@ class FLVDemuxer {
 
     _parseScriptData(arrayBuffer, dataOffset, dataSize) {
         let scriptData = AMF.parseScriptData(arrayBuffer, dataOffset, dataSize);
-
+        if (scriptData.hasOwnProperty('onCuePoint')) {
+            if (scriptData.onCuePoint == null || typeof scriptData.onCuePoint !== 'object') {
+                Log.w(this.TAG, 'Invalid onCuePoint data!');
+                return;
+            }
+            if (this._onScriptDataArrived) {
+                this._onScriptDataArrived({
+                    name: 'onCuePoint',
+                    data: Object.assign({}, scriptData.onCuePoint)
+                });
+            }
+        }
+        if (scriptData.hasOwnProperty('onTextData')) {
+            if (scriptData.onTextData == null || typeof scriptData.onTextData !== 'object') {
+                Log.w(this.TAG, 'Invalid onTextData structure!');
+                return;
+            }
+            if (this._onScriptDataArrived) {
+                this._onScriptDataArrived({
+                    name: 'onTextData',
+                    data: Object.assign({}, scriptData.onTextData)
+                });
+            }
+        }
         if (scriptData.hasOwnProperty('onMetaData')) {
             if (scriptData.onMetaData == null || typeof scriptData.onMetaData !== 'object') {
                 Log.w(this.TAG, 'Invalid onMetaData structure!');

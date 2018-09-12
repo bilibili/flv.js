@@ -88,6 +88,7 @@ In multipart mode, `duration` `filesize` `url` field in `MediaDataSource` struct
 | `customSeekHandler?`             | `object`  | `undefined`                  | Indicates a custom seek handler          |
 | `reuseRedirectedURL?`            | `boolean` | `false`                      | Reuse 301/302 redirected url for subsequence request like seek, reconnect, etc. |
 | `referrerPolicy?`                | `string`  | `no-referrer-when-downgrade` | Indicates the [Referrer Policy][] when using FetchStreamLoader |
+| `headers?`                       | `object`  | `undefined`                  | Indicates additional headers that will be added to request when using FetchStreamLoader |
 
 
 [Referrer Policy]: https://w3c.github.io/webappsec-referrer-policy/#referrer-policy

@@ -155,7 +155,12 @@ declare namespace FlvJs {
          * @defaultvalue 'no-referrer-when-downgrade' (from docs)
          */
         referrerPolicy?: ReferrerPolicy;
-
+        /**
+         * @desc Indicates additional headers that will be added to request
+         */
+        headers?: {
+            [k: string]: string
+        }
         /**
          * @desc Should implement `BaseLoader` interface
          */

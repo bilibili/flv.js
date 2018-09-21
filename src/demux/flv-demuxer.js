@@ -367,30 +367,7 @@ class FLVDemuxer {
 
     _parseScriptData(arrayBuffer, dataOffset, dataSize) {
         let scriptData = AMF.parseScriptData(arrayBuffer, dataOffset, dataSize);
-        if (scriptData.hasOwnProperty('onCuePoint')) {
-            if (scriptData.onCuePoint == null || typeof scriptData.onCuePoint !== 'object') {
-                Log.w(this.TAG, 'Invalid onCuePoint data!');
-                return;
-            }
-            if (this._onScriptDataArrived) {
-                this._onScriptDataArrived({
-                    name: 'onCuePoint',
-                    data: Object.assign({}, scriptData.onCuePoint)
-                });
-            }
-        }
-        if (scriptData.hasOwnProperty('onTextData')) {
-            if (scriptData.onTextData == null || typeof scriptData.onTextData !== 'object') {
-                Log.w(this.TAG, 'Invalid onTextData structure!');
-                return;
-            }
-            if (this._onScriptDataArrived) {
-                this._onScriptDataArrived({
-                    name: 'onTextData',
-                    data: Object.assign({}, scriptData.onTextData)
-                });
-            }
-        }
+
         if (scriptData.hasOwnProperty('onMetaData')) {
             if (scriptData.onMetaData == null || typeof scriptData.onMetaData !== 'object') {
                 Log.w(this.TAG, 'Invalid onMetaData structure!');
@@ -463,6 +440,12 @@ class FLVDemuxer {
             Log.v(this.TAG, 'Parsed onMetaData');
             if (this._mediaInfo.isComplete()) {
                 this._onMediaInfo(this._mediaInfo);
+            }
+        }
+
+        if (Object.keys(scriptData).length > 0) {
+            if (this._onScriptDataArrived) {
+                this._onScriptDataArrived(Object.assign({}, scriptData));
             }
         }
     }

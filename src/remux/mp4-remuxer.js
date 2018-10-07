@@ -416,7 +416,7 @@ class MP4Remuxer {
                         }
                     };
                     silentFrames.push(frame);
-                    mdatBytes += unit.byteLength;
+                    mdatBytes += frame.size;
                     currentDts += refSampleDuration;
                 }
 

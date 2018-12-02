@@ -94,6 +94,13 @@ class FetchStreamLoader extends BaseLoader {
             referrerPolicy: 'no-referrer-when-downgrade'
         };
 
+        // add additional headers
+        if (typeof this._config.headers === 'object') {
+            for (let key in this._config.headers) {
+                headers.append(key, this._config.headers[key]);
+            }
+        }
+
         // cors is enabled by default
         if (dataSource.cors === false) {
             // no-cors means 'disregard cors policy', which can only be used in ServiceWorker

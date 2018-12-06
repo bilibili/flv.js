@@ -37,6 +37,7 @@ class MediaInfo {
         this.fps = null;
         this.profile = null;
         this.level = null;
+        this.refFrames = null;
         this.chromaFormat = null;
         this.sarNum = null;
         this.sarDen = null;
@@ -63,6 +64,7 @@ class MediaInfo {
                                  this.fps != null &&
                                  this.profile != null &&
                                  this.level != null &&
+                                 this.refFrames != null &&
                                  this.chromaFormat != null &&
                                  this.sarNum != null &&
                                  this.sarDen != null);

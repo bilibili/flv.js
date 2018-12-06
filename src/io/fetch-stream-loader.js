@@ -94,6 +94,13 @@ class FetchStreamLoader extends BaseLoader {
             referrerPolicy: 'no-referrer-when-downgrade'
         };
 
+        // add additional headers
+        if (typeof this._config.headers === 'object') {
+            for (let key in this._config.headers) {
+                headers.append(key, this._config.headers[key]);
+            }
+        }
+
         // cors is enabled by default
         if (dataSource.cors === false) {
             // no-cors means 'disregard cors policy', which can only be used in ServiceWorker
@@ -161,9 +168,23 @@ class FetchStreamLoader extends BaseLoader {
     _pump(reader) {  // ReadableStreamReader
         return reader.read().then((result) => {
             if (result.done) {
-                this._status = LoaderStatus.kComplete;
-                if (this._onComplete) {
-                    this._onComplete(this._range.from, this._range.from + this._receivedLength - 1);
+                // First check received length
+                if (this._contentLength !== null && this._receivedLength < this._contentLength) {
+                    // Report Early-EOF
+                    this._status = LoaderStatus.kError;
+                    let type = LoaderErrors.EARLY_EOF;
+                    let info = {code: -1, msg: 'Fetch stream meet Early-EOF'};
+                    if (this._onError) {
+                        this._onError(type, info);
+                    } else {
+                        throw new RuntimeException(info.msg);
+                    }
+                } else {
+                    // OK. Download complete
+                    this._status = LoaderStatus.kComplete;
+                    if (this._onComplete) {
+                        this._onComplete(this._range.from, this._range.from + this._receivedLength - 1);
+                    }
                 }
             } else {
                 if (this._requestAbort === true) {

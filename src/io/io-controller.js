@@ -237,7 +237,9 @@ class IOController {
     }
 
     _selectLoader() {
-        if (this._isWebSocketURL) {
+        if (this._config.customLoader != null) {
+            this._loaderClass = this._config.customLoader;
+        } else if (this._isWebSocketURL) {
             this._loaderClass = WebSocketLoader;
         } else if (FetchStreamLoader.isSupported()) {
             this._loaderClass = FetchStreamLoader;

@@ -145,12 +145,23 @@ class RangeLoader extends BaseLoader {
         xhr.onload = this._onLoad.bind(this);
         xhr.onerror = this._onXhrError.bind(this);
 
-        if (dataSource.withCredentials && xhr['withCredentials']) {
+        if (dataSource.withCredentials) {
             xhr.withCredentials = true;
         }
 
         if (typeof seekConfig.headers === 'object') {
             let headers = seekConfig.headers;
+
+            for (let key in headers) {
+                if (headers.hasOwnProperty(key)) {
+                    xhr.setRequestHeader(key, headers[key]);
+                }
+            }
+        }
+
+        // add additional headers
+        if (typeof this._config.headers === 'object') {
+            let headers = this._config.headers;
 
             for (let key in headers) {
                 if (headers.hasOwnProperty(key)) {

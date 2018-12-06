@@ -88,6 +88,7 @@ In multipart mode, `duration` `filesize` `url` field in `MediaDataSource` struct
 | `customSeekHandler?`             | `object`  | `undefined`                  | Indicates a custom seek handler          |
 | `reuseRedirectedURL?`            | `boolean` | `false`                      | Reuse 301/302 redirected url for subsequence request like seek, reconnect, etc. |
 | `referrerPolicy?`                | `string`  | `no-referrer-when-downgrade` | Indicates the [Referrer Policy][] when using FetchStreamLoader |
+| `headers?`                       | `object`  | `undefined`                  | Indicates additional headers that will be added to request |
 
 
 [Referrer Policy]: https://w3c.github.io/webappsec-referrer-policy/#referrer-policy
@@ -189,6 +190,8 @@ A series of constants that can be used with `Player.on()` / `Player.off()`. They
 | LOADING_COMPLETE    | The input MediaDataSource has been completely buffered to end |
 | RECOVERED_EARLY_EOF | An unexpected network EOF occurred during buffering but automatically recovered |
 | MEDIA_INFO          | Provides technical information of the media like video/audio codec, bitrate, etc. |
+| METADATA_ARRIVED    | Provides metadata which FLV file(stream) can contain with an "onMetaData" marker.  |
+| SCRIPTDATA_ARRIVED  | Provides scriptdata (OnCuePoint / OnTextData) which FLV file(stream) can contain. |
 | STATISTICS_INFO     | Provides playback statistics information like dropped frames, current speed, etc. |
 
 ### flvjs.ErrorTypes

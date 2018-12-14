@@ -1,6 +1,6 @@
 {
   "name": "flv.js",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "HTML5 FLV Player",
   "main": "./dist/flv.js",
   "module": "./src/flv.js",

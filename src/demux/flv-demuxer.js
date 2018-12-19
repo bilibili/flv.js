@@ -430,6 +430,7 @@ class FLVDemuxer {
             if (typeof onMetaData.keyframes === 'object') {  // keyframes
                 this._mediaInfo.hasKeyframesIndex = true;
                 let keyframes = onMetaData.keyframes;
+                this._needTimestampBase = this._needTimestampBaseFn(keyframes.times)
                 this._mediaInfo.keyframesIndex = this._parseKeyframesIndex(keyframes);
                 onMetaData.keyframes = null;  // keyframes has been extracted, remove it
             } else {
@@ -456,7 +457,7 @@ class FLVDemuxer {
 
         // ignore first keyframe which is actually AVC Sequence Header (AVCDecoderConfigurationRecord)
         for (let i = 1; i < keyframes.times.length; i++) {
-            let time = this._timestampBase + Math.floor(keyframes.times[i] * 1000);
+            let time = this._getRealTimestamp(Math.floor(keyframes.times[i] * 1000));
             times.push(time);
             filepositions.push(keyframes.filepositions[i]);
         }
@@ -569,7 +570,7 @@ class FLVDemuxer {
                     this._onMediaInfo(mi);
                 }
             } else if (aacData.packetType === 1) {  // AAC raw frame data
-                let dts = this._timestampBase + tagTimestamp;
+                let dts = this._getRealTimestamp(tagTimestamp);
                 let aacSample = {unit: aacData.data, length: aacData.data.byteLength, dts: dts, pts: dts};
                 track.samples.push(aacSample);
                 track.length += aacData.data.length;
@@ -616,7 +617,7 @@ class FLVDemuxer {
             if (data == undefined) {
                 return;
             }
-            let dts = this._timestampBase + tagTimestamp;
+            let dts = this._getRealTimestamp(tagTimestamp);
             let mp3Sample = {unit: data, length: data.byteLength, dts: dts, pts: dts};
             track.samples.push(mp3Sample);
             track.length += data.length;
@@ -1046,7 +1047,7 @@ class FLVDemuxer {
 
         let offset = 0;
         const lengthSize = this._naluLengthSize;
-        let dts = this._timestampBase + tagTimestamp;
+        let dts = this._getRealTimestamp(tagTimestamp);
         let keyframe = (frameType === 1);  // from FLV Frame Type constants
 
         while (offset < dataSize) {
@@ -1094,6 +1095,18 @@ class FLVDemuxer {
             track.samples.push(avcSample);
             track.length += length;
         }
+    }
+
+    _needTimestampBaseFn(originalTimes) {
+      if (!originalTimes || originalTimes.length < 10) {
+        return false
+      }
+      // 对keyframes不熟悉，index稍微往后取一点
+      return originalTimes[9] * 1000 < this._timestampBase
+    }
+
+    _getRealTimestamp(timestamp) {
+      return this._needTimestampBase ? this._timestampBase + timestamp : timestamp
     }
 
 }

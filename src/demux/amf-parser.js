@@ -20,11 +20,7 @@ import Log from '../utils/logger.js';
 import decodeUTF8 from '../utils/utf8-conv.js';
 import {IllegalStateException} from '../utils/exception.js';
 
-let le = (function () {
-    let buf = new ArrayBuffer(2);
-    (new DataView(buf)).setInt16(0, 256, true);  // little-endian write
-    return (new Int16Array(buf))[0] === 256;  // platform-spec read, if equal then LE
-})();
+let le = false; // amf use big-endian
 
 class AMF {
 
@@ -70,7 +66,7 @@ class AMF {
             throw new IllegalStateException('Data not enough when parse String');
         }
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
-        let length = v.getUint16(0, !le);
+        let length = v.getUint16(0, le);
 
         let str;
         if (length > 0) {
@@ -90,7 +86,7 @@ class AMF {
             throw new IllegalStateException('Data not enough when parse LongString');
         }
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
-        let length = v.getUint32(0, !le);
+        let length = v.getUint32(0, le);
 
         let str;
         if (length > 0) {
@@ -110,8 +106,8 @@ class AMF {
             throw new IllegalStateException('Data size invalid when parse Date');
         }
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
-        let timestamp = v.getFloat64(0, !le);
-        let localTimeOffset = v.getInt16(8, !le);
+        let timestamp = v.getFloat64(0, le);
+        let localTimeOffset = v.getInt16(8, le);
         timestamp += localTimeOffset * 60 * 1000;  // get UTC time
 
         return {
@@ -135,7 +131,7 @@ class AMF {
         try {
             switch (type) {
                 case 0:  // Number(Double) type
-                    value = v.getFloat64(1, !le);
+                    value = v.getFloat64(1, le);
                     offset += 8;
                     break;
                 case 1: {  // Boolean type
@@ -153,7 +149,7 @@ class AMF {
                 case 3: { // Object(s) type
                     value = {};
                     let terminal = 0;  // workaround for malformed Objects which has missing ScriptDataObjectEnd
-                    if ((v.getUint32(dataSize - 4, !le) & 0x00FFFFFF) === 9) {
+                    if ((v.getUint32(dataSize - 4, le) & 0x00FFFFFF) === 9) {
                         terminal = 3;
                     }
                     while (offset < dataSize - 4) {  // 4 === type(UI8) + ScriptDataObjectEnd(UI24)
@@ -164,7 +160,7 @@ class AMF {
                         offset += amfobj.size;
                     }
                     if (offset <= dataSize - 3) {
-                        let marker = v.getUint32(offset - 1, !le) & 0x00FFFFFF;
+                        let marker = v.getUint32(offset - 1, le) & 0x00FFFFFF;
                         if (marker === 9) {
                             offset += 3;
                         }
@@ -175,7 +171,7 @@ class AMF {
                     value = {};
                     offset += 4;  // ECMAArrayLength(UI32)
                     let terminal = 0;  // workaround for malformed MixedArrays which has missing ScriptDataObjectEnd
-                    if ((v.getUint32(dataSize - 4, !le) & 0x00FFFFFF) === 9) {
+                    if ((v.getUint32(dataSize - 4, le) & 0x00FFFFFF) === 9) {
                         terminal = 3;
                     }
                     while (offset < dataSize - 8) {  // 8 === type(UI8) + ECMAArrayLength(UI32) + ScriptDataVariableEnd(UI24)
@@ -186,7 +182,7 @@ class AMF {
                         offset += amfvar.size;
                     }
                     if (offset <= dataSize - 3) {
-                        let marker = v.getUint32(offset - 1, !le) & 0x00FFFFFF;
+                        let marker = v.getUint32(offset - 1, le) & 0x00FFFFFF;
                         if (marker === 9) {
                             offset += 3;
                         }
@@ -201,7 +197,7 @@ class AMF {
                 case 10: {  // Strict array type
                     // ScriptDataValue[n]. NOTE: according to video_file_format_spec_v10_1.pdf
                     value = [];
-                    let strictArrayLength = v.getUint32(1, !le);
+                    let strictArrayLength = v.getUint32(1, le);
                     offset += 4;
                     for (let i = 0; i < strictArrayLength; i++) {
                         let val = AMF.parseValue(arrayBuffer, dataOffset + offset, dataSize - offset);

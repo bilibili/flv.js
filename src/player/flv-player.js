@@ -24,13 +24,14 @@ import Transmuxer from '../core/transmuxer.js';
 import TransmuxingEvents from '../core/transmuxing-events.js';
 import MSEController from '../core/mse-controller.js';
 import MSEEvents from '../core/mse-events.js';
+import {AudioPlayer} from './audio.js';
 import {ErrorTypes, ErrorDetails} from './player-errors.js';
 import {createDefaultConfig} from '../config.js';
 import {InvalidArgumentException, IllegalStateException} from '../utils/exception.js';
 
 class FlvPlayer {
 
-    constructor(mediaDataSource, config) {
+    constructor(mediaDataSource, config, mediaElement) {
         this.TAG = 'FlvPlayer';
         this._type = 'FlvPlayer';
         this._emitter = new EventEmitter();
@@ -51,9 +52,11 @@ class FlvPlayer {
         this.e = {
             onvLoadedMetadata: this._onvLoadedMetadata.bind(this),
             onvSeeking: this._onvSeeking.bind(this),
+            onvSeek: this._onvSeek.bind(this),
             onvCanPlay: this._onvCanPlay.bind(this),
             onvStalled: this._onvStalled.bind(this),
-            onvProgress: this._onvProgress.bind(this)
+            onvProgress: this._onvProgress.bind(this),
+            onvPlayStateChange: this._onvPlayStateChange.bind(this)
         };
 
         if (self.performance && self.performance.now) {
@@ -135,6 +138,9 @@ class FlvPlayer {
         mediaElement.addEventListener('canplay', this.e.onvCanPlay);
         mediaElement.addEventListener('stalled', this.e.onvStalled);
         mediaElement.addEventListener('progress', this.e.onvProgress);
+        mediaElement.addEventListener('play', this.e.onvPlayStateChange);
+        mediaElement.addEventListener('pause', this.e.onvPlayStateChange);
+        mediaElement.addEventListener('seeked', this.e.onvSeek);
 
         this._msectl = new MSEController(this._config);
 
@@ -173,9 +179,12 @@ class FlvPlayer {
             this._msectl.detachMediaElement();
             this._mediaElement.removeEventListener('loadedmetadata', this.e.onvLoadedMetadata);
             this._mediaElement.removeEventListener('seeking', this.e.onvSeeking);
+            this._mediaElement.removeEventListener('seeked', this.e.onvSeeked);
             this._mediaElement.removeEventListener('canplay', this.e.onvCanPlay);
             this._mediaElement.removeEventListener('stalled', this.e.onvStalled);
             this._mediaElement.removeEventListener('progress', this.e.onvProgress);
+            this._mediaElement.removeEventListener('play', this.e.onvPlayStateChange);
+            this._mediaElement.removeEventListener('pause', this.e.onvPlayStateChange);
             this._mediaElement = null;
         }
         if (this._msectl) {
@@ -206,7 +215,7 @@ class FlvPlayer {
             this._mediaElement.currentTime = 0;
         }
 
-        this._transmuxer = new Transmuxer(this._mediaDataSource, this._config);
+        this._transmuxer = new Transmuxer(this._mediaDataSource, this._config, this._mediaElement);
 
         this._transmuxer.on(TransmuxingEvents.INIT_SEGMENT, (type, is) => {
             this._msectl.appendInitSegment(is);
@@ -432,6 +441,7 @@ class FlvPlayer {
         if (needResume) {
             window.clearInterval(this._progressChecker);
             this._progressChecker = null;
+            this._transmuxer._controller._demuxer._audio.ctx.resume();
             if (needResume) {
                 Log.v(this.TAG, 'Continue loading from paused position');
                 this._transmuxer.resume();
@@ -592,6 +602,10 @@ class FlvPlayer {
         window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);
     }
 
+    _onvSeek(e) {
+        this._transmuxer._controller._demuxer._audio.onSeek(e.target)
+    }
+
     _onvCanPlay(e) {
         this._receivedCanPlay = true;
         this._mediaElement.removeEventListener('canplay', this.e.onvCanPlay);
@@ -603,6 +617,10 @@ class FlvPlayer {
 
     _onvProgress(e) {
         this._checkAndResumeStuckPlayback();
+    }
+
+    _onvPlayStateChange(e) {
+        this._transmuxer._controller._demuxer._audio.playStateChanged(e.target)
     }
 
 }

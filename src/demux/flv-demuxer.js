@@ -22,6 +22,7 @@ import SPSParser from './sps-parser.js';
 import DemuxErrors from './demux-errors.js';
 import MediaInfo from '../core/media-info.js';
 import {IllegalStateException} from '../utils/exception.js';
+import {AudioPlayer} from '../player/audio.js';
 
 function Swap16(src) {
     return (((src >>> 8) & 0xFF) |
@@ -48,8 +49,9 @@ class FLVDemuxer {
     constructor(probeData, config) {
         this.TAG = 'FLVDemuxer';
 
-        this._config = config;
 
+        this._config = config;
+        this._audio = new AudioPlayer();
         this._onError = null;
         this._onMediaInfo = null;
         this._onMetaDataArrived = null;
@@ -112,6 +114,40 @@ class FLVDemuxer {
             (new DataView(buf)).setInt16(0, 256, true);  // little-endian write
             return (new Int16Array(buf))[0] === 256;  // platform-spec read, if equal then LE
         })();
+
+        this._ulawtopcm = new Int16Array([-32124, -31100, -30076, -29052, -28028, -27004, -25980, -24956,
+            -23932, -22908, -21884, -20860, -19836, -18812, -17788, -16764,
+            -15996, -15484, -14972, -14460, -13948, -13436, -12924, -12412,
+            -11900, -11388, -10876, -10364, -9852, -9340, -8828, -8316,
+            -7932, -7676, -7420, -7164, -6908, -6652, -6396, -6140,
+            -5884, -5628, -5372, -5116, -4860, -4604, -4348, -4092,
+            -3900, -3772, -3644, -3516, -3388, -3260, -3132, -3004,
+            -2876, -2748, -2620, -2492, -2364, -2236, -2108, -1980,
+            -1884, -1820, -1756, -1692, -1628, -1564, -1500, -1436,
+            -1372, -1308, -1244, -1180, -1116, -1052, -988, -924,
+            -876, -844, -812, -780, -748, -716, -684, -652,
+            -620, -588, -556, -524, -492, -460, -428, -396,
+            -372, -356, -340, -324, -308, -292, -276, -260,
+            -244, -228, -212, -196, -180, -164, -148, -132,
+            -120, -112, -104, -96, -88, -80, -72, -64,
+            -56, -48, -40, -32, -24, -16, -8, 0,
+            32124, 31100, 30076, 29052, 28028, 27004, 25980, 24956,
+            23932, 22908, 21884, 20860, 19836, 18812, 17788, 16764,
+            15996, 15484, 14972, 14460, 13948, 13436, 12924, 12412,
+            11900, 11388, 10876, 10364, 9852, 9340, 8828, 8316,
+            7932, 7676, 7420, 7164, 6908, 6652, 6396, 6140,
+            5884, 5628, 5372, 5116, 4860, 4604, 4348, 4092,
+            3900, 3772, 3644, 3516, 3388, 3260, 3132, 3004,
+            2876, 2748, 2620, 2492, 2364, 2236, 2108, 1980,
+            1884, 1820, 1756, 1692, 1628, 1564, 1500, 1436,
+            1372, 1308, 1244, 1180, 1116, 1052, 988, 924,
+            876, 844, 812, 780, 748, 716, 684, 652,
+            620, 588, 556, 524, 492, 460, 428, 396,
+            372, 356, 340, 324, 308, 292, 276, 260,
+            244, 228, 212, 196, 180, 164, 148, 132,
+            120, 112, 104, 96, 88, 80, 72, 64,
+            56, 48, 40, 32, 24, 16, 8, 0,
+        ]);
     }
 
     destroy() {
@@ -466,16 +502,20 @@ class FLVDemuxer {
             filepositions: filepositions
         };
     }
+    _parseULawAudioData(arrayBuffer, dataOffset, dataSize, tagTimestamp) {
+        let array = new Uint8Array(arrayBuffer, dataOffset, dataSize);
+        let outputBuffer = new ArrayBuffer(4 * array.length)
+        let outputArray = new Float32Array(outputBuffer, 0, array.length)
+        for (let i=0; i<array.length; i++) {
+            outputArray[i] = this._ulawtopcm[array[i]] / 32767.0;
+        }
+
+        return outputArray
+    }
 
     _parseAudioData(arrayBuffer, dataOffset, dataSize, tagTimestamp) {
         if (dataSize <= 1) {
             Log.w(this.TAG, 'Flv: Invalid audio packet, missing SoundData payload!');
-            return;
-        }
-
-        if (this._hasAudioFlagOverrided === true && this._hasAudio === false) {
-            // If hasAudio: false indicated explicitly in MediaDataSource,
-            // Ignore all the audio packets
             return;
         }
 
@@ -485,7 +525,7 @@ class FLVDemuxer {
         let soundSpec = v.getUint8(0);
 
         let soundFormat = soundSpec >>> 4;
-        if (soundFormat !== 2 && soundFormat !== 10) {  // MP3 or AAC
+        if (soundFormat !== 2 && soundFormat !== 10 && soundFormat !== 8) {  // MP3, AAC, or mu-law
             this._onError(DemuxErrors.CODEC_UNSUPPORTED, 'Flv: Unsupported audio codec idx: ' + soundFormat);
             return;
         }
@@ -620,6 +660,10 @@ class FLVDemuxer {
             let mp3Sample = {unit: data, length: data.byteLength, dts: dts, pts: dts};
             track.samples.push(mp3Sample);
             track.length += data.length;
+        } else if (soundFormat === 8) {
+            let raw_pcm = this._parseULawAudioData(arrayBuffer, dataOffset+1, dataSize-1)
+            let pts = this._timestampBase + tagTimestamp;
+            this._audio.enqueue(raw_pcm, pts)
         }
     }
 

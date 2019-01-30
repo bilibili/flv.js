@@ -30,7 +30,7 @@ import {LoaderStatus, LoaderErrors} from '../io/loader.js';
 // Transmuxing (IO, Demuxing, Remuxing) controller, with multipart support
 class TransmuxingController {
 
-    constructor(mediaDataSource, config) {
+    constructor(mediaDataSource, config, mediaElement) {
         this.TAG = 'TransmuxingController';
         this._emitter = new EventEmitter();
 

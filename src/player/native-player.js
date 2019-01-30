@@ -18,6 +18,7 @@
 
 import EventEmitter from 'events';
 import PlayerEvents from './player-events.js';
+import {AudioPlayer} from './audio.js';
 import {createDefaultConfig} from '../config.js';
 import {InvalidArgumentException, IllegalStateException} from '../utils/exception.js';
 

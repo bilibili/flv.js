@@ -1,3 +1,7 @@
+## Modify
+/src/io/fetch-stream-loader.js: 添加AbortController用来终止fecth请求
+
+
 
 flv.js  [![npm](https://img.shields.io/npm/v/flv.js.svg?style=flat)](https://www.npmjs.com/package/flv.js)
 ======

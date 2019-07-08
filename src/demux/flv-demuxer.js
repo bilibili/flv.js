@@ -46,12 +46,12 @@ function ReadBig32(array, index) {
 
 class FLVDemuxer {
 
-    constructor(probeData, config) {
+    constructor(probeData, config, mediaElement) {
         this.TAG = 'FLVDemuxer';
 
 
         this._config = config;
-        this._audio = new AudioPlayer();
+        this._audio = new AudioPlayer(mediaElement);
         this._onError = null;
         this._onMediaInfo = null;
         this._onMetaDataArrived = null;
@@ -148,9 +148,47 @@ class FLVDemuxer {
             120, 112, 104, 96, 88, 80, 72, 64,
             56, 48, 40, 32, 24, 16, 8, 0,
         ]);
+
+
+        this._alawtopcm = new Int16Array([
+            -5504, -5248, -6016, -5760, -4480, -4224, -4992, -4736,
+            -7552, -7296, -8064, -7808, -6528, -6272, -7040, -6784,
+            -2752, -2624, -3008, -2880, -2240, -2112, -2496, -2368,
+            -3776, -3648, -4032, -3904, -3264, -3136, -3520, -3392,
+            -22016, -20992, -24064, -23040, -17920, -16896, -19968, -18944,
+            -30208, -29184, -32256, -31232, -26112, -25088, -28160, -27136,
+            -11008, -10496, -12032, -11520, -8960, -8448, -9984, -9472,
+            -15104, -14592, -16128, -15616, -13056, -12544, -14080, -13568,
+            -344, -328, -376, -360, -280, -264, -312, -296,
+            -472, -456, -504, -488, -408, -392, -440, -424,
+            -88, -72, -120, -104, -24, -8, -56, -40,
+            -216, -200, -248, -232, -152, -136, -184, -168,
+            -1376, -1312, -1504, -1440, -1120, -1056, -1248, -1184,
+            -1888, -1824, -2016, -1952, -1632, -1568, -1760, -1696,
+            -688, -656, -752, -720, -560, -528, -624, -592,
+            -944, -912, -1008, -976, -816, -784, -880, -848,
+            5504, 5248, 6016, 5760, 4480, 4224, 4992, 4736,
+            7552, 7296, 8064, 7808, 6528, 6272, 7040, 6784,
+            2752, 2624, 3008, 2880, 2240, 2112, 2496, 2368,
+            3776, 3648, 4032, 3904, 3264, 3136, 3520, 3392,
+            22016, 20992, 24064, 23040, 17920, 16896, 19968, 18944,
+            30208, 29184, 32256, 31232, 26112, 25088, 28160, 27136,
+            11008, 10496, 12032, 11520, 8960, 8448, 9984, 9472,
+            15104, 14592, 16128, 15616, 13056, 12544, 14080, 13568,
+            344, 328, 376, 360, 280, 264, 312, 296,
+            472, 456, 504, 488, 408, 392, 440, 424,
+            88, 72, 120, 104, 24, 8, 56, 40,
+            216, 200, 248, 232, 152, 136, 184, 168,
+            1376, 1312, 1504, 1440, 1120, 1056, 1248, 1184,
+            1888, 1824, 2016, 1952, 1632, 1568, 1760, 1696,
+            688, 656, 752, 720, 560, 528, 624, 592,
+            944, 912, 1008, 976, 816, 784, 880, 848,
+        ]);
     }
 
     destroy() {
+        this._audio.destroy();
+        this._audio = null;
         this._mediaInfo = null;
         this._metadata = null;
         this._audioMetadata = null;
@@ -289,7 +327,7 @@ class FLVDemuxer {
 
     _isInitialMetadataDispatched() {
         if (this._hasAudio && this._hasVideo) {  // both audio & video
-            return this._audioInitialMetadataDispatched && this._videoInitialMetadataDispatched;
+            return this._videoInitialMetadataDispatched;
         }
         if (this._hasAudio && !this._hasVideo) {  // audio only
             return this._audioInitialMetadataDispatched;
@@ -504,13 +542,24 @@ class FLVDemuxer {
     }
     _parseULawAudioData(arrayBuffer, dataOffset, dataSize, tagTimestamp) {
         let array = new Uint8Array(arrayBuffer, dataOffset, dataSize);
-        let outputBuffer = new ArrayBuffer(4 * array.length)
-        let outputArray = new Float32Array(outputBuffer, 0, array.length)
-        for (let i=0; i<array.length; i++) {
+        let outputBuffer = new ArrayBuffer(4 * array.length);
+        let outputArray = new Float32Array(outputBuffer, 0, array.length);
+        for (let i = 0; i < array.length; i++) {
             outputArray[i] = this._ulawtopcm[array[i]] / 32767.0;
         }
 
-        return outputArray
+        return outputArray;
+    }
+
+    _parseALawAudioData(arrayBuffer, dataOffset, dataSize, tagTimestamp) {
+        let array = new Uint8Array(arrayBuffer, dataOffset, dataSize);
+        let outputBuffer = new ArrayBuffer(4 * array.length);
+        let outputArray = new Float32Array(outputBuffer, 0, array.length);
+        for (let i = 0; i < array.length; i++) {
+            outputArray[i] = this._alawtopcm[array[i]] / 32767.0;
+        }
+
+        return outputArray;
     }
 
     _parseAudioData(arrayBuffer, dataOffset, dataSize, tagTimestamp) {
@@ -525,7 +574,7 @@ class FLVDemuxer {
         let soundSpec = v.getUint8(0);
 
         let soundFormat = soundSpec >>> 4;
-        if (soundFormat !== 2 && soundFormat !== 10 && soundFormat !== 8) {  // MP3, AAC, or mu-law
+        if (soundFormat !== 2 && soundFormat !== 10 && soundFormat !== 8 && soundFormat !== 7) {  // MP3, AAC, or mu-law
             this._onError(DemuxErrors.CODEC_UNSUPPORTED, 'Flv: Unsupported audio codec idx: ' + soundFormat);
             return;
         }
@@ -661,11 +710,16 @@ class FLVDemuxer {
             track.samples.push(mp3Sample);
             track.length += data.length;
         } else if (soundFormat === 8) {
-            let raw_pcm = this._parseULawAudioData(arrayBuffer, dataOffset+1, dataSize-1)
+            let raw_pcm = this._parseULawAudioData(arrayBuffer, dataOffset + 1, dataSize - 1);
             let pts = this._timestampBase + tagTimestamp;
-            this._audio.enqueue(raw_pcm, pts)
+            this._audio.enqueue(raw_pcm, pts);
+        } else if (soundFormat === 7) {
+            let raw_pcm = this._parseALawAudioData(arrayBuffer, dataOffset + 1, dataSize - 1);
+            let pts = this._timestampBase + tagTimestamp;
+            this._audio.enqueue(raw_pcm, pts);
         }
     }
+    
 
     _parseAACAudioData(arrayBuffer, dataOffset, dataSize) {
         if (dataSize <= 1) {

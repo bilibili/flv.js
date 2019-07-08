@@ -101,8 +101,10 @@
             }
             player = flvjs.createPlayer(mediaDataSource, {
                 enableWorker: false,
-                lazyLoadMaxDuration: 3 * 60,
-                seekType: 'range',
+                lazyLoad: false,
+                lazyLoadRecoverDuration: 0,
+		cors: false,
+                seekType: 'param',
             });
             player.attachMediaElement(element);
             player.load();
@@ -117,11 +119,8 @@
         }
 
         function flv_destroy() {
-            player.pause();
-            player.unload();
-            player.detachMediaElement();
-            player.destroy();
-            player = null;
+            var audio = player._getAudio();
+            audio.initPlayback(document.getElementsByName('videoElement')[0]);
         }
 
         function flv_seekto() {
@@ -171,7 +170,6 @@
                 var checkbox = document.getElementById(field);
                 ls_set(field, checkbox.checked ? '1' : '0');
             }
-            ls_set('hasAudio', false);
             var msURL = document.getElementById('msURL');
             var sURL = document.getElementById('sURL');
             ls_set('msURL', msURL.value);

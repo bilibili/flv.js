@@ -53,9 +53,12 @@ class FlvPlayer {
             onvLoadedMetadata: this._onvLoadedMetadata.bind(this),
             onvSeeking: this._onvSeeking.bind(this),
             onvSeek: this._onvSeek.bind(this),
+            onvVolume: this._onvVolume.bind(this),
+            onvRate: this._onvRate.bind(this),
             onvCanPlay: this._onvCanPlay.bind(this),
             onvStalled: this._onvStalled.bind(this),
             onvProgress: this._onvProgress.bind(this),
+            onvAudioProgress: this._onvAudioProgress.bind(this),
             onvPlayStateChange: this._onvPlayStateChange.bind(this)
         };
 
@@ -138,9 +141,13 @@ class FlvPlayer {
         mediaElement.addEventListener('canplay', this.e.onvCanPlay);
         mediaElement.addEventListener('stalled', this.e.onvStalled);
         mediaElement.addEventListener('progress', this.e.onvProgress);
+        mediaElement.addEventListener('progress', this.e.onvAudioProgress);
         mediaElement.addEventListener('play', this.e.onvPlayStateChange);
         mediaElement.addEventListener('pause', this.e.onvPlayStateChange);
         mediaElement.addEventListener('seeked', this.e.onvSeek);
+        mediaElement.addEventListener('volumechange', this.e.onvVolume);
+        mediaElement.addEventListener('ratechange', this.e.onvRate);
+
 
         this._msectl = new MSEController(this._config);
 
@@ -180,9 +187,12 @@ class FlvPlayer {
             this._mediaElement.removeEventListener('loadedmetadata', this.e.onvLoadedMetadata);
             this._mediaElement.removeEventListener('seeking', this.e.onvSeeking);
             this._mediaElement.removeEventListener('seeked', this.e.onvSeeked);
+            this._mediaElement.removeEventListener('volumechane', this.e.onvVolume);
+            this._mediaElement.removeEventListener('ratechange', this.e.onvRate);
             this._mediaElement.removeEventListener('canplay', this.e.onvCanPlay);
             this._mediaElement.removeEventListener('stalled', this.e.onvStalled);
             this._mediaElement.removeEventListener('progress', this.e.onvProgress);
+            this._mediaElement.removeEventListener('progress', this.e.onvAudioProgress);
             this._mediaElement.removeEventListener('play', this.e.onvPlayStateChange);
             this._mediaElement.removeEventListener('pause', this.e.onvPlayStateChange);
             this._mediaElement = null;
@@ -313,12 +323,38 @@ class FlvPlayer {
         this._mediaElement.volume = value;
     }
 
+    _getAudio() {
+        if (this._transmuxer) {
+            if (this._transmuxer._controller) {
+                if (this._transmuxer._controller._demuxer) {
+                    if (this._transmuxer._controller._demuxer._audio) {
+                        return this._transmuxer._controller._demuxer._audio;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     get muted() {
-        return this._mediaElement.muted;
+        let elementMuted = this._mediaElement.muted;
+        let audio = this._getAudio();
+        if (audio != null) {
+            return audio.isMuted();
+        }
+        return elementMuted;
     }
 
     set muted(muted) {
         this._mediaElement.muted = muted;
+    }
+
+    toggleMute(videoElement) {
+        videoElement.muted = !videoElement.muted;
+        let audio = this._getAudio();
+        if (audio != null) {
+            audio.volumeChanged(videoElement);
+        }
     }
 
     get currentTime() {
@@ -430,12 +466,12 @@ class FlvPlayer {
         for (let i = 0; i < buffered.length; i++) {
             let from = buffered.start(i);
             let to = buffered.end(i);
-            if (currentTime >= from && currentTime < to) {
-                if (currentTime >= to - this._config.lazyLoadRecoverDuration) {
-                    needResume = true;
-                }
-                break;
+            //if (currentTime >= from && currentTime < to) {
+            if (currentTime >= to - this._config.lazyLoadRecoverDuration) {
+                needResume = true;
             }
+            break;
+            //}
         }
 
         if (needResume) {
@@ -561,6 +597,20 @@ class FlvPlayer {
         }
     }
 
+    _onvVolume(e) {
+        let audio = this._getAudio();
+        if (audio != null) {
+            audio.volumeChanged(e.target);
+        }
+    }
+
+    _onvRate(e) {
+        let audio = this._getAudio();
+        if (audio != null) {
+            audio.rateChanged(e.target);
+        }
+    }
+
     _onvSeeking(e) {  // handle seeking request from browser's progress bar
         let target = this._mediaElement.currentTime;
         let buffered = this._mediaElement.buffered;
@@ -603,7 +653,7 @@ class FlvPlayer {
     }
 
     _onvSeek(e) {
-        this._transmuxer._controller._demuxer._audio.onSeek(e.target)
+        this._transmuxer._controller._demuxer._audio.onSeek(e.target);
     }
 
     _onvCanPlay(e) {
@@ -619,8 +669,15 @@ class FlvPlayer {
         this._checkAndResumeStuckPlayback();
     }
 
+    _onvAudioProgress(e) {
+        let audio = this._getAudio();
+        if (audio != null) {
+            audio.onProgressChanged(e.target);
+        }
+    }
+
     _onvPlayStateChange(e) {
-        this._transmuxer._controller._demuxer._audio.playStateChanged(e.target)
+        this._transmuxer._controller._demuxer._audio.playStateChanged(e.target);
     }
 
 }

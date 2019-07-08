@@ -33,6 +33,7 @@ class TransmuxingController {
     constructor(mediaDataSource, config, mediaElement) {
         this.TAG = 'TransmuxingController';
         this._emitter = new EventEmitter();
+        this._mediaElement = mediaElement;
 
         this._config = config;
 
@@ -244,7 +245,7 @@ class TransmuxingController {
             consumed = this._demuxer.parseChunks(data, byteStart);
         } else if ((probeData = FLVDemuxer.probe(data)).match) {
             // Always create new FLVDemuxer
-            this._demuxer = new FLVDemuxer(probeData, this._config);
+            this._demuxer = new FLVDemuxer(probeData, this._config, this._mediaElement);
 
             if (!this._remuxer) {
                 this._remuxer = new MP4Remuxer(this._config);

@@ -38,9 +38,15 @@
         </div>
         <div class="video-container">
             <div>
-                <video name="videoElement" class="centeredVideo" controls autoplay>
+                <video name="videoElement" class="centeredVideo" controls autoplay width="600" height="400">
                     Your browser is too old which doesn't support HTML5 video.
                 </video>
+                <canvas id="my-canvas" width="1280" height="720"></canvas>
+                <input type="range" min="0" max="360" value="0" class="slider" name="azimuth">
+                <input type="range" min="1" max="1000" value="100" class="slider" name="start_dist">
+                <input type="range" min="1" max="1000" value="500" class="slider" name="end_dist">
+                <input type="range" min="1" max="1000" value="50" class="slider" name="nearw">
+                <input type="range" min="1" max="1000" value="500" class="slider" name="farw">
             </div>
         </div>
         <div class="controls">
@@ -55,10 +61,590 @@
     </div>
 
     <script src="../dist/flv.js"></script>
+    <script src="gl-matrix.js"></script>
     
     <script>
         var checkBoxFields = ['isLive', 'withCredentials', 'hasAudio', 'hasVideo'];
         var streamURL, mediaSourceURL;
+
+        var processor = {
+            timerCallback: function() {
+                if (this.video.paused || this.video.ended) {
+                    return;
+                }
+                this.computeFrame();
+                var self = this;
+                setTimeout(function () {
+                    self.timerCallback();
+                }, 1); // roughly 60 frames per second
+            },
+
+            initShaderProgram: function(gl, vsSource, fsSource) {
+                const vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, vsSource);
+                const fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+
+                // Create the shader program
+
+                const shaderProgram = gl.createProgram();
+                gl.attachShader(shaderProgram, vertexShader);
+                gl.attachShader(shaderProgram, fragmentShader);
+                gl.linkProgram(shaderProgram);
+
+                // If creating the shader program failed, alert
+
+                if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+                    alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+                    return null;
+                }
+
+                return shaderProgram;
+            },
+
+            initBuffers: function(gl) {
+                const positionBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+
+                const positions = [
+                    // Front face
+                    0.0, 0.0,  1.0, // BL
+                    0.5, 0.0,  1.0, // MB
+                    0.5, 1.0,  1.0, // MT
+                    1.0, 0.0,  1.0, // BR
+                    1.0, 1.0,  1.0, // TR
+                    0.0, 1.0,  1.0  // TL
+                ];
+
+
+                const indices = [
+                    0, 1, 2,
+                    0, 2, 5,
+                    2, 1, 3,
+                    2, 4, 3
+
+                ];
+
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+                const normalBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+
+                const vertexNormals = [
+                    // Front
+                    0.0,  0.0,  1.0,
+                    0.0,  0.0,  1.0,
+                    0.0,  0.0,  1.0,
+                    0.0,  0.0,  1.0,
+                    0.0,  0.0,  1.0,
+                    0.0,  0.0,  1.0
+                ];
+
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals),
+                    gl.STATIC_DRAW);
+
+                const textureCoordBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+
+
+                const textureCoordinates = [
+                    // Front
+                    0.0,  0.0,
+                    0.5, 0.0,
+                    0.5, 1.0,
+                    1.0,  0.0,
+                    1.0,  1.0,
+                    0.0,  1.0
+                ];
+
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordinates),
+                    gl.STATIC_DRAW);
+
+                const indexBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+
+                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
+                    new Uint16Array(indices), gl.STATIC_DRAW);
+
+                return {
+                    position: positionBuffer,
+                    normal: normalBuffer,
+                    textureCoord: textureCoordBuffer,
+                    indices: indexBuffer,
+                };
+            },
+
+            //
+            // Initialize a texture.
+            //
+            initTexture: function(gl, url) {
+                const texture = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                const level = 0;
+                const internalFormat = gl.RGBA;
+                const width = 1;
+                const height = 1;
+                const border = 0;
+                const srcFormat = gl.RGBA;
+                const srcType = gl.UNSIGNED_BYTE;
+                const pixel = new Uint8Array([0, 0, 255, 255]);  // opaque blue
+                gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                    width, height, border, srcFormat, srcType,
+                    pixel);
+
+                // Turn off mips and set  wrapping to clamp to edge so it
+                // will work regardless of the dimensions of the video.
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+                return texture;
+            },
+
+            initTransparentTexture: function(gl, url) {
+                const texture = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                const level = 0;
+                const internalFormat = gl.RGBA;
+                const width = 1;
+                const height = 1;
+                const border = 0;
+                const srcFormat = gl.RGBA;
+                const srcType = gl.UNSIGNED_BYTE;
+                const pixel = new Uint8Array([255, 255, 255, 60]);  // opaque blue
+                gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                    width, height, border, srcFormat, srcType,
+                    pixel);
+
+                // Turn off mips and set  wrapping to clamp to edge so it
+                // will work regardless of the dimensions of the video.
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+                return texture;
+            },
+
+            //
+            // copy the video texture
+            //
+            updateTexture: function(gl, texture, video) {
+                const level = 0;
+                const internalFormat = gl.RGBA;
+                const srcFormat = gl.RGBA;
+                const srcType = gl.UNSIGNED_BYTE;
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                    srcFormat, srcType, video);
+            },
+
+            isPowerOf2: function(value) {
+                return (value & (value - 1)) == 0;
+            },
+
+            loadShader: function(gl, type, source) {
+                const shader = gl.createShader(type);
+
+                // Send the source to the shader object
+
+                gl.shaderSource(shader, source);
+
+                // Compile the shader program
+
+                gl.compileShader(shader);
+
+                // See if it compiled successfully
+
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+                    gl.deleteShader(shader);
+                    return null;
+                }
+
+                return shader;
+            },
+
+            refreshVariables: function(gl) {
+                this.azimuth = document.getElementsByName('azimuth')[0].value * 0.0174533;
+                this.start_dist = document.getElementsByName('start_dist')[0].value/1000.0;
+                this.end_dist = document.getElementsByName('end_dist')[0].value/1000.0;
+                this.nearw = document.getElementsByName('nearw')[0].value/1000.0;
+                this.farw = document.getElementsByName('farw')[0].value/1000.0;
+                this.dir_x = Math.sin(this.azimuth);
+                this.dir_y = Math.cos(this.azimuth);
+                this.near_center_x = this.dir_x * this.start_dist;
+                this.near_center_y = this.dir_y * this.start_dist;
+                this.far_center_x = this.dir_x * this.end_dist;
+                this.far_center_y = this.dir_y * this.end_dist;
+                this.near_hwidth = this.nearw * 0.5;
+                this.far_hwidth = this.farw * 0.5;
+                this.norm_x = this.dir_y
+                this.norm_y = -this.dir_x
+
+                this.frustum = [
+                    (this.near_center_x - this.norm_x * this.near_hwidth + 0.5), (this.near_center_y - this.norm_y * this.near_hwidth + 0.5),// bottom left
+                    (this.near_center_x + 0.5), (this.near_center_y + 0.5),// bottom left
+                    (this.far_center_x + 0.5), (this.far_center_y + 0.5),// bottom left
+                    (this.near_center_x + this.norm_x * this.near_hwidth + 0.5), (this.near_center_y + this.norm_y * this.near_hwidth + 0.5),// bottom right
+                    (this.far_center_x + this.norm_x * this.far_hwidth + 0.5), (this.far_center_y + this.norm_y * this.far_hwidth + 0.5),// top right
+                    (this.far_center_x - this.norm_x * this.far_hwidth + 0.5), (this.far_center_y - this.norm_y * this.far_hwidth + 0.5),
+                ];
+
+
+                this.frustum_positions = [
+                    (this.near_center_x + this.norm_x * this.near_hwidth + 0.5), (this.near_center_y + this.norm_y * this.near_hwidth + 0.5), 1,// bottom right
+                    (this.near_center_x + 0.5), (this.near_center_y + 0.5), 1,// mid bottom
+                    (this.far_center_x + 0.5), (this.far_center_y + 0.5), 1,// mid top
+                    (this.near_center_x - this.norm_x * this.near_hwidth + 0.5), (this.near_center_y - this.norm_y * this.near_hwidth + 0.5), 1,// bottom left
+                    (this.far_center_x - this.norm_x * this.far_hwidth + 0.5), (this.far_center_y - this.norm_y * this.far_hwidth + 0.5), 1,// top right
+                    (this.far_center_x + this.norm_x * this.far_hwidth + 0.5), (this.far_center_y + this.norm_y * this.far_hwidth + 0.5), 1
+                ];
+
+
+                if (!this.frustum_verts)
+                    this.frustum_verts = gl.createBuffer();
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_verts);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.frustum), gl.STATIC_DRAW);
+
+                if (!this.frustum_vert_pos)
+                    this.frustum_vert_pos = gl.createBuffer()
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_vert_pos);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.frustum_positions), gl.STATIC_DRAW);
+
+
+                //console.log(this.frustum);
+                //console.log(this.frustum_positions);
+            },
+
+            doLoad: function() {
+
+
+
+                this.video = document.getElementsByName("videoElement")[0];
+                this.c1 = document.getElementById("my-canvas");
+                this.gl = this.c1.getContext('webgl');
+
+                const gl = this.gl;
+                const vsSource = `
+                    attribute vec4 aVertexPosition;
+                    attribute vec3 aVertexNormal;
+                    attribute vec2 aTextureCoord;
+                    uniform mat4 uNormalMatrix;
+                    uniform mat4 uModelViewMatrix;
+                    uniform mat4 uProjectionMatrix;
+                    varying highp vec2 vTextureCoord;
+                    varying highp vec3 vLighting;
+                    void main(void) {
+                      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+                      vTextureCoord = aTextureCoord;
+                      // Apply lighting effect
+                      highp vec3 ambientLight = vec3(0.3, 0.3, 0.3);
+                      highp vec3 directionalLightColor = vec3(1, 1, 1);
+                      highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
+                      highp vec4 transformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
+                      highp float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
+                      vLighting = ambientLight + (directionalLightColor * directional);
+                    }
+                  `;
+
+                                // Fragment shader program
+
+                                const fsSource = `
+                    varying highp vec2 vTextureCoord;
+                    varying highp vec3 vLighting;
+                    uniform sampler2D uSampler;
+                    void main(void) {
+                      highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
+                      gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+                    }
+                  `;
+
+                // Initialize a shader program; this is where all the lighting
+                // for the vertices and so forth is established.
+                this.shaderProgram = this.initShaderProgram(gl, vsSource, fsSource);
+
+                // Collect all the info needed to use the shader program.
+                // Look up which attributes our shader program is using
+                // for aVertexPosition, aVertexNormal, aTextureCoord,
+                // and look up uniform locations.
+                this.programInfo = {
+                    program: this.shaderProgram,
+                    attribLocations: {
+                        vertexPosition: gl.getAttribLocation(this.shaderProgram, 'aVertexPosition'),
+                        vertexNormal: gl.getAttribLocation(this.shaderProgram, 'aVertexNormal'),
+                        textureCoord: gl.getAttribLocation(this.shaderProgram, 'aTextureCoord'),
+                    },
+                    uniformLocations: {
+                        projectionMatrix: gl.getUniformLocation(this.shaderProgram, 'uProjectionMatrix'),
+                        modelViewMatrix: gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
+                        normalMatrix: gl.getUniformLocation(this.shaderProgram, 'uNormalMatrix'),
+                        uSampler: gl.getUniformLocation(this.shaderProgram, 'uSampler'),
+                    },
+                };
+
+                // Here's where we call the routine that builds all the
+                // objects we'll be drawing.
+                this.buffers = this.initBuffers(gl);
+
+                this.texture = this.initTexture(gl);
+                this.transparent_texture = this.initTransparentTexture(gl);
+
+                this.refreshVariables(this.gl);
+                var self = this;
+                document.getElementsByName('azimuth')[0].addEventListener('input', function() {
+                    self.refreshVariables(self.gl);
+                });
+                document.getElementsByName('start_dist')[0].addEventListener('input', function() {
+                    self.refreshVariables(self.gl);
+                });
+                document.getElementsByName('end_dist')[0].addEventListener('input', function() {
+                    self.refreshVariables(self.gl);
+                });
+                document.getElementsByName('nearw')[0].addEventListener('input', function() {
+                    self.refreshVariables(self.gl);
+                });
+                document.getElementsByName('farw')[0].addEventListener('input', function() {
+                    self.refreshVariables(self.gl);
+                });
+
+
+
+                this.video.addEventListener("play", function() {
+                    self.width = self.video.width;
+                    self.height = self.video.height;
+                    self.timerCallback();
+                }, false);
+            },
+
+            computeFrame: function() {
+                this.updateTexture(this.gl, this.texture, this.video);
+
+                const gl = this.gl;
+                gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
+                gl.clearDepth(1.0);                 // Clear everything
+                gl.enable(gl.DEPTH_TEST);           // Enable depth testing
+                gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
+                gl.enable(gl.BLEND);
+                gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+                // Clear the canvas before we start drawing on it.
+
+                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+                // Create a perspective matrix, a special matrix that is
+                // used to simulate the distortion of perspective in a camera.
+                // Our field of view is 45 degrees, with a width/height
+                // ratio that matches the display size of the canvas
+                // and we only want to see objects between 0.1 units
+                // and 100 units away from the camera.
+
+                const fieldOfView = 45 * Math.PI / 180;   // in radians
+                const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+                const zNear = 0.1;
+                const zFar = 100.0;
+                const projectionMatrix = mat4.create();
+
+                // note: glmatrix.js always has the first argument
+                // as the destination to receive the result.
+
+                mat4.ortho(projectionMatrix, -1, 1, -1, 1, 0.1, 100);
+
+                // Set the drawing position to the "identity" point, which is
+                // the center of the scene.
+                modelViewMatrix = mat4.create();
+
+                // Now move the drawing position a bit to where we want to
+                // start drawing the square.
+                const cubeRotation = 0;
+                mat4.translate(modelViewMatrix,     // destination matrix
+                    modelViewMatrix,     // matrix to translate
+                    [-0, -0, -2.0]);  // amount to translate
+                const normalMatrix = mat4.create();
+
+                mat4.invert(normalMatrix, modelViewMatrix);
+                mat4.transpose(normalMatrix, normalMatrix);
+
+                // Tell WebGL how to pull out the positions from the position
+                // buffer into the vertexPosition attribute
+                {
+                    const numComponents = 3;
+                    const type = gl.FLOAT;
+                    const normalize = false;
+                    const stride = 0;
+                    const offset = 0;
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.position);
+                    gl.vertexAttribPointer(
+                        this.programInfo.attribLocations.vertexPosition,
+                        numComponents,
+                        type,
+                        normalize,
+                        stride,
+                        offset);
+                    gl.enableVertexAttribArray(
+                        this.programInfo.attribLocations.vertexPosition);
+                }
+
+                // Tell WebGL how to pull out the texture coordinates from
+                // the texture coordinate buffer into the textureCoord attribute.
+                {
+                    const numComponents = 2;
+                    const type = gl.FLOAT;
+                    const normalize = false;
+                    const stride = 0;
+                    const offset = 0;
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_verts);
+                    gl.vertexAttribPointer(
+                        this.programInfo.attribLocations.textureCoord,
+                        numComponents,
+                        type,
+                        normalize,
+                        stride,
+                        offset);
+                    gl.enableVertexAttribArray(
+                        this.programInfo.attribLocations.textureCoord);
+                }
+
+                // Tell WebGL how to pull out the normals from
+                // the normal buffer into the vertexNormal attribute.
+                {
+                    const numComponents = 3;
+                    const type = gl.FLOAT;
+                    const normalize = false;
+                    const stride = 0;
+                    const offset = 0;
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.normal);
+                    gl.vertexAttribPointer(
+                        this.programInfo.attribLocations.vertexNormal,
+                        numComponents,
+                        type,
+                        normalize,
+                        stride,
+                        offset);
+                    gl.enableVertexAttribArray(
+                        this.programInfo.attribLocations.vertexNormal);
+                }
+
+                // Tell WebGL which indices to use to index the vertices
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.indices);
+
+                // Tell WebGL to use our program when drawing
+
+                gl.useProgram(this.programInfo.program);
+
+                // Set the shader uniforms
+
+                gl.uniformMatrix4fv(
+                    this.programInfo.uniformLocations.projectionMatrix,
+                    false,
+                    projectionMatrix);
+                gl.uniformMatrix4fv(
+                    this.programInfo.uniformLocations.modelViewMatrix,
+                    false,
+                    modelViewMatrix);
+                gl.uniformMatrix4fv(
+                    this.programInfo.uniformLocations.normalMatrix,
+                    false,
+                    normalMatrix);
+
+                // Specify the texture to map onto the faces.
+
+                // Tell WebGL we want to affect texture unit 0
+                gl.activeTexture(gl.TEXTURE0);
+
+                // Bind the texture to texture unit 0
+                gl.bindTexture(gl.TEXTURE_2D, this.texture);
+
+                // Tell the shader we bound the texture to texture unit 0
+                gl.uniform1i(this.programInfo.uniformLocations.uSampler, 0);
+
+                {
+                    const vertexCount = 6;
+                    const type = gl.UNSIGNED_SHORT;
+                    const offset = 0;
+
+
+                    gl.drawElements(gl.TRIANGLES, 12, type, offset);
+                    modelViewMatrix = mat4.create();
+                    mat4.translate(modelViewMatrix,     // destination matrix
+                        modelViewMatrix,     // matrix to translate
+                        [-1, -1 , -2.0]);  // amount to translate
+                    const normalMatrix = mat4.create();
+
+                    mat4.invert(normalMatrix, modelViewMatrix);
+                    gl.uniformMatrix4fv(
+                        this.programInfo.uniformLocations.modelViewMatrix,
+                        false,
+                        modelViewMatrix);
+
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.textureCoord);
+                    gl.vertexAttribPointer(
+                        this.programInfo.attribLocations.textureCoord,
+                        2,
+                        gl.FLOAT,
+                        false,
+                        0,
+                        0);
+                    gl.enableVertexAttribArray(
+                        this.programInfo.attribLocations.textureCoord);
+
+                    gl.drawElements(gl.TRIANGLES, 12, type, offset);
+
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_verts);
+                    gl.vertexAttribPointer(
+                        this.programInfo.attribLocations.textureCoord,
+                        2,
+                        gl.FLOAT,
+                        false,
+                        0,
+                        0);
+                    gl.enableVertexAttribArray(
+                        this.programInfo.attribLocations.textureCoord);
+
+
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_vert_pos);
+                    gl.vertexAttribPointer(
+                        this.programInfo.attribLocations.vertexPosition,
+                        3,
+                        gl.FLOAT,
+                        false,
+                        0,
+                        0);
+                    gl.enableVertexAttribArray(
+                        this.programInfo.attribLocations.vertexPosition);
+
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_verts);
+                    gl.vertexAttribPointer(
+                        this.programInfo.attribLocations.textureCoord,
+                        2,
+                        gl.FLOAT,
+                        false,
+                        0,
+                        0);
+                    gl.enableVertexAttribArray(
+                        this.programInfo.attribLocations.textureCoord);
+                    gl.bindTexture(gl.TEXTURE_2D, this.transparent_texture);
+                    gl.drawElements(gl.TRIANGLES, 12    , type, offset);
+
+
+
+
+                }
+
+
+
+
+
+
+                // start "frustum" calc
+
+
+                // Update the rotation for the next draw
+
+                return;
+            }
+        };
 
         function flv_load() {
             console.log('isSupported: ' + flvjs.isSupported());
@@ -108,6 +694,7 @@
             });
             player.attachMediaElement(element);
             player.load();
+            processor.doLoad();
         }
 
         function flv_start() {

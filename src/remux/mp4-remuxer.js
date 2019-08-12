@@ -270,7 +270,6 @@ class MP4Remuxer {
             mdatBytes = 8 + track.length;
         }
 
-
         let lastSample = null;
 
         // Pop the lastSample and waiting for stash

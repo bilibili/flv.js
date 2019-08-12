@@ -677,7 +677,10 @@ class FlvPlayer {
     }
 
     _onvPlayStateChange(e) {
-        this._transmuxer._controller._demuxer._audio.playStateChanged(e.target);
+        let audio = this._getAudio();
+        if (audio != null) {
+            audio.playStateChanged(e.target);
+        }
     }
 
 }

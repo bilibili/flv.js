@@ -4,7 +4,7 @@ const SAMPLE_RATE = 8000;
 export class AudioPlayer {
     constructor(mediaElement) {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)({'sampleRate': SAMPLE_RATE, 'latencyHint': 'interactive'});
-        this.is_safari = this.ctx.sampleRate != SAMPLE_RATE;
+        this.requires_upsample = this.ctx.sampleRate != SAMPLE_RATE;
         this.gain = this.ctx.createGain();
         this.gain.connect(this.ctx.destination);
 
@@ -144,7 +144,7 @@ export class AudioPlayer {
 
         let buf = null;
 
-        if (this.is_safari) {
+        if (this.requires_upsample) {
 
             buf = this.ctx.createBuffer(1, total * 4, SAMPLE_RATE * 4);
             let channel = buf.getChannelData(0);

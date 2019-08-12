@@ -193,7 +193,7 @@ class MozChunkedLoader extends BaseLoader {
 
         if (this._contentLength && e.loaded < this._contentLength) {
             type = LoaderErrors.EARLY_EOF;
-            info = {code: -1, msg: 'Moz-Chunked stream meet Early-Eof'};
+            info = {code: -1, msg: 'RangeLoader meet Early-Eof'};
         } else {
             type = LoaderErrors.EXCEPTION;
             info = {code: -1, msg: e.constructor.name + ' ' + e.type};

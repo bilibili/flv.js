@@ -290,7 +290,7 @@ class MSStreamLoader extends BaseLoader {
 
         if (this._contentLength && this._receivedLength < this._contentLength) {
             type = LoaderErrors.EARLY_EOF;
-            info = {code: -1, msg: 'MSStream meet Early-Eof'};
+            info = {code: -1, msg: 'RangeLoader meet Early-Eof'};
         } else {
             type = LoaderErrors.EARLY_EOF;
             info = {code: -1, msg: e.constructor.name + ' ' + e.type};

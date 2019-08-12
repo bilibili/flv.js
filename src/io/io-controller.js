@@ -623,9 +623,12 @@ class IOController {
                         return;
                     }
                     // else: We don't know totalLength, throw UnrecoverableEarlyEof
+                } else {
+                    if (this._onComplete) {
+                        this._onComplete(this.extraData);
+                        return;
+                    }
                 }
-                // live stream: throw UnrecoverableEarlyEof error to upper-layer
-                type = LoaderErrors.UNRECOVERABLE_EARLY_EOF;
                 break;
             }
             case LoaderErrors.UNRECOVERABLE_EARLY_EOF:

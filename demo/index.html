@@ -38,15 +38,42 @@
         </div>
         <div class="video-container">
             <div>
-                <video name="videoElement" class="centeredVideo" controls autoplay width="600" height="400">
+                <video name="videoElement" class="centeredVideo" loop controls autoplay width="60" height="40">
                     Your browser is too old which doesn't support HTML5 video.
                 </video>
-                <canvas id="my-canvas" width="1280" height="720"></canvas>
-                <input type="range" min="0" max="360" value="0" class="slider" name="azimuth">
-                <input type="range" min="1" max="1000" value="100" class="slider" name="start_dist">
-                <input type="range" min="1" max="1000" value="500" class="slider" name="end_dist">
-                <input type="range" min="1" max="1000" value="50" class="slider" name="nearw">
-                <input type="range" min="1" max="1000" value="500" class="slider" name="farw">
+                <div>
+                <canvas id="canvas" width="1000" height="1500"></canvas>
+                    <div>
+                        <input type="checkbox" name="show_original" checked hidden>
+                        <table>
+
+                            <tr>
+                                <td>azimuth</td><td><input type="range" min="0" max="360" value="0" class="slider" name="azimuth" style="width:400px"><output name="azimuth_output">0</output></td>
+                            </tr>
+                            <tr>
+                                <td>lens</td><td><input type="range" min="0" max="2000" value="110" class="slider" name="lens_factor" style="width:400px"><output name="lens_factor_output">1.1</output></td>
+                            </tr>
+                            <tr>
+                                <td>distance</td><td><input type="range" min="0" max="1000" value="500" class="slider" name="front_clip" style="width:400px"><output name="front_clip_output">0.0</output></td>
+                            </tr>
+                            <tr>
+                                <td>fov</td><td><input type="range" min="0" max="360" value="90" class="slider" name="fov" style="width:400px"><output name="fov_output">90</output></td>
+                            </tr>
+                            <tr>
+                                <td>radius</td><td><input type="range" min="0" max="1200" value="500" class="slider" name="outer_radius" style="width:400px"><output name="outer_radius_output">0.5</output></td>
+                            </tr>
+                            <tr>
+                                <td>lens aspect ratio</td><td><input type="range" min="500" max="2000" value="1000" class="slider" name="lens_aspect" style="width:400px"><output name="lens_aspect_output">1.0</output></td>
+                            </tr>
+                            <tr>
+                                <td>output scale Y</td><td><input type="range" min="0" max="1000" value="1000" class="slider" name="output_scale" style="width:400px"><output name="output_scale_output">1.0</output></td>
+                            </tr>
+                            <tr>
+                                <td>output scale X</td><td><input type="range" min="0" max="1000" value="1000" class="slider" name="output_scale_x" style="width:400px"><output name="output_scale_output_x">1.0</output></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="controls">
@@ -105,15 +132,27 @@
                 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
 
-                const positions = [
-                    // Front face
-                    0.0, 0.0,  1.0, // BL
-                    0.5, 0.0,  1.0, // MB
-                    0.5, 1.0,  1.0, // MT
-                    1.0, 0.0,  1.0, // BR
-                    1.0, 1.0,  1.0, // TR
-                    0.0, 1.0,  1.0  // TL
-                ];
+                var width = 1.7;
+                var height = 2.0;
+                var halfw = width/2.0;
+                var halfh = height/2.0;
+
+                const positions = [ -halfw, -halfh, 1.0,
+                0.0, -halfh, 1.0,
+                0.0, halfh, 1.0,
+                halfw, -halfh, 1.0,
+                halfw, halfh, 1.0,
+                -halfw, halfh, 1.0];
+//
+//                const positions = [
+//                    // Front face
+//                    -1.0, -1.0,  1.0, // BL
+//                    0.0, -1.0,  1.0, // MB
+//                    0.0, 1.0,  1.0, // MT
+//                    1.0, -1.0,  1.0, // BR
+//                    1.0, 1.0,  1.0, // TR
+//                    -1.0, 1.0,  1.0  // TL
+//                ];
 
 
                 const indices = [
@@ -126,35 +165,16 @@
 
                 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
-                const normalBuffer = gl.createBuffer();
-                gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-
-                const vertexNormals = [
-                    // Front
-                    0.0,  0.0,  1.0,
-                    0.0,  0.0,  1.0,
-                    0.0,  0.0,  1.0,
-                    0.0,  0.0,  1.0,
-                    0.0,  0.0,  1.0,
-                    0.0,  0.0,  1.0
-                ];
-
-                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexNormals),
-                    gl.STATIC_DRAW);
-
                 const textureCoordBuffer = gl.createBuffer();
                 gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
 
 
-                const textureCoordinates = [
-                    // Front
-                    0.0,  0.0,
-                    0.5, 0.0,
-                    0.5, 1.0,
-                    1.0,  0.0,
-                    1.0,  1.0,
-                    0.0,  1.0
-                ];
+                const textureCoordinates = [0, 0,
+                    0.5, 0,
+                    0.5, 1,
+                    1, 0,
+                    1, 1,
+                    0, 1];//[-0.5, -0.5, 0, -0.5, 0, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5];
 
                 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordinates),
                     gl.STATIC_DRAW);
@@ -168,7 +188,6 @@
 
                 return {
                     position: positionBuffer,
-                    normal: normalBuffer,
                     textureCoord: textureCoordBuffer,
                     indices: indexBuffer,
                 };
@@ -265,30 +284,72 @@
             },
 
             refreshVariables: function(gl) {
-                this.azimuth = document.getElementsByName('azimuth')[0].value * 0.0174533;
-                this.start_dist = document.getElementsByName('start_dist')[0].value/1000.0;
-                this.end_dist = document.getElementsByName('end_dist')[0].value/1000.0;
-                this.nearw = document.getElementsByName('nearw')[0].value/1000.0;
-                this.farw = document.getElementsByName('farw')[0].value/1000.0;
-                this.dir_x = Math.sin(this.azimuth);
-                this.dir_y = Math.cos(this.azimuth);
-                this.near_center_x = this.dir_x * this.start_dist;
-                this.near_center_y = this.dir_y * this.start_dist;
-                this.far_center_x = this.dir_x * this.end_dist;
-                this.far_center_y = this.dir_y * this.end_dist;
-                this.near_hwidth = this.nearw * 0.5;
-                this.far_hwidth = this.farw * 0.5;
-                this.norm_x = this.dir_y
-                this.norm_y = -this.dir_x
 
-                this.frustum = [
-                    (this.near_center_x - this.norm_x * this.near_hwidth + 0.5), (this.near_center_y - this.norm_y * this.near_hwidth + 0.5),// bottom left
-                    (this.near_center_x + 0.5), (this.near_center_y + 0.5),// bottom left
-                    (this.far_center_x + 0.5), (this.far_center_y + 0.5),// bottom left
-                    (this.near_center_x + this.norm_x * this.near_hwidth + 0.5), (this.near_center_y + this.norm_y * this.near_hwidth + 0.5),// bottom right
-                    (this.far_center_x + this.norm_x * this.far_hwidth + 0.5), (this.far_center_y + this.norm_y * this.far_hwidth + 0.5),// top right
-                    (this.far_center_x - this.norm_x * this.far_hwidth + 0.5), (this.far_center_y - this.norm_y * this.far_hwidth + 0.5),
-                ];
+                if (!this.azimuth_override)
+                    this.azimuth = document.getElementsByName('azimuth')[0].value * 0.0174533;
+                this.lens_factor = document.getElementsByName('lens_factor')[0].value / 1000.0;
+                this.lens_aspect = document.getElementsByName('lens_aspect')[0].value / 1000.0;
+                this.front_clip = document.getElementsByName('front_clip')[0].value / 1000.0 - 0.5;
+                this.fov = document.getElementsByName('fov')[0].value * 0.0174533;
+                this.outer_radius = document.getElementsByName('outer_radius')[0].value / 1000.0;
+                this.show_original = document.getElementsByName('show_original')[0].checked;
+                this.y_scale = document.getElementsByName('output_scale')[0].value / 1000.0;
+                this.x_scale = document.getElementsByName('output_scale_x')[0].value / 1000.0;
+
+
+//                var canvas = document.createElement('canvas');
+//                canvas.width = this.video.videoWidth;
+//                canvas.height = this.video.videoHeight;
+//                var context = canvas.getContext('2d');
+//
+//                context.drawImage(this.video, 0, 0);
+//                console.log(canvas.toDataURL("image/png"));
+//                if (this.video.videoWidth > 0) {
+//
+//                    var theData = context.getImageData(0, 0, this.video.videoWidth, this.video.videoHeight);
+//
+//
+//                    var x = 0;
+//                    var y = 300;
+//
+//                    var getLuminosity = function(data, x, y) {
+//                        var idx = (i + y * this.video.videoWidth) * 4;
+//                        var red = theData.data[idx + 0];
+//                        var green = theData.data[idx + 1];
+//                        var blue = theData.data[idx + 2];
+//                        var alpha = theData.data[idx + 3];
+//
+//                        return (red + green + blue) / 255 * 3;
+//                    }
+//
+//                    for (var i = 0; i < this.video.videoWidth/2.0; i++) {
+//                        var lumin = getLuminosity(theData.data, )
+//                        console.log("Color: X: " + i + " Y: " + y + "(" + red + "," + green + "," + blue + "," + alpha + ")");
+//                    }
+//                }
+
+
+                this.near_width = this.lens_factor;
+
+//                this.frustum = [
+//                    (this.near_center_x - this.norm_x * this.near_hwidth + 0.5), (this.near_center_y - this.norm_y * this.near_hwidth + 0.5),// bottom left
+//                    (this.near_center_x + 0.5), (this.near_center_y + 0.5),// bottom left
+//                    (this.far_center_x + 0.5), (this.far_center_y + 0.5),// bottom left
+//                    (this.near_center_x + this.norm_x * this.near_hwidth + 0.5), (this.near_center_y + this.norm_y * this.near_hwidth + 0.5),// bottom right
+//                    (this.far_center_x + this.norm_x * this.far_hwidth + 0.5), (this.far_center_y + this.norm_y * this.far_hwidth + 0.5),// top right
+//                    (this.far_center_x - this.norm_x * this.far_hwidth + 0.5), (this.far_center_y - this.norm_y * this.far_hwidth + 0.5),
+//                ];
+
+                this.frustum = [0, 0,
+                0.5, 0,
+                0.5, 1,
+                1, 0,
+                1, 1,
+                0, 1];
+
+                //this.frustum = [-0.5, -0.5, 0, -0.5, 0, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5];
+
+                this.extents = [this.nearw, this.start_dist, this.farw, this.end_dist]
 
 
                 this.frustum_positions = [
@@ -321,9 +382,37 @@
             doLoad: function() {
 
 
+                document.onkeydown = checkKey;
+                var self = this;
+                function checkKey(e) {
 
+                    e = e || window.event;
+
+                    if (e.keyCode == '38') {
+                        // up arrow
+                        document.getElementsByName('front_clip')[0].value = document.getElementsByName('front_clip')[0].value + 1;
+                        self.refreshVariables(self.gl);
+                    }
+                    else if (e.keyCode == '40') {
+                        // down arrow
+                        document.getElementsByName('front_clip')[0].value = document.getElementsByName('front_clip')[0].value - 1;
+                        self.refreshVariables(self.gl);
+                    }
+                    else if (e.keyCode == '37') {
+                        document.getElementsByName('azimuth')[0].value = document.getElementsByName('azimuth')[0].value - 1;
+                        self.refreshVariables(self.gl);
+                        console.log("left");
+                    }
+                    else if (e.keyCode == '39') {
+                        // right arrow
+                        document.getElementsByName('azimuth')[0].value = document.getElementsByName('azimuth')[0].value + 1;
+                        console.log("right " + document.getElementsByName('azimuth')[0].value);
+                        self.refreshVariables(self.gl);
+                    }
+
+                }
                 this.video = document.getElementsByName("videoElement")[0];
-                this.c1 = document.getElementById("my-canvas");
+                this.c1 = document.getElementById("canvas");
                 this.gl = this.c1.getContext('webgl');
 
                 const gl = this.gl;
@@ -334,32 +423,127 @@
                     uniform mat4 uNormalMatrix;
                     uniform mat4 uModelViewMatrix;
                     uniform mat4 uProjectionMatrix;
+                    uniform vec4 extents;
+                    uniform highp float azimuth;
+
                     varying highp vec2 vTextureCoord;
                     varying highp vec3 vLighting;
                     void main(void) {
                       gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
                       vTextureCoord = aTextureCoord;
-                      // Apply lighting effect
-                      highp vec3 ambientLight = vec3(0.3, 0.3, 0.3);
-                      highp vec3 directionalLightColor = vec3(1, 1, 1);
-                      highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
-                      highp vec4 transformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
-                      highp float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
-                      vLighting = ambientLight + (directionalLightColor * directional);
                     }
                   `;
 
                                 // Fragment shader program
 
                                 const fsSource = `
-                    varying highp vec2 vTextureCoord;
-                    varying highp vec3 vLighting;
-                    uniform sampler2D uSampler;
-                    void main(void) {
-                      highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
-                      gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
-                    }
-                  `;
+varying highp vec2 vTextureCoord;
+ uniform sampler2D uSampler;
+ uniform highp float azimuth;
+ uniform highp float lens_factor;
+ uniform highp float lens_aspect_ratio;
+ uniform highp float front_clip;
+ uniform highp float near_width;
+ uniform highp float fov;
+ uniform highp float outer_radius;
+ uniform bool show_original;
+ uniform bool draw_debug;
+
+highp vec4 drawCircle(in highp vec2 center, in highp float radius, in highp vec2 uv, in highp vec4 circleColor, in highp vec4 color) {
+   highp float result = length(uv-center);
+    if (result - radius < 0.001 && result - radius > - 0.001) {
+        return circleColor;
+    } else {
+        return color;
+    }
+}
+
+highp vec4 drawLine(in highp vec2 a, in highp vec2 b, in highp vec2 c, in highp vec4 color) {
+    highp float res;
+    res = (a.x - c.x) * (b.y - c.y) - (a.y - c.y) * (b.x - c.x);
+    if(res < 0.001 && res > -0.001) {
+        return vec4(1.0, 0, 0, 1.0);
+    } else{
+        return color;
+    }
+}
+
+highp vec2 rotate(in vec2 vec, in highp float radians) {
+    highp vec2 dir = vec2(sin(radians), cos(radians));
+
+    return vec2(vec.x * dir.y - vec.y * dir.x, vec.x * dir.x + vec.y * dir.y);
+}
+
+highp vec2 sphereIntersect( in vec2 rayOrigin, in vec2 rayDirection, highp float radius, in vec2 center )
+{
+    highp vec2 oc = rayOrigin-center;
+    highp float b = dot( oc, rayDirection );
+    highp float c = dot( oc, oc ) - radius*radius;
+    highp float h = b*b - c;
+    if( h<0.0 ) return vec2(-1.0); // no intersection
+    h = sqrt( h );
+    return vec2( -b-h, -b+h );
+}
+
+void main(void)
+{
+	highp vec2 uv = vTextureCoord;;
+
+    bool flip = false;
+    highp float aspect_ratio = lens_aspect_ratio;
+    highp vec2 dir = vec2(sin(azimuth), cos(azimuth)); // calculate a direction based on given azimuth
+    highp vec2 pos = vec2(0.5, 0.5); // calculate center of our frustum
+    highp float radius = (lens_factor/2.0) + ((near_width*near_width) / (8.0 * lens_factor)); // calculate our inner circle radius based on lensing
+    // this allows us to change the lens aperature without moving the near clip which is crucial for tweaking values
+
+    highp vec2 rStart = normalize(rotate(dir, -fov/2.0)); // left most near frustum point
+    highp vec2 lStart = normalize(rotate(dir, fov/2.0)); // right most near frustum point
+    highp vec2 lpos = pos + dir * (front_clip-radius);
+
+    highp vec2 nearPlane = rStart-lStart; // Vector from left to right near plane points
+    highp vec2 pixelDir = normalize(rotate(lStart, -fov * uv.x)); // Direction of ray that this pixel will interpolate from
+    // this is interpolted along the uv.x, meaning the bottom left of the image will be at the left near frustum
+    //and bottom right will be at the right near
+
+        highp vec2 rayStart = lpos + pixelDir * radius; // multiply the direction by the radius of the inner frustum and offset by position
+    highp vec2 rayEnd = lpos + pixelDir * sphereIntersect(lpos, pixelDir * 1.0, outer_radius, vec2(0.5, 0.5)).y; // find distance to outer frustum and clip our ray to this point
+    highp vec2 res;
+
+    if (flip) // ground mounted cameras will have their images flipped vertically
+        res = mix(rayEnd, rayStart, uv.y);
+    else
+        res = mix(rayStart, rayEnd, uv.y);
+
+    res.x -= 0.5;
+    res.x *= 1.0/aspect_ratio; //our result coordinates need to have the inverse aspect ratio correction applied
+    res.x += 0.5;
+
+    if (show_original) {
+    	uv.x -= 0.5;
+        uv.x *= aspect_ratio;
+        uv.x += 0.5;
+        res = vTextureCoord;
+    }
+
+
+    highp vec4 color = texture2D(uSampler, res);
+    if (res.x > 1.0 || res.y > 1.0)
+        color = vec4(0.0, 0.0, 0.0, 1.0);
+    if (draw_debug) { // this shits nasty af
+        highp vec2 leftFar = sphereIntersect(lpos, lpos + lStart * outer_radius, outer_radius, vec2(0.5, 0.5));
+        highp vec2 rightFar = sphereIntersect(lpos, lpos + rStart * outer_radius, outer_radius, vec2(0.5, 0.5));
+        color = drawCircle(vec2(0.5, 0.5), outer_radius, uv, vec4(1.0, 0.0, 0.0, 1.0), color);
+        color = drawCircle(lpos, radius, uv, vec4(1.0, 0.0, 0.0, 1.0), color);
+        color = drawCircle(lpos+ lStart * radius, 0.01, uv, vec4(1.0, 1.0, 0.0, 1.0), color);
+        color = drawCircle(lpos+ rStart * radius, 0.01, uv, vec4(1.0, 0.0, 1.0, 1.0), color);
+        color = drawCircle(lpos + lStart * leftFar.y, 0.01, uv, vec4(1.0, 1.0, 0.0, 1.0), color);
+        color = drawCircle(lpos + rStart * rightFar.y, 0.01, uv, vec4(1.0, 0.0, 1.0, 1.0), color);
+        color = drawLine(lpos, lpos + lStart * leftFar.y, uv, color);
+        color = drawLine(lpos, lpos + rStart * leftFar.y, uv, color);
+    }
+
+    gl_FragColor = color;
+}`;
 
                 // Initialize a shader program; this is where all the lighting
                 // for the vertices and so forth is established.
@@ -373,7 +557,6 @@
                     program: this.shaderProgram,
                     attribLocations: {
                         vertexPosition: gl.getAttribLocation(this.shaderProgram, 'aVertexPosition'),
-                        vertexNormal: gl.getAttribLocation(this.shaderProgram, 'aVertexNormal'),
                         textureCoord: gl.getAttribLocation(this.shaderProgram, 'aTextureCoord'),
                     },
                     uniformLocations: {
@@ -381,6 +564,16 @@
                         modelViewMatrix: gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
                         normalMatrix: gl.getUniformLocation(this.shaderProgram, 'uNormalMatrix'),
                         uSampler: gl.getUniformLocation(this.shaderProgram, 'uSampler'),
+                        lens_factor: gl.getUniformLocation(this.shaderProgram, 'lens_factor'),
+                        lens_aspect: gl.getUniformLocation(this.shaderProgram, 'lens_aspect_ratio'),
+                        azimuth: gl.getUniformLocation(this.shaderProgram, 'azimuth'),
+                        near_width: gl.getUniformLocation(this.shaderProgram, 'near_width'),
+                        front_clip: gl.getUniformLocation(this.shaderProgram, 'front_clip'),
+                        outer_radius: gl.getUniformLocation(this.shaderProgram, 'outer_radius'),
+                        show_orig: gl.getUniformLocation(this.shaderProgram, 'show_original'),
+                        draw_debug: gl.getUniformLocation(this.shaderProgram, 'draw_debug'),
+                        fov: gl.getUniformLocation(this.shaderProgram, 'fov')
+
                     },
                 };
 
@@ -393,21 +586,82 @@
 
                 this.refreshVariables(this.gl);
                 var self = this;
-                document.getElementsByName('azimuth')[0].addEventListener('input', function() {
+                document.getElementsByName('azimuth')[0].addEventListener('input', function(e) {
+                    document.getElementsByName('azimuth_output')[0].value = e.target.value;
                     self.refreshVariables(self.gl);
                 });
-                document.getElementsByName('start_dist')[0].addEventListener('input', function() {
+                document.getElementsByName('lens_factor')[0].addEventListener('input', function(e) {
+                    document.getElementsByName('lens_factor_output')[0].value = e.target.value/1000.0;
                     self.refreshVariables(self.gl);
                 });
-                document.getElementsByName('end_dist')[0].addEventListener('input', function() {
+
+                document.getElementsByName('lens_aspect')[0].addEventListener('input', function(e) {
+                    document.getElementsByName('lens_aspect_output')[0].value = e.target.value/1000.0;
                     self.refreshVariables(self.gl);
                 });
-                document.getElementsByName('nearw')[0].addEventListener('input', function() {
+                document.getElementsByName('front_clip')[0].addEventListener('input', function(e) {
+                    document.getElementsByName('front_clip_output')[0].value = e.target.value / 1000.0;
                     self.refreshVariables(self.gl);
                 });
-                document.getElementsByName('farw')[0].addEventListener('input', function() {
+                document.getElementsByName('fov')[0].addEventListener('input', function(e) {
+                    document.getElementsByName('fov_output')[0].value = e.target.value;
                     self.refreshVariables(self.gl);
                 });
+                document.getElementsByName('outer_radius')[0].addEventListener('input', function(e) {
+                    document.getElementsByName('outer_radius_output')[0].value = e.target.value/1000.0;
+                    self.refreshVariables(self.gl);
+                });
+
+                document.getElementsByName('output_scale')[0].addEventListener('input', function(e) {
+                    document.getElementsByName('output_scale_output')[0].value = e.target.value/1000.0;
+                    self.refreshVariables(self.gl);
+                });
+
+                document.getElementsByName('output_scale_x')[0].addEventListener('input', function(e) {
+                    document.getElementsByName('output_scale_output_x')[0].value = e.target.value/1000.0;
+                    self.refreshVariables(self.gl);
+                });
+
+                document.getElementsByName('show_original')[0].addEventListener('input', function() {
+                    self.refreshVariables(self.gl);
+                });
+
+                self.mouse_down = false;
+
+                this.c1.addEventListener("mousedown", function(e) {
+                    self.mouse_down = true;
+                }, false);
+
+                this.c1.addEventListener("mouseup", function(e) {
+                   self.mouse_down = false;
+                });
+
+                this.c1.addEventListener("mousemove", function(e)
+                {
+                    if (!self.mouse_down)
+                        return;
+
+
+
+                    var x = event.x;
+                    var y = event.y;
+
+                    var canvas = document.getElementById("canvas");
+                    var rect = canvas.getBoundingClientRect();
+                    var midx = canvas.width;
+                    var midy = canvas.height;
+
+                    x -= rect.left;
+                    y -= rect.top;
+
+                    x = (x / canvas.width) - 0.5;
+                    y = (1 - (y / canvas.height)) * 2.0 - 0.5;
+
+                    self.azimuth_override = true;
+                    self.azimuth = Math.atan2(x, y);
+
+                    //console.log("x:" + x + " y:" + y);
+                }, false);
 
 
 
@@ -449,7 +703,7 @@
                 // note: glmatrix.js always has the first argument
                 // as the destination to receive the result.
 
-                mat4.ortho(projectionMatrix, -1, 1, -1, 1, 0.1, 100);
+                mat4.ortho(projectionMatrix, -1.0, 1.0, -1, 1, 0.1, 100);
 
                 // Set the drawing position to the "identity" point, which is
                 // the center of the scene.
@@ -460,8 +714,10 @@
                 const cubeRotation = 0;
                 mat4.translate(modelViewMatrix,     // destination matrix
                     modelViewMatrix,     // matrix to translate
-                    [-0, -0, -2.0]);  // amount to translate
+                    [0.0, -0.5, -2.0]);  // amount to translate
                 const normalMatrix = mat4.create();
+
+                mat4.scale(modelViewMatrix, modelViewMatrix, [1.0, 0.5, 0.5]);
 
                 mat4.invert(normalMatrix, modelViewMatrix);
                 mat4.transpose(normalMatrix, normalMatrix);
@@ -494,7 +750,7 @@
                     const normalize = false;
                     const stride = 0;
                     const offset = 0;
-                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_verts);
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.textureCoord);
                     gl.vertexAttribPointer(
                         this.programInfo.attribLocations.textureCoord,
                         numComponents,
@@ -506,25 +762,6 @@
                         this.programInfo.attribLocations.textureCoord);
                 }
 
-                // Tell WebGL how to pull out the normals from
-                // the normal buffer into the vertexNormal attribute.
-                {
-                    const numComponents = 3;
-                    const type = gl.FLOAT;
-                    const normalize = false;
-                    const stride = 0;
-                    const offset = 0;
-                    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.normal);
-                    gl.vertexAttribPointer(
-                        this.programInfo.attribLocations.vertexNormal,
-                        numComponents,
-                        type,
-                        normalize,
-                        stride,
-                        offset);
-                    gl.enableVertexAttribArray(
-                        this.programInfo.attribLocations.vertexNormal);
-                }
 
                 // Tell WebGL which indices to use to index the vertices
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.indices);
@@ -548,6 +785,16 @@
                     false,
                     normalMatrix);
 
+                gl.uniform1f(this.programInfo.uniformLocations.azimuth, this.azimuth);
+                gl.uniform1f(this.programInfo.uniformLocations.lens_factor,  this.lens_factor);
+                gl.uniform1f(this.programInfo.uniformLocations.lens_aspect, this.lens_aspect);
+                gl.uniform1f(this.programInfo.uniformLocations.front_clip, this.front_clip);
+                gl.uniform1f(this.programInfo.uniformLocations.near_width, this.near_width);
+                gl.uniform1f(this.programInfo.uniformLocations.outer_radius, this.outer_radius);
+                gl.uniform1i(this.programInfo.uniformLocations.show_orig, 1);
+                gl.uniform1i(this.programInfo.uniformLocations.draw_debug, 1);
+                gl.uniform1f(this.programInfo.uniformLocations.fov, this.fov);
+
                 // Specify the texture to map onto the faces.
 
                 // Tell WebGL we want to affect texture unit 0
@@ -569,7 +816,12 @@
                     modelViewMatrix = mat4.create();
                     mat4.translate(modelViewMatrix,     // destination matrix
                         modelViewMatrix,     // matrix to translate
-                        [-1, -1 , -2.0]);  // amount to translate
+                        [0.0, 0.5 , -2.0]);  // amount to translate
+
+                    mat4.scale(modelViewMatrix, modelViewMatrix, [1.0*this.x_scale, 0.5*this.y_scale, 0.5]);
+                    gl.uniform1i(this.programInfo.uniformLocations.show_orig, 0);
+                    gl.uniform1i(this.programInfo.uniformLocations.draw_debug, 0);
+
                     const normalMatrix = mat4.create();
 
                     mat4.invert(normalMatrix, modelViewMatrix);
@@ -591,41 +843,41 @@
 
                     gl.drawElements(gl.TRIANGLES, 12, type, offset);
 
-                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_verts);
-                    gl.vertexAttribPointer(
-                        this.programInfo.attribLocations.textureCoord,
-                        2,
-                        gl.FLOAT,
-                        false,
-                        0,
-                        0);
-                    gl.enableVertexAttribArray(
-                        this.programInfo.attribLocations.textureCoord);
-
-
-                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_vert_pos);
-                    gl.vertexAttribPointer(
-                        this.programInfo.attribLocations.vertexPosition,
-                        3,
-                        gl.FLOAT,
-                        false,
-                        0,
-                        0);
-                    gl.enableVertexAttribArray(
-                        this.programInfo.attribLocations.vertexPosition);
-
-                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_verts);
-                    gl.vertexAttribPointer(
-                        this.programInfo.attribLocations.textureCoord,
-                        2,
-                        gl.FLOAT,
-                        false,
-                        0,
-                        0);
-                    gl.enableVertexAttribArray(
-                        this.programInfo.attribLocations.textureCoord);
-                    gl.bindTexture(gl.TEXTURE_2D, this.transparent_texture);
-                    gl.drawElements(gl.TRIANGLES, 12    , type, offset);
+//                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_verts);
+//                    gl.vertexAttribPointer(
+//                        this.programInfo.attribLocations.textureCoord,
+//                        2,
+//                        gl.FLOAT,
+//                        false,
+//                        0,
+//                        0);
+//                    gl.enableVertexAttribArray(
+//                        this.programInfo.attribLocations.textureCoord);
+//
+//
+//                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_vert_pos);
+//                    gl.vertexAttribPointer(
+//                        this.programInfo.attribLocations.vertexPosition,
+//                        3,
+//                        gl.FLOAT,
+//                        false,
+//                        0,
+//                        0);
+//                    gl.enableVertexAttribArray(
+//                        this.programInfo.attribLocations.vertexPosition);
+//
+//                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_verts);
+//                    gl.vertexAttribPointer(
+//                        this.programInfo.attribLocations.textureCoord,
+//                        2,
+//                        gl.FLOAT,
+//                        false,
+//                        0,
+//                        0);
+//                    gl.enableVertexAttribArray(
+//                        this.programInfo.attribLocations.textureCoord);
+//                    gl.bindTexture(gl.TEXTURE_2D, this.transparent_texture);
+//                    gl.drawElements(gl.TRIANGLES, 12    , type, offset);
 
 
 

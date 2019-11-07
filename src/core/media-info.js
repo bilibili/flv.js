@@ -50,11 +50,6 @@ class MediaInfo {
     }
 
     isComplete() {
-        let audioInfoComplete = (this.hasAudio === false) ||
-                                (this.hasAudio === true &&
-                                 this.audioCodec != null &&
-                                 this.audioSampleRate != null &&
-                                 this.audioChannelCount != null);
 
         let videoInfoComplete = (this.hasVideo === false) ||
                                 (this.hasVideo === true &&
@@ -70,11 +65,9 @@ class MediaInfo {
                                  this.sarDen != null);
 
         // keyframesIndex may not be present
-        return this.mimeType != null &&
-               this.duration != null &&
+        return this.duration != null &&
                this.metadata != null &&
                this.hasKeyframesIndex != null &&
-               audioInfoComplete &&
                videoInfoComplete;
     }
 

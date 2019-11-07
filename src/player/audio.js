@@ -23,8 +23,12 @@ export class AudioPlayer {
         this.videoPlayer = mediaElement;
         this.packets = [];
         this.timestamps = [];
+        this.last_timestamp = null;
         this.seekTime = 0;
         this.rate = 1.0;
+        this.hacked_ts = -1;
+        this.gap_offset = 0;
+        this.sample_time = 1000.0 / SAMPLE_RATE; // This is in miliseconds
 
     }
 
@@ -36,6 +40,8 @@ export class AudioPlayer {
 
     play(time) {
         this.seekTime = time;
+        this.last_timestamp = null;
+
         if (this.playing)
             return;
 
@@ -131,6 +137,33 @@ export class AudioPlayer {
         if (!this.ctx)
             return;
 
+        // if (timestamp == this.last_timestamp || timestamp == this.hacked_ts) {
+        //     if (this.hacked_ts == -1) {
+        //         this.hacked_ts = timestamp;
+        //         //console.log('Setting hacked ts: ' + timestamp)
+        //     }
+        //     var old_ts = timestamp;
+        //     timestamp = this.last_timestamp + this.pkt_duration;
+        //     console.log('Setting ' + old_ts + ' to ' + timestamp);
+        //
+        //     // BIG HACK - Some camera/bridges are sending us multiple audio packets with the same timestamp.
+        //     // If we encounter stuttering or jumbled audio issues this is a likely culprit.
+        // } else {
+        //     if (this.last_timestamp && timestamp - this.last_timestamp > this.pkt_duration) {
+        //         this.gap_offset += (timestamp - this.last_timestamp) - this.pkt_duration;
+        //         console.log('Audio gap detected ' + this.last_timestamp + ' ' + timestamp);
+        //         console.log('Offsetting future frames by ' + this.gap_offset + ' samples');
+        //     }
+        //     this.hacked_ts = -1;
+        // }
+
+        if (this.last_timestamp) {
+            timestamp = this.last_timestamp + (packet.length * this.sample_time);
+            this.last_timestamp = timestamp;
+        } else {
+            this.last_timestamp = timestamp;
+        }
+
         this.packets.push(packet);
         this.timestamps.push(timestamp);
         let total = 0;
@@ -168,6 +201,7 @@ export class AudioPlayer {
             let channel = buf.getChannelData(0);
 
             timestamp = this.timestamps[0];
+
             let offset = 0;
             for (let i = 0; i < this.packets.length; i++) {
                 let pack = this.packets[i];

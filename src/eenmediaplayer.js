@@ -32,6 +32,45 @@ import {InvalidArgumentException} from './utils/exception.js';
 Polyfill.install();
 
 
+function startPlayback(config, element) {
+    let start = config.start;
+    let end = config.end;
+
+    if (!start && !end) {
+        start = 'stream_' + (new Date()).valueOf() + config.esn;
+        end = '+300000';
+    }
+
+    let url =  [
+        window.location.protocol + '//' + window.location.host +
+        '/asset/play/video.flv?' +
+        'id=' + config.esn,
+        'start_timestamp=' + start,
+        'end_timestamp=' + end
+    ].join('&');
+
+    if (config.auth_key != null) {
+        url += '&A=' + config.auth_key;
+    }
+
+    let options = {
+        enableWorker: false,
+        lazyLoadMaxDuration: 5 * 60,
+        seekType: 'range',
+        url: url,
+        isLive: config.isLive(),
+        type: 'flv'
+    };
+
+    if (config.options)
+        Object.assign(config.options, options);
+
+    let player = createPlayer(options);
+    player.attachMediaElement(element);
+    player.load();
+    return player;
+}
+
 // factory method
 function createPlayer(mediaDataSource, optionalConfig) {
     let mds = mediaDataSource;
@@ -62,6 +101,42 @@ function getFeatureList() {
 }
 
 
+class MediaItem {
+    constructor(esn) {
+        this.esn = esn;
+        this.start = null;
+        this.end = null;
+        this.auth_key = null;
+        this.api_key = null;
+        this.options = null;
+    }
+
+    setStartTime(time) {
+        this.start = time;
+    }
+
+    setEndTime(time) {
+        this.end = time;
+    }
+
+    setAPIKey(key) {
+        this.api_key = key;
+    }
+
+    setAuthKey(key) {
+        this.auth_key = key;
+    }
+
+    setOptions(options) {
+        this.options = options;
+    }
+
+    isLive() {
+        return this.start == null && this.end == null;
+    }
+
+}
+
 // interfaces
 let flvjs = {};
 
@@ -89,4 +164,14 @@ Object.defineProperty(flvjs, 'version', {
     }
 });
 
-export default flvjs;
+let MediaPlayer = {};
+let EEN = {};
+
+MediaPlayer.startPlayback = startPlayback;
+MediaPlayer.MediaItem = MediaItem;
+
+EEN.MediaPlayer = MediaPlayer;
+EEN.MediaPlayer.flvjs = flvjs;
+
+export default EEN;
+

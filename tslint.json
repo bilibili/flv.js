@@ -1,1 +1,100 @@
-{ "extends": "dtslint/dt.json" }
+vec4 drawCircle(in vec2 center, in float radius, in vec2 uv, in vec4 color) {
+float res = length(uv-center);
+if (res - radius < 0.001 && res - radius > - 0.001) {
+return vec4(1.0, 0, 0, 1.0);
+} else {
+return color;
+}
+}
+
+vec4 drawLine(in vec2 a, in vec2 b, in vec2 c, in vec4 color) {
+float res = (a.x - c.x) * (b.y - c.y) - (a.y - c.y) * (b.x - c.x);
+if(res < 0.001 && res > -0.001) {
+return vec4(1.0, 0, 0, 1.0);
+} else{
+return color;
+}
+}
+
+vec2 rotate(in vec2 vec, in float radians) {
+highp vec2 dir = vec2(sin(radians), cos(radians));
+
+return vec2(vec.x * dir.y - vec.y * dir.x, vec.x * dir.x + vec.y * dir.y);
+}
+
+highp vec2 sphereIntersect( in vec2 rayOrigin, in vec2 rayDirection, float radius, in vec2 center )
+{
+highp vec2 oc = rayOrigin - center;
+highp float b = dot( oc, rayDirection );
+highp float c = dot( oc, oc ) - radius*radius;
+highp float h = b*b - c;
+if( h<0.0 ) return vec2(-1.0); // no intersection
+h = sqrt( h );
+return vec2( -b-h, -b+h );
+}
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+vec2 uv = fragCoord.xy / iResolution.xy;
+
+bool flip;
+highp float aspect_ratio = 16.0/9.0;
+highp float azimuth = 00.0 * 0.0174533;
+highp float front_clip = 0.0;
+highp vec2 dir = normalize(vec2(sin(azimuth), cos(azimuth)));
+highp vec2 norm = vec2(-dir.y, dir.x);
+highp float lens_factor = 0.01;
+highp float near_width = 0.2;
+highp float outer_radius = 0.49;
+highp vec2 pos = vec2(0.5, 0.5) + dir * front_clip;
+highp float radius = (lens_factor/2.0) + ((near_width*near_width) / (8.0 * lens_factor));
+//highp float fov = 90.0 * 0.0174533;
+highp vec2 lpos = pos - (dir * (radius-lens_factor));
+highp vec2 ldir = (dir * (radius-lens_factor)) - norm * (near_width/2.0);
+highp vec2 rdir = (dir * (radius-lens_factor)) + norm * (near_width/2.0);
+highp vec2 lStart = lpos + ldir;
+highp vec2 rStart = lpos + rdir;
+//highp vec2 collision_point = lpos + lStart * outer_radius + vec2((radius-lens_factor)/2.0, 0.0);
+highp float leftFar = length(lStart + normalize(ldir) * outer_radius-lens_factor - lpos);//sphereIntersect(lpos, lStart * outer_radius, outer_radius, vec2(0.5, 0.5));
+highp float rightFar = length(lStart + normalize(rdir) * outer_radius-lens_factor - lpos);
+uv.x -= 0.5;
+uv.x *= aspect_ratio;
+highp float newX = uv.x * dir.y - uv.y * dir.x;
+highp float newY = uv.x * dir.x + uv.y * dir.y;
+//uv.x = newX;
+//uv.y = newY;
+uv.x += 0.5;
+
+// FIX ME - DIR
+
+highp vec2 nearPlane = rStart-lStart;
+highp vec2 pixelDir = (lStart + normalize(nearPlane) * (uv.x * length(nearPlane))) - lpos;//normalize(vec2(lStart.x + near_width * uv.x, lStart.y));
+
+highp vec2 rayStart = lpos + pixelDir * radius;
+highp vec2 rayEnd = lpos + pixelDir * leftFar;
+highp vec2 res = mix(rayEnd, rayStart, uv.y);
+
+//res = uv;
+vec4 color = texture(iChannel1, res);
+color = drawCircle(pos, lens_factor, uv, color);
+color = drawCircle(lStart, 0.05, uv, color);
+color = drawCircle(rStart, 0.05, uv, color);
+color = drawCircle(lpos+ normalize(rdir) * rightFar, 0.05, uv, color);
+color = drawCircle(vec2(0.5, 0.5), outer_radius, uv, color);
+color = drawCircle((lpos + (dir * (radius-lens_factor))), 0.005, uv, color);
+
+color = drawCircle(lpos, radius, uv, color);
+color = drawLine(lpos, lStart * 1.0, uv, color);
+color = drawLine(lpos, rStart * 1.0, uv, color);
+color = drawLine(lStart, rStart, uv, color);
+//color = drawLine(pos, pos + rStart * 1.0, uv, color);
+//color = drawLine(lpos - lStart * leftFar.y, lpos - lStart * leftFar.y + vec2(0, 1), uv, color);
+//color = drawLine(lpos + lStart * leftFar.y, lpos + lStart * leftFar.y + vec2(0, 1), uv, color);
+//color = drawLine(lpos + lStart * radius, lpos + lStart * radius + vec2(0, 1), uv, color);
+//color = drawLine(lpos + rStart * radius, lpos + rStart * radius + vec2(0, 1), uv, color);
+if (length(rayStart-uv) < 0.01) {
+color = vec4(0.0, 0.0, 1.0, 1.0);
+}
+fragColor = color;
+//fragColor = vec4(pixelDir.x, pixelDir.y, 0.0, 1.0);
+}

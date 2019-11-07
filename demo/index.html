@@ -5,6 +5,8 @@
     <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
     <title>flv.js demo</title>
     <link rel="stylesheet" type="text/css" href="demo.css" />
+    <script src="jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="vec2.min.js"></script>
 </head>
 
 <body>
@@ -36,44 +38,74 @@
                 </div>
             </div>
         </div>
-        <div class="video-container">
+        <div class="video-container" style="width:2000px;">
             <div>
-                <video name="videoElement" class="centeredVideo" loop controls autoplay width="60" height="40">
+                <video name="videoElement" class="centeredVideo" loop controls autoplay hidden width="60" height="40">
                     Your browser is too old which doesn't support HTML5 video.
                 </video>
-                <div>
-                <canvas id="canvas" width="1000" height="1500"></canvas>
+                <div style="width: 1500px">
+                    <canvas id="canvas1" width="1500" height="1500"></canvas><br>
+                    <div id="canvas_container">
+
+                    </div>
+                    <p name="fps">60</p>
                     <div>
-                        <input type="checkbox" name="show_original" checked hidden>
-                        <table>
+                        <table style="font-size:40px">
+                            <col style="width:20%">
+                            <col style="width:80%">
+                            <tr>
+                                <td>Pane:</td><td> <select id="pane_dropdown"></select></td>
+                            </tr>
+                            <tr>
+                                <td><button onclick="add_pane()">Add Pane</button></td>
+                            </tr>
+                            <tr>
+                                <td>Show Debug:</td><td><input type="checkbox" name="show_original" checked></td>
+                            </tr>
+                            <tr>
+                                <td>Scene Type:</td><td><select name="scene_type"> <option value="ceiling">ceiling</option> <option value="floor">floor</option> <option value="wall">wall</option></select></td>
+                            </tr>
 
                             <tr>
-                                <td>azimuth</td><td><input type="range" min="0" max="360" value="0" class="slider" name="azimuth" style="width:400px"><output name="azimuth_output">0</output></td>
+                                <td>azimuth</td><td><input type="range" min="0" max="360" value="0" class="slider" name="azimuth" style="width:800px"><output name="azimuth_output">0</output></td>
                             </tr>
                             <tr>
-                                <td>lens</td><td><input type="range" min="0" max="2000" value="110" class="slider" name="lens_factor" style="width:400px"><output name="lens_factor_output">1.1</output></td>
+                                <td>lens</td><td><input type="range" min="0" max="2000" value="110" class="slider" name="lens_factor" style="width:800px"><output name="lens_factor_output">1.1</output></td>
                             </tr>
                             <tr>
-                                <td>distance</td><td><input type="range" min="0" max="1000" value="500" class="slider" name="front_clip" style="width:400px"><output name="front_clip_output">0.0</output></td>
+                                <td>inner_radius</td><td><input type="range" min="0" max="2000" value="110" class="slider" name="inner_radius" style="width:800px"><output name="inner_radius_output">1.1</output></td>
                             </tr>
                             <tr>
-                                <td>fov</td><td><input type="range" min="0" max="360" value="90" class="slider" name="fov" style="width:400px"><output name="fov_output">90</output></td>
+                                <td>distance</td><td><input type="range" min="0" max="1000" value="500" class="slider" name="front_clip" style="width:800px"><output name="front_clip_output">0.0</output></td>
                             </tr>
                             <tr>
-                                <td>radius</td><td><input type="range" min="0" max="1200" value="500" class="slider" name="outer_radius" style="width:400px"><output name="outer_radius_output">0.5</output></td>
+                                <td>fov</td><td><input type="range" min="0" max="360" value="90" class="slider" name="fov" style="width:800px"><output name="fov_output">90</output></td>
                             </tr>
                             <tr>
-                                <td>lens aspect ratio</td><td><input type="range" min="500" max="2000" value="1000" class="slider" name="lens_aspect" style="width:400px"><output name="lens_aspect_output">1.0</output></td>
+                                <td>radius</td><td><input type="range" min="0" max="1200" value="500" class="slider" name="outer_radius" style="width:800px"><output name="outer_radius_output">0.5</output></td>
                             </tr>
                             <tr>
-                                <td>output scale Y</td><td><input type="range" min="0" max="1000" value="1000" class="slider" name="output_scale" style="width:400px"><output name="output_scale_output">1.0</output></td>
+                                <td>lens aspect ratio</td><td><input type="range" min="500" max="2000" value="1000" class="slider" name="lens_aspect" style="width:800px"><output name="lens_aspect_output">1.0</output></td>
                             </tr>
                             <tr>
-                                <td>output scale X</td><td><input type="range" min="0" max="1000" value="1000" class="slider" name="output_scale_x" style="width:400px"><output name="output_scale_output_x">1.0</output></td>
+                                <td>distortion</td><td><input type="range" min="0" max="10000" value="0" class="slider" name="distortion" style="width:800px"><output name="distortion_output">1.0</output></td>
+                            </tr>
+                            <tr>
+                                <td>output scale Y</td><td><input type="range" min="0" max="1000" value="1000" class="slider" name="output_scale" style="width:800px"><output name="output_scale_output">1.0</output></td>
+                            </tr>
+                            <tr>
+                                <td>output scale X</td><td><input type="range" min="0" max="1000" value="1000" class="slider" name="output_scale_x" style="width:800px"><output name="output_scale_output_x">1.0</output></td>
+                            </tr>
+                            <tr>
+                                <td>offset Y</td><td><input type="range" min="0" max="1000" value="500" class="slider" name="offset_y" style="width:800px"><output name="offset_y_output">0.0</output></td>
+                            </tr>
+                            <tr>
+                                <td>offset X</td><td><input type="range" min="0" max="1000" value="500" class="slider" name="offset_x" style="width:800px"><output name="offset_x_output">0.0</output></td>
                             </tr>
                         </table>
                     </div>
                 </div>
+                <textarea disabled rows="40" cols="80" id="pane_output" style="border:solid 1px orange;"/>
             </div>
         </div>
         <div class="controls">
@@ -87,13 +119,67 @@
         <textarea name="logcatbox" class="logcatBox" rows="10" readonly></textarea>
     </div>
 
-    <script src="../dist/flv.js"></script>
+    <script src="../dist/EEN.MediaPlayer.js"></script>
     <script src="gl-matrix.js"></script>
     
     <script>
         var checkBoxFields = ['isLive', 'withCredentials', 'hasAudio', 'hasVideo'];
         var streamURL, mediaSourceURL;
 
+        function loadPane(pane, container, dropdown) {
+            pane.show_debug = true;
+            var canvas = $('<canvas width=' + pane.width + ' height=' + pane.height + ' name=canvas/>').appendTo(container);
+            var line = document.createElement("option");
+            line.text = pane.name;
+            line.value = pane.name;
+            dropdown.add(line);
+        }
+        function paneChanged(pane) {
+            pane.show_debug = document.getElementsByName('show_original')[0].checked;
+
+            if (!this.azimuth_override)
+                pane.azimuth = document.getElementsByName('azimuth')[0].value;
+
+            var shader = document.getElementsByName('scene_type')[0].value;
+
+            pane.shader = shader;
+            pane.lens_factor = document.getElementsByName('lens_factor')[0].value / 1000.0;
+
+            pane.lens_aspect = document.getElementsByName('lens_aspect')[0].value / 1000.0;
+            pane.inverse_lens_aspect = 1.0 / pane.lens_aspect;
+            pane.front_clip = document.getElementsByName('front_clip')[0].value / 1000.0 - 0.5;
+            pane.distortion = document.getElementsByName('distortion')[0].value / 1000.0 * -1;
+            pane.fov = document.getElementsByName('fov')[0].value;
+            pane.outer_radius = document.getElementsByName('outer_radius')[0].value / 1000.0;
+            pane.show_original = document.getElementsByName('show_original')[0].checked;
+            pane.scale.y = document.getElementsByName('output_scale')[0].value / 1000.0;
+            pane.scale.x = document.getElementsByName('output_scale_x')[0].value / 1000.0;
+            pane.offset.x = document.getElementsByName('offset_x')[0].value / 1000.0 - 0.5;
+            pane.offset.y = document.getElementsByName('offset_y')[0].value / 1000.0 - 0.5;
+            pane.offset_vector = new Vec2(pane.offset.x, pane.offset.y);
+
+            var azimuth = pane.azimuth * 0.0174533;
+
+            pane.dir = new Vec2(Math.sin(azimuth), Math.cos(azimuth)); // calculate a direction based on given azimuth
+            pane.center_pos = new Vec2(0.5, 0.5); // calculate center of our frustum
+            pane.lens_width = document.getElementsByName('inner_radius')[0].value/1000.0;
+            pane.inner_radius = (pane.lens_factor / 2.0) + ((pane.lens_factor * pane.lens_factor) / (4 * pane.lens_width * pane.lens_factor)); // calculate our inner circle radius based on lensing
+
+            var fov = pane.fov * 0.0174533;
+            var halfFOV = fov / 2.0;
+
+            var leftDir = new Vec2(Math.sin(halfFOV), Math.cos(halfFOV));
+            var rightDir = new Vec2(Math.sin(-halfFOV), Math.cos(-halfFOV));
+
+            pane.lStart = new Vec2(pane.dir.x * leftDir.y - pane.dir.y * leftDir.x, pane.dir.x * leftDir.x + pane.dir.y * leftDir.y);
+            pane.rStart = new Vec2(pane.dir.x * rightDir.y - pane.dir.y * rightDir.x, pane.dir.x * rightDir.x + pane.dir.y * rightDir.y);
+            pane.lStart.normalize();
+            pane.rStart.normalize();
+
+
+            pane.lpos = pane.center_pos.add(pane.dir.multiply(pane.front_clip - pane.inner_radius));
+
+        }
         var processor = {
             timerCallback: function() {
                 if (this.video.paused || this.video.ended) {
@@ -106,7 +192,7 @@
                 }, 1); // roughly 60 frames per second
             },
 
-            initShaderProgram: function(gl, vsSource, fsSource) {
+            initShaderProgram: function(gl, name, vsSource, fsSource) {
                 const vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, vsSource);
                 const fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
@@ -123,6 +209,37 @@
                     alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
                     return null;
                 }
+
+                this.programInfo[name] = {
+                    program: shaderProgram,
+                    attribLocations: {
+                        vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
+                        textureCoord: gl.getAttribLocation(shaderProgram, 'aTextureCoord'),
+                    },
+                    uniformLocations: {
+                        projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
+                        modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+                        normalMatrix: gl.getUniformLocation(shaderProgram, 'uNormalMatrix'),
+                        uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
+                        lens_factor: gl.getUniformLocation(shaderProgram, 'lens_factor'),
+                        lens_aspect: gl.getUniformLocation(shaderProgram, 'lens_aspect_ratio'),
+                        inverse_lens_aspect: gl.getUniformLocation(shaderProgram, 'inverse_lens_aspect_ratio'),
+                        azimuth: gl.getUniformLocation(shaderProgram, 'azimuth'),
+                        near_width: gl.getUniformLocation(shaderProgram, 'near_width'),
+                        front_clip: gl.getUniformLocation(shaderProgram, 'front_clip'),
+                        distortion: gl.getUniformLocation(shaderProgram, 'distortion'),
+                        outer_radius: gl.getUniformLocation(shaderProgram, 'outer_radius'),
+                        show_orig: gl.getUniformLocation(shaderProgram, 'show_original'),
+                        draw_debug: gl.getUniformLocation(shaderProgram, 'draw_debug'),
+                        fov: gl.getUniformLocation(shaderProgram, 'fov'),
+                        inner_radius: gl.getUniformLocation(shaderProgram, 'inner_radius'),
+                        lStart: gl.getUniformLocation(shaderProgram, 'lStart'),
+                        rStart: gl.getUniformLocation(shaderProgram, 'rStart'),
+                        lpos: gl.getUniformLocation(shaderProgram, 'lpos'),
+                        offset: gl.getUniformLocation(shaderProgram, 'offset'),
+                        output_color: gl.getUniformLocation(shaderProgram, 'output_color')
+                    },
+                };
 
                 return shaderProgram;
             },
@@ -143,17 +260,6 @@
                 halfw, -halfh, 1.0,
                 halfw, halfh, 1.0,
                 -halfw, halfh, 1.0];
-//
-//                const positions = [
-//                    // Front face
-//                    -1.0, -1.0,  1.0, // BL
-//                    0.0, -1.0,  1.0, // MB
-//                    0.0, 1.0,  1.0, // MT
-//                    1.0, -1.0,  1.0, // BR
-//                    1.0, 1.0,  1.0, // TR
-//                    -1.0, 1.0,  1.0  // TL
-//                ];
-
 
                 const indices = [
                     0, 1, 2,
@@ -199,20 +305,9 @@
             initTexture: function(gl, url) {
                 const texture = gl.createTexture();
                 gl.bindTexture(gl.TEXTURE_2D, texture);
-                const level = 0;
-                const internalFormat = gl.RGBA;
-                const width = 1;
-                const height = 1;
-                const border = 0;
-                const srcFormat = gl.RGBA;
-                const srcType = gl.UNSIGNED_BYTE;
                 const pixel = new Uint8Array([0, 0, 255, 255]);  // opaque blue
-                gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-                    width, height, border, srcFormat, srcType,
-                    pixel);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
 
-                // Turn off mips and set  wrapping to clamp to edge so it
-                // will work regardless of the dimensions of the video.
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -223,20 +318,9 @@
             initTransparentTexture: function(gl, url) {
                 const texture = gl.createTexture();
                 gl.bindTexture(gl.TEXTURE_2D, texture);
-                const level = 0;
-                const internalFormat = gl.RGBA;
-                const width = 1;
-                const height = 1;
-                const border = 0;
-                const srcFormat = gl.RGBA;
-                const srcType = gl.UNSIGNED_BYTE;
                 const pixel = new Uint8Array([255, 255, 255, 60]);  // opaque blue
-                gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-                    width, height, border, srcFormat, srcType,
-                    pixel);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
 
-                // Turn off mips and set  wrapping to clamp to edge so it
-                // will work regardless of the dimensions of the video.
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -244,9 +328,7 @@
                 return texture;
             },
 
-            //
-            // copy the video texture
-            //
+
             updateTexture: function(gl, texture, video) {
                 const level = 0;
                 const internalFormat = gl.RGBA;
@@ -285,16 +367,13 @@
 
             refreshVariables: function(gl) {
 
-                if (!this.azimuth_override)
-                    this.azimuth = document.getElementsByName('azimuth')[0].value * 0.0174533;
-                this.lens_factor = document.getElementsByName('lens_factor')[0].value / 1000.0;
-                this.lens_aspect = document.getElementsByName('lens_aspect')[0].value / 1000.0;
-                this.front_clip = document.getElementsByName('front_clip')[0].value / 1000.0 - 0.5;
-                this.fov = document.getElementsByName('fov')[0].value * 0.0174533;
-                this.outer_radius = document.getElementsByName('outer_radius')[0].value / 1000.0;
-                this.show_original = document.getElementsByName('show_original')[0].checked;
-                this.y_scale = document.getElementsByName('output_scale')[0].value / 1000.0;
-                this.x_scale = document.getElementsByName('output_scale_x')[0].value / 1000.0;
+                if (!this.panes)
+                    return;
+
+                var dropdown = document.getElementById('pane_dropdown');
+                var pane = this.panes[dropdown.selectedIndex];
+                paneChanged.call(this, pane);
+
 
 
 //                var canvas = document.createElement('canvas');
@@ -310,35 +389,25 @@
 //
 //
 //                    var x = 0;
-//                    var y = 300;
+//                    var y = this.video.videoHeight/2.0;
 //
-//                    var getLuminosity = function(data, x, y) {
-//                        var idx = (i + y * this.video.videoWidth) * 4;
-//                        var red = theData.data[idx + 0];
-//                        var green = theData.data[idx + 1];
-//                        var blue = theData.data[idx + 2];
-//                        var alpha = theData.data[idx + 3];
+//                    var getLuminosity = function(data, video, x, y) {
+//                        var idx = (i + y * video.videoWidth) * 4;
+//                        var red = theData.data[idx + 0] / 255.0;
+//                        var green = theData.data[idx + 1] / 255.0;
+//                        var blue = theData.data[idx + 2] / 255.0;
 //
-//                        return (red + green + blue) / 255 * 3;
+//                        console.log("Color: X: " + i + " Y: " + y + "(" + red + ", " + green + ", " + blue + ")");
+//                        return (0.2126*red + 0.7152*green + 0.0722*blue);
 //                    }
 //
-//                    for (var i = 0; i < this.video.videoWidth/2.0; i++) {
-//                        var lumin = getLuminosity(theData.data, )
-//                        console.log("Color: X: " + i + " Y: " + y + "(" + red + "," + green + "," + blue + "," + alpha + ")");
+//                    for (var i = 0; i < this.video.videoWidth; i++) {
+//                        var lumin = getLuminosity(theData.data, this.video, i, y);
 //                    }
 //                }
 
 
                 this.near_width = this.lens_factor;
-
-//                this.frustum = [
-//                    (this.near_center_x - this.norm_x * this.near_hwidth + 0.5), (this.near_center_y - this.norm_y * this.near_hwidth + 0.5),// bottom left
-//                    (this.near_center_x + 0.5), (this.near_center_y + 0.5),// bottom left
-//                    (this.far_center_x + 0.5), (this.far_center_y + 0.5),// bottom left
-//                    (this.near_center_x + this.norm_x * this.near_hwidth + 0.5), (this.near_center_y + this.norm_y * this.near_hwidth + 0.5),// bottom right
-//                    (this.far_center_x + this.norm_x * this.far_hwidth + 0.5), (this.far_center_y + this.norm_y * this.far_hwidth + 0.5),// top right
-//                    (this.far_center_x - this.norm_x * this.far_hwidth + 0.5), (this.far_center_y - this.norm_y * this.far_hwidth + 0.5),
-//                ];
 
                 this.frustum = [0, 0,
                 0.5, 0,
@@ -374,14 +443,83 @@
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_vert_pos);
                 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.frustum_positions), gl.STATIC_DRAW);
 
-
+                document.getElementById('pane_output').value = JSON.stringify(this.panes, null, 2);
                 //console.log(this.frustum);
                 //console.log(this.frustum_positions);
             },
 
+            loadShaderNamed: function(name) {
+                var self = this;
+                $.ajax({url: name + '.frag', async:false, success: function(data) {
+                    self.fs = data;
+                    if (self.vs && self.fs) {
+                        self.shaderPrograms[name] = self.initShaderProgram(self.gl, name, self.vs, self.fs);
+                    }
+                }});
+
+                $.ajax({url: name+'.vert', async:false, success: function(data) {
+                    self.vs = data;
+
+                    if (self.vs && self.fs) {
+                        self.shaderPrograms[name] = self.initShaderProgram(self.gl, name, self.vs, self.fs);
+                    }
+                }});
+            },
+            loadPanes: function() {
+                var self = this;
+
+                $.ajax({url: 'panes.json', dataType: "json", async:false, success: function(data) {
+                    self.panes = data;
+                    var container = document.getElementById('canvas_container');
+                    var dropdown = document.getElementById('pane_dropdown');
+                    dropdown.innerHTML = "";
+
+                    self.panes.forEach(function(e) {
+                        loadPane(e, container, dropdown);
+                        self.load_pane(e)
+                    });
+
+
+
+                },
+                error: function(e) {
+                    console.log(e);
+                }});
+            },
+            load_pane: function(pane) {
+
+            self.ignore_changes = true;
+                document.getElementsByName('azimuth')[0].value = pane.azimuth;
+                document.getElementsByName('lens_factor')[0].value = pane.lens_factor * 1000.0;
+                document.getElementsByName('lens_aspect')[0].value = pane.lens_aspect * 1000.0;
+                document.getElementsByName('inner_radius')[0].value = pane.inner_radius * 1000.0;
+                document.getElementsByName('front_clip')[0].value = (pane.front_clip + 0.5) * 1000.0;
+                document.getElementsByName('distortion')[0].value = (pane.distortion) * 1000.0 * -1;
+                document.getElementsByName('fov')[0].value = pane.fov;
+                document.getElementsByName('outer_radius')[0].value = pane.outer_radius * 1000.0;
+                document.getElementsByName('output_scale')[0].value = pane.scale.y * 1000.0;
+                document.getElementsByName('output_scale_x')[0].value = pane.scale.x * 1000.0;
+                document.getElementsByName('offset_x')[0].value = pane.offset.x * 1000.0 + 500;
+                document.getElementsByName('offset_y')[0].value = pane.offset.y * 1000.0 + 500;
+
+                document.getElementsByName('azimuth_output')[0].value = pane.azimuth;
+                document.getElementsByName('lens_factor_output')[0].value = pane.lens_factor;
+                document.getElementsByName('lens_aspect_output')[0].value = pane.lens_aspect;
+                document.getElementsByName('inner_radius_output')[0].value = pane.inner_radius;
+                document.getElementsByName('front_clip_output')[0].value = pane.front_clip;
+                document.getElementsByName('distortion_output')[0].value = pane.distortion;
+                document.getElementsByName('fov_output')[0].value = pane.fov;
+                document.getElementsByName('outer_radius_output')[0].value = pane.outer_radius;
+                document.getElementsByName('output_scale_output')[0].value = pane.scale.y;
+                document.getElementsByName('output_scale_output_x')[0].value = pane.scale.x;
+            document.getElementsByName('show_original')[0].value = pane.show_debug;
+            self.ignore_changes = false;
+        },
             doLoad: function() {
 
-
+                this.ignore_changes = false;
+                this.projectionMatrix = mat4.create();
+                mat4.ortho(this.projectionMatrix, -1.0, 1.0, -1, 1, 0.1, 100);
                 document.onkeydown = checkKey;
                 var self = this;
                 function checkKey(e) {
@@ -411,174 +549,33 @@
                     }
 
                 }
+
+                this.programInfo = new Object();
+                this.shaderPrograms = new Object();
                 this.video = document.getElementsByName("videoElement")[0];
-                this.c1 = document.getElementById("canvas");
+                this.c1 = document.getElementById("canvas1");
                 this.gl = this.c1.getContext('webgl');
 
                 const gl = this.gl;
-                const vsSource = `
-                    attribute vec4 aVertexPosition;
-                    attribute vec3 aVertexNormal;
-                    attribute vec2 aTextureCoord;
-                    uniform mat4 uNormalMatrix;
-                    uniform mat4 uModelViewMatrix;
-                    uniform mat4 uProjectionMatrix;
-                    uniform vec4 extents;
-                    uniform highp float azimuth;
-
-                    varying highp vec2 vTextureCoord;
-                    varying highp vec3 vLighting;
-                    void main(void) {
-                      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-                      vTextureCoord = aTextureCoord;
-                    }
-                  `;
-
-                                // Fragment shader program
-
-                                const fsSource = `
-varying highp vec2 vTextureCoord;
- uniform sampler2D uSampler;
- uniform highp float azimuth;
- uniform highp float lens_factor;
- uniform highp float lens_aspect_ratio;
- uniform highp float front_clip;
- uniform highp float near_width;
- uniform highp float fov;
- uniform highp float outer_radius;
- uniform bool show_original;
- uniform bool draw_debug;
-
-highp vec4 drawCircle(in highp vec2 center, in highp float radius, in highp vec2 uv, in highp vec4 circleColor, in highp vec4 color) {
-   highp float result = length(uv-center);
-    if (result - radius < 0.001 && result - radius > - 0.001) {
-        return circleColor;
-    } else {
-        return color;
-    }
-}
-
-highp vec4 drawLine(in highp vec2 a, in highp vec2 b, in highp vec2 c, in highp vec4 color) {
-    highp float res;
-    res = (a.x - c.x) * (b.y - c.y) - (a.y - c.y) * (b.x - c.x);
-    if(res < 0.001 && res > -0.001) {
-        return vec4(1.0, 0, 0, 1.0);
-    } else{
-        return color;
-    }
-}
-
-highp vec2 rotate(in vec2 vec, in highp float radians) {
-    highp vec2 dir = vec2(sin(radians), cos(radians));
-
-    return vec2(vec.x * dir.y - vec.y * dir.x, vec.x * dir.x + vec.y * dir.y);
-}
-
-highp vec2 sphereIntersect( in vec2 rayOrigin, in vec2 rayDirection, highp float radius, in vec2 center )
-{
-    highp vec2 oc = rayOrigin-center;
-    highp float b = dot( oc, rayDirection );
-    highp float c = dot( oc, oc ) - radius*radius;
-    highp float h = b*b - c;
-    if( h<0.0 ) return vec2(-1.0); // no intersection
-    h = sqrt( h );
-    return vec2( -b-h, -b+h );
-}
-
-void main(void)
-{
-	highp vec2 uv = vTextureCoord;;
-
-    bool flip = false;
-    highp float aspect_ratio = lens_aspect_ratio;
-    highp vec2 dir = vec2(sin(azimuth), cos(azimuth)); // calculate a direction based on given azimuth
-    highp vec2 pos = vec2(0.5, 0.5); // calculate center of our frustum
-    highp float radius = (lens_factor/2.0) + ((near_width*near_width) / (8.0 * lens_factor)); // calculate our inner circle radius based on lensing
-    // this allows us to change the lens aperature without moving the near clip which is crucial for tweaking values
-
-    highp vec2 rStart = normalize(rotate(dir, -fov/2.0)); // left most near frustum point
-    highp vec2 lStart = normalize(rotate(dir, fov/2.0)); // right most near frustum point
-    highp vec2 lpos = pos + dir * (front_clip-radius);
-
-    highp vec2 nearPlane = rStart-lStart; // Vector from left to right near plane points
-    highp vec2 pixelDir = normalize(rotate(lStart, -fov * uv.x)); // Direction of ray that this pixel will interpolate from
-    // this is interpolted along the uv.x, meaning the bottom left of the image will be at the left near frustum
-    //and bottom right will be at the right near
-
-        highp vec2 rayStart = lpos + pixelDir * radius; // multiply the direction by the radius of the inner frustum and offset by position
-    highp vec2 rayEnd = lpos + pixelDir * sphereIntersect(lpos, pixelDir * 1.0, outer_radius, vec2(0.5, 0.5)).y; // find distance to outer frustum and clip our ray to this point
-    highp vec2 res;
-
-    if (flip) // ground mounted cameras will have their images flipped vertically
-        res = mix(rayEnd, rayStart, uv.y);
-    else
-        res = mix(rayStart, rayEnd, uv.y);
-
-    res.x -= 0.5;
-    res.x *= 1.0/aspect_ratio; //our result coordinates need to have the inverse aspect ratio correction applied
-    res.x += 0.5;
-
-    if (show_original) {
-    	uv.x -= 0.5;
-        uv.x *= aspect_ratio;
-        uv.x += 0.5;
-        res = vTextureCoord;
-    }
-
-
-    highp vec4 color = texture2D(uSampler, res);
-    if (res.x > 1.0 || res.y > 1.0)
-        color = vec4(0.0, 0.0, 0.0, 1.0);
-    if (draw_debug) { // this shits nasty af
-        highp vec2 leftFar = sphereIntersect(lpos, lpos + lStart * outer_radius, outer_radius, vec2(0.5, 0.5));
-        highp vec2 rightFar = sphereIntersect(lpos, lpos + rStart * outer_radius, outer_radius, vec2(0.5, 0.5));
-        color = drawCircle(vec2(0.5, 0.5), outer_radius, uv, vec4(1.0, 0.0, 0.0, 1.0), color);
-        color = drawCircle(lpos, radius, uv, vec4(1.0, 0.0, 0.0, 1.0), color);
-        color = drawCircle(lpos+ lStart * radius, 0.01, uv, vec4(1.0, 1.0, 0.0, 1.0), color);
-        color = drawCircle(lpos+ rStart * radius, 0.01, uv, vec4(1.0, 0.0, 1.0, 1.0), color);
-        color = drawCircle(lpos + lStart * leftFar.y, 0.01, uv, vec4(1.0, 1.0, 0.0, 1.0), color);
-        color = drawCircle(lpos + rStart * rightFar.y, 0.01, uv, vec4(1.0, 0.0, 1.0, 1.0), color);
-        color = drawLine(lpos, lpos + lStart * leftFar.y, uv, color);
-        color = drawLine(lpos, lpos + rStart * leftFar.y, uv, color);
-    }
-
-    gl_FragColor = color;
-}`;
-
                 // Initialize a shader program; this is where all the lighting
                 // for the vertices and so forth is established.
-                this.shaderProgram = this.initShaderProgram(gl, vsSource, fsSource);
+
 
                 // Collect all the info needed to use the shader program.
                 // Look up which attributes our shader program is using
                 // for aVertexPosition, aVertexNormal, aTextureCoord,
                 // and look up uniform locations.
-                this.programInfo = {
-                    program: this.shaderProgram,
-                    attribLocations: {
-                        vertexPosition: gl.getAttribLocation(this.shaderProgram, 'aVertexPosition'),
-                        textureCoord: gl.getAttribLocation(this.shaderProgram, 'aTextureCoord'),
-                    },
-                    uniformLocations: {
-                        projectionMatrix: gl.getUniformLocation(this.shaderProgram, 'uProjectionMatrix'),
-                        modelViewMatrix: gl.getUniformLocation(this.shaderProgram, 'uModelViewMatrix'),
-                        normalMatrix: gl.getUniformLocation(this.shaderProgram, 'uNormalMatrix'),
-                        uSampler: gl.getUniformLocation(this.shaderProgram, 'uSampler'),
-                        lens_factor: gl.getUniformLocation(this.shaderProgram, 'lens_factor'),
-                        lens_aspect: gl.getUniformLocation(this.shaderProgram, 'lens_aspect_ratio'),
-                        azimuth: gl.getUniformLocation(this.shaderProgram, 'azimuth'),
-                        near_width: gl.getUniformLocation(this.shaderProgram, 'near_width'),
-                        front_clip: gl.getUniformLocation(this.shaderProgram, 'front_clip'),
-                        outer_radius: gl.getUniformLocation(this.shaderProgram, 'outer_radius'),
-                        show_orig: gl.getUniformLocation(this.shaderProgram, 'show_original'),
-                        draw_debug: gl.getUniformLocation(this.shaderProgram, 'draw_debug'),
-                        fov: gl.getUniformLocation(this.shaderProgram, 'fov')
 
-                    },
-                };
 
                 // Here's where we call the routine that builds all the
                 // objects we'll be drawing.
+                this.loadPanes();
+                this.loadShaderNamed('ceiling');
+                this.loadShaderNamed('debug');
+                this.loadShaderNamed('extended_debug');
+                this.loadShaderNamed('linear');
+                this.loadShaderNamed('floor');
+
                 this.buffers = this.initBuffers(gl);
 
                 this.texture = this.initTexture(gl);
@@ -586,44 +583,112 @@ void main(void)
 
                 this.refreshVariables(this.gl);
                 var self = this;
+
+                document.getElementsByName('scene_type')[0].addEventListener('change', function(e) {
+                    if (self.ignore_changes)
+                        return;
+
+                    self.refreshVariables(self.gl);
+                });
                 document.getElementsByName('azimuth')[0].addEventListener('input', function(e) {
                     document.getElementsByName('azimuth_output')[0].value = e.target.value;
+                    if (self.ignore_changes)
+                        return;
+
                     self.refreshVariables(self.gl);
                 });
                 document.getElementsByName('lens_factor')[0].addEventListener('input', function(e) {
                     document.getElementsByName('lens_factor_output')[0].value = e.target.value/1000.0;
+                    if (self.ignore_changes)
+                        return;
+
                     self.refreshVariables(self.gl);
                 });
 
                 document.getElementsByName('lens_aspect')[0].addEventListener('input', function(e) {
                     document.getElementsByName('lens_aspect_output')[0].value = e.target.value/1000.0;
+                    if (self.ignore_changes)
+                        return;
+
+                    self.refreshVariables(self.gl);
+                });
+
+                document.getElementsByName('distortion')[0].addEventListener('input', function(e) {
+                    document.getElementsByName('distortion_output')[0].value = e.target.value/1000.0;
+                    if (self.ignore_changes)
+                        return;
+
+                    self.refreshVariables(self.gl);
+                });
+                document.getElementsByName('inner_radius')[0].addEventListener('input', function(e) {
+                    document.getElementsByName('inner_radius_output')[0].value = e.target.value / 1000.0;
+                    if (self.ignore_changes)
+                        return;
+
                     self.refreshVariables(self.gl);
                 });
                 document.getElementsByName('front_clip')[0].addEventListener('input', function(e) {
                     document.getElementsByName('front_clip_output')[0].value = e.target.value / 1000.0;
+                    if (self.ignore_changes)
+                        return;
+
                     self.refreshVariables(self.gl);
                 });
                 document.getElementsByName('fov')[0].addEventListener('input', function(e) {
                     document.getElementsByName('fov_output')[0].value = e.target.value;
+                    if (self.ignore_changes)
+                        return;
+
                     self.refreshVariables(self.gl);
                 });
                 document.getElementsByName('outer_radius')[0].addEventListener('input', function(e) {
                     document.getElementsByName('outer_radius_output')[0].value = e.target.value/1000.0;
+                    if (self.ignore_changes)
+                        return;
+
                     self.refreshVariables(self.gl);
                 });
 
                 document.getElementsByName('output_scale')[0].addEventListener('input', function(e) {
                     document.getElementsByName('output_scale_output')[0].value = e.target.value/1000.0;
+                    if (self.ignore_changes)
+                        return;
                     self.refreshVariables(self.gl);
                 });
 
                 document.getElementsByName('output_scale_x')[0].addEventListener('input', function(e) {
                     document.getElementsByName('output_scale_output_x')[0].value = e.target.value/1000.0;
+                    if (self.ignore_changes)
+                        return;
+
+                    self.refreshVariables(self.gl);
+                });
+
+                document.getElementsByName('offset_x')[0].addEventListener('input', function(e) {
+                    document.getElementsByName('offset_x_output')[0].value = (e.target.value/1000.0 - 0.5).toFixed(3);
+                    if (self.ignore_changes)
+                        return;
+                    self.refreshVariables(self.gl);
+                });
+
+                document.getElementsByName('offset_y')[0].addEventListener('input', function(e) {
+                    document.getElementsByName('offset_y_output')[0].value = (e.target.value/1000.0 - 0.5).toFixed(3);
+                    if (self.ignore_changes)
+                        return;
+
                     self.refreshVariables(self.gl);
                 });
 
                 document.getElementsByName('show_original')[0].addEventListener('input', function() {
+                    if (self.ignore_changes)
+                        return;
                     self.refreshVariables(self.gl);
+                });
+
+                document.getElementById('pane_dropdown').addEventListener('change', function(e) {
+                    var pane = self.panes[e.target.selectedIndex];
+                    load_pane(pane);
+
                 });
 
                 self.mouse_down = false;
@@ -641,12 +706,10 @@ void main(void)
                     if (!self.mouse_down)
                         return;
 
-
-
                     var x = event.x;
                     var y = event.y;
 
-                    var canvas = document.getElementById("canvas");
+                    var canvas = document.getElementById("canvas1");
                     var rect = canvas.getBoundingClientRect();
                     var midx = canvas.width;
                     var midy = canvas.height;
@@ -672,8 +735,76 @@ void main(void)
                 }, false);
             },
 
-            computeFrame: function() {
-                this.updateTexture(this.gl, this.texture, this.video);
+            setShader: function (gl, programInfo, pane) {
+                gl.useProgram(programInfo.program);
+
+                if (typeof pane.lStart === 'undefined')
+                    self.paneChanged(pane);
+
+                gl.uniform1f(programInfo.uniformLocations.azimuth, pane.azimuth * 0.0174533);
+                gl.uniform1f(programInfo.uniformLocations.lens_factor, pane.lens_factor);
+                gl.uniform1f(programInfo.uniformLocations.lens_aspect, pane.lens_aspect);
+                gl.uniform1f(programInfo.uniformLocations.inverse_lens_aspect, pane.inverse_lens_aspect);
+                gl.uniform1f(programInfo.uniformLocations.front_clip, pane.front_clip);
+
+                if (programInfo.uniformLocations.distortion)
+                    gl.uniform1f(programInfo.uniformLocations.distortion, pane.distortion);
+
+                gl.uniform1f(programInfo.uniformLocations.near_width, pane.lens_factor);
+                gl.uniform1f(programInfo.uniformLocations.outer_radius, pane.outer_radius);
+                gl.uniform1i(programInfo.uniformLocations.show_orig, 1);
+                gl.uniform1i(programInfo.uniformLocations.draw_debug, 1);
+                gl.uniform1f(programInfo.uniformLocations.fov, pane.fov * 0.0174533);
+
+                gl.uniform1f(programInfo.uniformLocations.inner_radius, pane.inner_radius);
+
+                gl.uniform2fv(programInfo.uniformLocations.lStart, pane.lStart.toArray());
+                gl.uniform2fv(programInfo.uniformLocations.rStart, pane.rStart.toArray());
+                gl.uniform2fv(programInfo.uniformLocations.lpos, pane.lpos.toArray());
+                gl.uniform2fv(programInfo.uniformLocations.offset, pane.offset_vector.toArray());
+            },
+            drawPane: function (gl, pane, programInfo, offset, scale, projectionMatrix) {
+                ///console.log('drawing pane: ' + pane);
+                const modelViewMatrix = mat4.create();
+                mat4.translate(modelViewMatrix,     // destination matrix
+                    modelViewMatrix,     // matrix to translate
+                    offset);  // amount to translate
+                const normalMatrix = mat4.create();
+
+                mat4.scale(modelViewMatrix, modelViewMatrix, scale);
+
+                mat4.invert(normalMatrix, modelViewMatrix);
+                mat4.transpose(normalMatrix, normalMatrix);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.position);
+
+
+                this.setShader(gl, programInfo, pane);
+                gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
+                gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.textureCoord);
+                gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, 2, gl.FLOAT, false, 0, 0);
+                gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
+
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.indices);
+
+
+                gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
+                gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+                gl.uniformMatrix4fv(programInfo.uniformLocations.normalMatrix, false, normalMatrix);
+
+
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, this.texture);
+                gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+
+                gl.drawElements(gl.TRIANGLES, 12, gl.UNSIGNED_SHORT, 0);
+            }, computeFrame: function() {
+                var self = this;
+
+                if (!this.shaderPrograms['ceiling'] || !this.panes)
+                    return;
 
                 const gl = this.gl;
                 gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
@@ -684,222 +815,40 @@ void main(void)
                 gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
                 // Clear the canvas before we start drawing on it.
-
+                var elements = document.getElementsByName('canvas');
+                if (elements.length > 0 ) {
+                    for (var i = 0; i < this.panes.length && i < elements.length; i++) {
+                        var pane = this.panes[i];
+                        this.updateTexture(this.gl, this.texture, this.video);
+                        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                        this.drawPane(gl, this.panes[i], this.programInfo[this.panes[i].shader], [0, 0, -2.0], [1.0*pane.scale.x, 1.0*pane.scale.y, 1], this.projectionMatrix);
+                        elements[i].getContext('2d').drawImage(self.c1, 0, 0, self.c1.width, self.c1.height, 0, 0, elements[i].width, elements[i].height);
+                    }
+                } else {
+                    this.updateTexture(this.gl, this.texture, this.video);
+                }
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-                // Create a perspective matrix, a special matrix that is
-                // used to simulate the distortion of perspective in a camera.
-                // Our field of view is 45 degrees, with a width/height
-                // ratio that matches the display size of the canvas
-                // and we only want to see objects between 0.1 units
-                // and 100 units away from the camera.
-
-                const fieldOfView = 45 * Math.PI / 180;   // in radians
-                const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-                const zNear = 0.1;
-                const zFar = 100.0;
-                const projectionMatrix = mat4.create();
-
-                // note: glmatrix.js always has the first argument
-                // as the destination to receive the result.
-
-                mat4.ortho(projectionMatrix, -1.0, 1.0, -1, 1, 0.1, 100);
-
-                // Set the drawing position to the "identity" point, which is
-                // the center of the scene.
-                modelViewMatrix = mat4.create();
-
-                // Now move the drawing position a bit to where we want to
-                // start drawing the square.
-                const cubeRotation = 0;
-                mat4.translate(modelViewMatrix,     // destination matrix
-                    modelViewMatrix,     // matrix to translate
-                    [0.0, -0.5, -2.0]);  // amount to translate
-                const normalMatrix = mat4.create();
-
-                mat4.scale(modelViewMatrix, modelViewMatrix, [1.0, 0.5, 0.5]);
-
-                mat4.invert(normalMatrix, modelViewMatrix);
-                mat4.transpose(normalMatrix, normalMatrix);
-
-                // Tell WebGL how to pull out the positions from the position
-                // buffer into the vertexPosition attribute
-                {
-                    const numComponents = 3;
-                    const type = gl.FLOAT;
-                    const normalize = false;
-                    const stride = 0;
-                    const offset = 0;
-                    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.position);
-                    gl.vertexAttribPointer(
-                        this.programInfo.attribLocations.vertexPosition,
-                        numComponents,
-                        type,
-                        normalize,
-                        stride,
-                        offset);
-                    gl.enableVertexAttribArray(
-                        this.programInfo.attribLocations.vertexPosition);
+                gl.depthFunc(gl.ALWAYS);            // Near things obscure far things
+                this.drawPane(gl, this.panes[0], this.programInfo['linear'], [0.0, 0.0, -2.0], [1.0, 1.0, 1.0], this.projectionMatrix);
+                gl.useProgram(this.programInfo['debug'].program);
+                for (var i=0; i<this.panes.length; i++) {
+                    if (this.panes[i].show_debug) {
+                        gl.uniform4fv(this.programInfo['debug'].uniformLocations.output_color, this.panes[i].output_color);
+                        this.drawPane(gl, this.panes[i], this.programInfo['debug'], [0.0, 0.0, -2.0], [1.0, 1.0, 1.0], this.projectionMatrix);
+                    }
                 }
-
-                // Tell WebGL how to pull out the texture coordinates from
-                // the texture coordinate buffer into the textureCoord attribute.
-                {
-                    const numComponents = 2;
-                    const type = gl.FLOAT;
-                    const normalize = false;
-                    const stride = 0;
-                    const offset = 0;
-                    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.textureCoord);
-                    gl.vertexAttribPointer(
-                        this.programInfo.attribLocations.textureCoord,
-                        numComponents,
-                        type,
-                        normalize,
-                        stride,
-                        offset);
-                    gl.enableVertexAttribArray(
-                        this.programInfo.attribLocations.textureCoord);
-                }
-
-
-                // Tell WebGL which indices to use to index the vertices
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers.indices);
-
-                // Tell WebGL to use our program when drawing
-
-                gl.useProgram(this.programInfo.program);
-
-                // Set the shader uniforms
-
-                gl.uniformMatrix4fv(
-                    this.programInfo.uniformLocations.projectionMatrix,
-                    false,
-                    projectionMatrix);
-                gl.uniformMatrix4fv(
-                    this.programInfo.uniformLocations.modelViewMatrix,
-                    false,
-                    modelViewMatrix);
-                gl.uniformMatrix4fv(
-                    this.programInfo.uniformLocations.normalMatrix,
-                    false,
-                    normalMatrix);
-
-                gl.uniform1f(this.programInfo.uniformLocations.azimuth, this.azimuth);
-                gl.uniform1f(this.programInfo.uniformLocations.lens_factor,  this.lens_factor);
-                gl.uniform1f(this.programInfo.uniformLocations.lens_aspect, this.lens_aspect);
-                gl.uniform1f(this.programInfo.uniformLocations.front_clip, this.front_clip);
-                gl.uniform1f(this.programInfo.uniformLocations.near_width, this.near_width);
-                gl.uniform1f(this.programInfo.uniformLocations.outer_radius, this.outer_radius);
-                gl.uniform1i(this.programInfo.uniformLocations.show_orig, 1);
-                gl.uniform1i(this.programInfo.uniformLocations.draw_debug, 1);
-                gl.uniform1f(this.programInfo.uniformLocations.fov, this.fov);
-
-                // Specify the texture to map onto the faces.
-
-                // Tell WebGL we want to affect texture unit 0
-                gl.activeTexture(gl.TEXTURE0);
-
-                // Bind the texture to texture unit 0
-                gl.bindTexture(gl.TEXTURE_2D, this.texture);
-
-                // Tell the shader we bound the texture to texture unit 0
-                gl.uniform1i(this.programInfo.uniformLocations.uSampler, 0);
-
-                {
-                    const vertexCount = 6;
-                    const type = gl.UNSIGNED_SHORT;
-                    const offset = 0;
-
-
-                    gl.drawElements(gl.TRIANGLES, 12, type, offset);
-                    modelViewMatrix = mat4.create();
-                    mat4.translate(modelViewMatrix,     // destination matrix
-                        modelViewMatrix,     // matrix to translate
-                        [0.0, 0.5 , -2.0]);  // amount to translate
-
-                    mat4.scale(modelViewMatrix, modelViewMatrix, [1.0*this.x_scale, 0.5*this.y_scale, 0.5]);
-                    gl.uniform1i(this.programInfo.uniformLocations.show_orig, 0);
-                    gl.uniform1i(this.programInfo.uniformLocations.draw_debug, 0);
-
-                    const normalMatrix = mat4.create();
-
-                    mat4.invert(normalMatrix, modelViewMatrix);
-                    gl.uniformMatrix4fv(
-                        this.programInfo.uniformLocations.modelViewMatrix,
-                        false,
-                        modelViewMatrix);
-
-                    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.textureCoord);
-                    gl.vertexAttribPointer(
-                        this.programInfo.attribLocations.textureCoord,
-                        2,
-                        gl.FLOAT,
-                        false,
-                        0,
-                        0);
-                    gl.enableVertexAttribArray(
-                        this.programInfo.attribLocations.textureCoord);
-
-                    gl.drawElements(gl.TRIANGLES, 12, type, offset);
-
-//                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_verts);
-//                    gl.vertexAttribPointer(
-//                        this.programInfo.attribLocations.textureCoord,
-//                        2,
-//                        gl.FLOAT,
-//                        false,
-//                        0,
-//                        0);
-//                    gl.enableVertexAttribArray(
-//                        this.programInfo.attribLocations.textureCoord);
+                gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
 //
-//
-//                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_vert_pos);
-//                    gl.vertexAttribPointer(
-//                        this.programInfo.attribLocations.vertexPosition,
-//                        3,
-//                        gl.FLOAT,
-//                        false,
-//                        0,
-//                        0);
-//                    gl.enableVertexAttribArray(
-//                        this.programInfo.attribLocations.vertexPosition);
-//
-//                    gl.bindBuffer(gl.ARRAY_BUFFER, this.frustum_verts);
-//                    gl.vertexAttribPointer(
-//                        this.programInfo.attribLocations.textureCoord,
-//                        2,
-//                        gl.FLOAT,
-//                        false,
-//                        0,
-//                        0);
-//                    gl.enableVertexAttribArray(
-//                        this.programInfo.attribLocations.textureCoord);
-//                    gl.bindTexture(gl.TEXTURE_2D, this.transparent_texture);
-//                    gl.drawElements(gl.TRIANGLES, 12    , type, offset);
-
-
-
-
-                }
-
-
-
-
-
-
-                // start "frustum" calc
-
-
-                // Update the rotation for the next draw
-
+//                var self = this;
+//                elements.forEach(function(element) {
+//                   element.getContext('2d').drawImage(self.c1, 0, 0);
+//                });
                 return;
             }
         };
 
         function flv_load() {
-            console.log('isSupported: ' + flvjs.isSupported());
+            console.log('isSupported: ' + EEN.MediaPlayer.flvjs.isSupported());
             if (mediaSourceURL.className === '') {
                 var url = document.getElementById('msURL').value;
     
@@ -937,15 +886,16 @@ void main(void)
                     player = null;
                 }
             }
-            player = flvjs.createPlayer(mediaDataSource, {
-                enableWorker: false,
-                lazyLoad: false,
-                lazyLoadRecoverDuration: 0,
-		cors: false,
-                seekType: 'param',
-            });
-            player.attachMediaElement(element);
-            player.load();
+           player = EEN.MediaPlayer.flvjs.createPlayer(mediaDataSource, {
+                   enableWorker: false,
+                   lazyLoad: false,
+                   lazyLoadRecoverDuration: 0,
+                  cors: false,
+                   seekType: 'param',
+               });
+           player.attachMediaElement(element);
+           player.load();
+            //player = EEN.MediaPlayer.startLive('100f9f23', 'c013~d3955ca427b0a55d7f7d019245853228', element);
             processor.doLoad();
         }
 
@@ -971,6 +921,11 @@ void main(void)
             streamURL.className = '';
             mediaSourceURL.className = 'hidden';
             saveSettings();
+        }
+
+        function add_pane() {
+            var pane = this.panes[this.panes.length-1];
+
         }
 
         function switch_mds() {
@@ -1038,15 +993,15 @@ void main(void)
         }
 
         function showVersion() {
-            var version = flvjs.version;
+            var version = EEN.MediaPlayer.flvjs.version;
             document.title = document.title + " (v" + version + ")";
         }
 
-        var logcatbox = document.getElementsByName('logcatbox')[0];
-        flvjs.LoggingControl.addLogListener(function(type, str) {
-            logcatbox.value = logcatbox.value + str + '\n';
-            logcatbox.scrollTop = logcatbox.scrollHeight;
-        });
+//        var logcatbox = document.getElementsByName('logcatbox')[0];
+//        EEN.MediaPlayer.flvjs.LoggingControl.addLogListener(function(type, str) {
+//            logcatbox.value = logcatbox.value + str + '\n';
+//            logcatbox.scrollTop = logcatbox.scrollHeight;
+//        });
 
         document.addEventListener('DOMContentLoaded', function () {
             streamURL = document.getElementById('streamURL');

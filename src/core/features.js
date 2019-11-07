@@ -22,8 +22,7 @@ import {createDefaultConfig} from '../config.js';
 class Features {
 
     static supportMSEH264Playback() {
-        return window.MediaSource &&
-               window.MediaSource.isTypeSupported('video/mp4; codecs="avc1.42E01E,mp4a.40.2"');
+        return window.MediaSource && window.MediaSource.isTypeSupported('video/mp4; codecs="avc1.42E01E,mp4a.40.2"');
     }
 
     static supportNetworkStreamIO() {

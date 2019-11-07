@@ -1,105 +1,86 @@
-
-flv.js  [![npm](https://img.shields.io/npm/v/flv.js.svg?style=flat)](https://www.npmjs.com/package/flv.js)
-======
-An HTML5 Flash Video (FLV) Player written in pure JavaScript without Flash. LONG LIVE FLV!
-
-This project relies on [Media Source Extensions][] to work.
-
-## Overview
-flv.js works by transmuxing FLV file stream into ISO BMFF (Fragmented MP4) segments, followed by feeding mp4 segments into an HTML5 `<video>` element through [Media Source Extensions][] API.
-
-flv.js is written in [ECMAScript 6][], transpiled into ECMAScript 5 by [Babel Compiler][], and bundled with [Browserify][].
-
-[Media Source Extensions]: https://w3c.github.io/media-source/
-[hls.js]: https://github.com/dailymotion/hls.js
-[ECMAScript 6]: https://github.com/lukehoban/es6features
-[Babel Compiler]: https://babeljs.io/
-[Browserify]: http://browserify.org/
-
-## Demo
-[http://bilibili.github.io/flv.js/demo/](http://bilibili.github.io/flv.js/demo/)
-
-## Features
-- FLV container with H.264 + AAC / MP3 codec playback
-- Multipart segmented video playback
-- HTTP FLV low latency live stream playback
-- FLV over WebSocket live stream playback
-- Compatible with Chrome, FireFox, Safari 10, IE11 and Edge
-- Extremely low overhead, and hardware accelerated by your browser!
-
-## Installation
-```bash
-npm install --save flv.js
-```
-
-## Build
-```bash
-npm install          # install dev-dependences
-npm install -g gulp  # install build tool
-gulp release         # packaged & minimized js will be emitted in dist folder
-```
-
-[cnpm](https://github.com/cnpm/cnpm) mirror is recommended if you are in Mainland China.
-
-## CORS
-If you use standalone video server for FLV stream, `Access-Control-Allow-Origin` header must be configured correctly on video server for cross-origin resource fetching.
-
-See [cors.md](docs/cors.md) for more details.
-
-## Getting Started
-```html
-<script src="flv.min.js"></script>
-<video id="videoElement"></video>
-<script>
-    if (flvjs.isSupported()) {
-        var videoElement = document.getElementById('videoElement');
-        var flvPlayer = flvjs.createPlayer({
-            type: 'flv',
-            url: 'http://example.com/flv/video.flv'
-        });
-        flvPlayer.attachMediaElement(videoElement);
-        flvPlayer.load();
-        flvPlayer.play();
+highp vec4 drawCircle(in highp vec2 center, in highp float radius, in highp vec2 uv, in highp vec4 color) {
+   highp float result = length(uv-center);
+    if (result - radius < 0.001 && result - radius > - 0.001) {
+        return vec4(1.0, 0, 0, 1.0);
+    } else {
+        return color;
     }
-</script>
-```
+}
 
-## Limitations
-- MP3 audio codec is currently not working on IE11 / Edge
-- HTTP FLV live stream is not currently working on all browsers, see [livestream.md](docs/livestream.md)
+highp vec4 drawLine(in highp vec2 a, in highp vec2 b, in highp vec2 c, in highp vec4 color) {
+    highp float res;
+    res = (a.x - c.x) * (b.y - c.y) - (a.y - c.y) * (b.x - c.x);
+    if(res < 0.001 && res > -0.001) {
+        return vec4(1.0, 0, 0, 1.0);
+    } else{
+        return color;
+    }
+}
 
-## Multipart playback
-You only have to provide a playlist for `MediaDataSource`. See [multipart.md](docs/multipart.md)
+highp vec2 rotate(in vec2 vec, in highp float radians) {
+    highp vec2 dir = vec2(sin(radians), cos(radians));
 
-## Livestream playback
-See [livestream.md](docs/livestream.md)
+    return vec2(vec.x * dir.y - vec.y * dir.x, vec.x * dir.x + vec.y * dir.y);
+}
 
-## API and Configuration
-See [api.md](docs/api.md)
+highp vec2 sphereIntersect( in vec2 rayOrigin, in vec2 rayDirection, highp float radius, in vec2 center )
+{
+    highp vec2 oc = rayOrigin - center;
+    highp float b = dot( oc, rayDirection );
+    highp float c = dot( oc, oc ) - radius*radius;
+    highp float h = b*b - c;
+    if( h<0.0 ) return vec2(-1.0); // no intersection
+    h = sqrt( h );
+    return vec2( -b-h, -b+h );
+}
 
-## Debug
-```bash
-npm install          # install dev-dependences
-npm install -g gulp  # install build tool
-npm run dev          # with incremental compile and auto reload
-```
+void main(void)
+{
+	highp vec2 uv = highp vec2 vNewCoord = vTextureCoord;;
 
-## Design
-See [design.md](docs/design.md)
+    bool flip;
+    highp float aspect_ratio = 16.0/9.0;
+    highp float azimuth = 45.0 * 0.0174533;
+    highp float front_clip = 0.1;
+    highp vec2 dir = vec2(sin(azimuth), cos(azimuth));
+    highp float lens_factor = 0.11;
+    highp float near_width = 0.6;
+    highp float outer_radius = 0.48;
+    highp vec2 pos = vec2(0.5, 0.5) + dir * front_clip;
+    highp float radius = (lens_factor/2.0) + ((near_width*near_width) / (8.0 * lens_factor));
+    highp float fov = 90.0 * 0.0174533;
 
-## License
-```
-Copyright (C) 2016 Bilibili. All Rights Reserved.
+    highp vec2 lStart = rotate(dir, -fov/2.0);
+    highp vec2 rStart = rotate(dir, fov/2.0);
+    highp vec2 lpos = pos - (dir * (radius-lens_factor));
+	//highp vec2 collision_point = lpos + lStart * outer_radius + vec2((radius-lens_factor)/2.0, 0.0);
+    highp vec2 leftFar = sphereIntersect(lpos, lpos + lStart * outer_radius, outer_radius, vec2(0.5, 0.5));
+	highp vec2 rightFar = sphereIntersect(lpos, lpos + rStart * outer_radius, outer_radius, vec2(0.5, 0.5));
+	uv.x -= 0.5;
+    uv.x *= aspect_ratio;
+    highp float newX = uv.x * dir.y - uv.y * dir.x;
+	highp float newY = uv.x * dir.x + uv.y * dir.y;
+    //uv.x = newX;
+    //uv.y = newY;
+    uv.x += 0.5;
+    highp vec2 width = rStart - lStart;
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    highp vec2 pixelDir = normalize(vec2(lpos.x + lStart.x + width.x * uv.x, lpos.y + lStart.y));
+    highp vec2 rayStart = lpos + pixelDir * radius;
+    highp float endDist = sphereIntersect(lpos, pixelDir, outer_radius, vec2(0.5, 0.5)).y;
+    highp vec2 rayEnd = lpos + pixelDir * endDist;
+    highp vec2 res = mix(rayEnd, rayStart, uv.y);
 
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-```
+    res = uv;
+    vec4 color = texture(iChannel1, res);
+    color = drawCircle(vec2(0.5, 0.5), outer_radius, uv, color);
+    color = drawCircle(lpos, radius, uv, color);
+    color = drawLine(lpos, lpos + lStart * 1.0, uv, color);
+    color = drawLine(lpos, lpos + rStart * 1.0, uv, color);
+    //color = drawLine(lpos - lStart * leftFar.y, lpos - lStart * leftFar.y + vec2(0, 1), uv, color);
+    //color = drawLine(lpos + lStart * leftFar.y, lpos + lStart * leftFar.y + vec2(0, 1), uv, color);
+    //color = drawLine(lpos + lStart * radius, lpos + lStart * radius + vec2(0, 1), uv, color);
+    //color = drawLine(lpos + rStart * radius, lpos + rStart * radius + vec2(0, 1), uv, color);
+    fragColor = color;
+    //fragColor = vec4(leftFar.x/10.0, leftFar.y, 0.0, 1.0);
+}

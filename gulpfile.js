@@ -35,7 +35,7 @@ const browserSync = require('browser-sync').create();
 function doWatchify() {
     let customOpts = {
         entries: 'src/index.js',
-        standalone: 'flvjs',
+        standalone: 'EEN',
         debug: true,
         transform: ['babelify', 'browserify-versionify'],
         plugin: ['browserify-derequire']
@@ -55,7 +55,7 @@ function doWatchify() {
 function doBundle(b) {
     return b.bundle()
         .on('error', console.error.bind(console))
-        .pipe(source('flv.js'))
+        .pipe(source('EEN.MediaPlayer.js'))
         .pipe(buffer())
         .pipe(sourcemaps.init({loadMaps: true}))
         .pipe(sourcemaps.write('./'))
@@ -106,7 +106,7 @@ gulp.task('lint', function () {
 gulp.task('build', ['clean', 'lint'], function () {
     let b = browserify({
         entries: 'src/index.js',
-        standalone: 'flvjs',
+        standalone: 'EEN',
         debug: true,
         transform: ['babelify', 'browserify-versionify'],
         plugin: ['browserify-derequire']
@@ -132,7 +132,7 @@ gulp.task('minimize', ['lint', 'build'], function () {
         }
     };
 
-    return gulp.src('dist/flv.js')
+    return gulp.src('dist/EEN.MediaPlayer.js')
         .pipe(rename({extname: '.min.js'}))
         .pipe(sourcemaps.init({loadMaps: true}))
             .pipe(uglify(options))

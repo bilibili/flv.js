@@ -787,6 +787,26 @@
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.position);
 
+                if (pane["animation"]) {
+                    var animation = pane["animation"]
+                    if (!animation["start_time"]) {
+                        animation["start_time"] = Date.now();
+                        pane.azimuth = pane.azimuth - parseFloat(animation["azimuth"]) * 0.5;
+                        pane["original_azimuth"] = parseFloat(pane.azimuth);
+                    }
+
+                    var anim_azimuth = parseFloat(animation["azimuth"]);
+
+                    var elapsed = (Date.now() - animation["start_time"]) / 1000.0;
+                    var reversed = Math.floor(elapsed / animation["duration"]) % 2;
+                    var progress = (elapsed % animation["duration"]) / animation["duration"] * anim_azimuth;
+                    if (reversed) {
+                        pane.azimuth = pane.original_azimuth + anim_azimuth - progress;
+                    } else {
+                        pane.azimuth = pane.original_azimuth + progress;
+                    }
+                    self.recalculatePaneVariables(pane);
+                }
 
                 this.setShader(gl, programInfo, pane);
                 gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
@@ -825,10 +845,10 @@
 
                 // Clear the canvas before we start drawing on it.
                 var elements = document.getElementsByName('canvas');
+                this.updateTexture(this.gl, this.texture, this.video);
                 if (elements.length > 0 ) {
                     for (var i = 0; i < this.panes.length && i < elements.length; i++) {
                         var pane = this.panes[i];
-                        this.updateTexture(this.gl, this.texture, this.video);
                         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                         this.drawPane(gl, this.panes[i], this.programInfo[this.panes[i].shader], [0, 0, -2.0], [1.0*pane.scale.x, 1.0*pane.scale.y, 1], this.projectionMatrix);
                         elements[i].getContext('2d').drawImage(self.c1, 0, 0, self.c1.width, self.c1.height, 0, 0, elements[i].width, elements[i].height);

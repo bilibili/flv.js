@@ -2,7 +2,7 @@
   {
     "name":"DHL 90 FOV",
     "shader":"ceiling",
-    "azimuth": "144",
+    "azimuth": 144,
     "lens_factor": 1.351,
     "lens_aspect": 1.022,
     "front_clip": 0.40700000000000003,
@@ -20,7 +20,7 @@
   {
     "name":"DHL 90 FOV",
     "shader":"ceiling",
-    "azimuth": "38",
+    "azimuth": 38,
     "lens_factor": 1.351,
     "lens_aspect": 1.022,
     "front_clip": 0.15600000000000003,
@@ -38,7 +38,7 @@
   {
     "name":"DHL 90 FOV",
     "shader":"ceiling",
-    "azimuth": "238",
+    "azimuth": 238,
     "lens_factor": 1.351,
     "lens_aspect": 1.022,
     "front_clip": 0.06499999999999995,
@@ -56,7 +56,7 @@
   {
     "name":"DHL 90 FOV",
     "shader":"ceiling",
-    "azimuth": "107",
+    "azimuth": 107,
     "lens_factor": 2,
     "lens_aspect": 1.022,
     "front_clip": 0.16300000000000003,
@@ -64,6 +64,7 @@
     "inner_radius": 1.4545454545454546,
     "lens_width": 1.1,
     "fov": "16",
+    "animation":{"azimuth": 50.0, "duration": 4.0},
     "scale":{"x":1.3, "y":1.0},
     "offset":{"x":0.0, "y":0.0},
     "output_color":[1.0, 0.0, 0.0, 1.0],
@@ -71,7 +72,7 @@
     "height":500,
     "distortion":0.0
   },
-  
+
   {
     "name":"DHL 360 FOV",
     "shader":"ceiling",

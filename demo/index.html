@@ -133,7 +133,7 @@
 
         function loadPane(pane, container, dropdown) {
             pane.show_debug = true;
-            var canvas = $('<canvas width=' + pane.width + ' height=' + pane.height + ' name=canvas/>').appendTo(container);
+            var canvas = $('<canvas width=' + pane.width + ' height=' + pane.height + ' name=canvas style="padding: 1px"/>').appendTo(container);
             var line = document.createElement("option");
             line.text = pane.name;
             line.value = pane.name;
@@ -497,7 +497,15 @@
             },
             load_pane: function(pane) {
 
-            self.ignore_changes = true;
+                this.panes.forEach(function (e) {
+                    if (e === pane) {
+                        e.output_color = [0.0, 1.0, 0.0, 1.0];
+                    } else {
+                        e.output_color = [1.0, 0.0, 0.0, 1.0];
+                    }
+                });
+
+                self.ignore_changes = true;
                 document.getElementsByName('azimuth')[0].value = pane.azimuth;
                 document.getElementsByName('lens_factor')[0].value = pane.lens_factor * 1000.0;
                 document.getElementsByName('lens_aspect')[0].value = pane.lens_aspect * 1000.0;

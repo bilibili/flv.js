@@ -34,7 +34,7 @@ class FetchStreamLoader extends BaseLoader {
             // fetch + stream is broken on Microsoft Edge. Disable before build 15048.
             // see https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/8196907/
             // Fixed in Jan 10, 2017. Build 15048+ removed from blacklist.
-            let isWorkWellEdge = Browser.msedge && Browser.version.minor >= 15048;
+            let isWorkWellEdge = Browser.msedge && Browser.version.minor >= 15048 && !Browser.webkit;
             let browserNotBlacklisted = Browser.msedge ? isWorkWellEdge : true;
             return (self.fetch && self.ReadableStream && browserNotBlacklisted);
         } catch (e) {

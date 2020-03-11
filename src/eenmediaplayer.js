@@ -41,13 +41,18 @@ function startPlayback(config, element) {
         end = '+300000';
     }
 
-    let url =  [
-        window.location.protocol + '//' + window.location.host +
-        '/asset/play/video.flv?' +
-        'id=' + config.esn,
-        'start_timestamp=' + start,
-        'end_timestamp=' + end
-    ].join('&');
+    var url = null;
+    if(!config.url){
+        url =  [
+            window.location.protocol + '//' + window.location.host +
+            '/asset/play/video.flv?' +
+            'id=' + config.esn,
+            'start_timestamp=' + start,
+            'end_timestamp=' + end
+        ].join('&');
+    } else {
+        url = config.url;
+    }
 
     if (config.auth_key != null) {
         url += '&A=' + config.auth_key;

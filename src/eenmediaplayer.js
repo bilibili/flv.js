@@ -41,8 +41,8 @@ function startPlayback(config, element) {
         end = '+300000';
     }
 
-    var url = null;
-    if(!config.url){
+    let url = null;
+    if (!config.url) {
         url =  [
             window.location.protocol + '//' + window.location.host +
             '/asset/play/video.flv?' +

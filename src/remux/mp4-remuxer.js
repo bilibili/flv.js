@@ -83,6 +83,7 @@ class MP4Remuxer {
     bindDataSource(producer) {
         producer.onDataAvailable = this.remux.bind(this);
         producer.onTrackMetadata = this._onTrackMetadataReceived.bind(this);
+        producer.onFlushStashedSamples = this.flushStashedSamples.bind(this);
         return this;
     }
 

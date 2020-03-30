@@ -11,7 +11,7 @@
 
 <body>
     
-    <div class="mainContainer">
+    <div class="mainContainer" style="width:100%">
         <div>
             <div id="streamURL">
                 <div class="url-input">
@@ -19,7 +19,7 @@
                     <input id="sURL" type="text" value="http://172.30.13.52:8080/wick2.flv" />
                     <button onclick="switch_mds()">Switch to MediaDataSource</button>
                 </div>
-                <div class="options">
+                <div class="options" style="visibility: hidden">
                     <input type="checkbox" id="isLive" onchange="saveSettings()" />
                     <label for="isLive">isLive</label>
                     <input type="checkbox" id="withCredentials" onchange="saveSettings()" />
@@ -38,77 +38,82 @@
                 </div>
             </div>
         </div>
-        <div class="video-container" style="width:2000px;">
+        <div><div style="display: flex; width:100%; height:500px">
+            <textarea disabled rows="15" cols="80" id="pane_output" style="border:solid 1px orange; width:20%"></textarea>
+            <table style="font-size:12px; width:30%;">
+                <col style="width:20%">
+                <col style="width:80%">
+                <tr>
+                    <td>Pane:</td><td> <select id="pane_dropdown"></select></td>
+                </tr>
+                <tr>
+                    <td><button onclick="add_pane()">Add Pane</button></td>
+                </tr>
+                <tr>
+                    <td>Show Debug:</td><td><input type="checkbox" name="show_original" checked></td>
+                </tr>
+                <tr>
+                    <td>Scene Type:</td><td><select name="scene_type"> <option value="ceiling">ceiling</option> <option value="floor">floor</option> <option value="wall">wall</option></select></td>
+                </tr>
+
+                <tr>
+                    <td>azimuth</td><td><input type="range" min="0" max="360" value="0" class="slider" name="azimuth" style="width:800px"><output name="azimuth_output">0</output></td>
+                </tr>
+                <tr>
+                    <td>lens</td><td><input type="range" min="0" max="2000" value="110" class="slider" name="lens_factor" style="width:800px"><output name="lens_factor_output">1.1</output></td>
+                </tr>
+                <!--<tr>
+                    <td>inner_radius</td><td><input type="range" min="0" max="2000" value="110" class="slider" name="inner_radius" style="width:800px"><output name="inner_radius_output">1.1</output></td>
+                </tr>--!>
+                <tr>
+                    <td>distance</td><td><input type="range" min="0" max="1000" value="500" class="slider" name="front_clip" style="width:800px"><output name="front_clip_output">0.0</output></td>
+                </tr>
+                <tr>
+                    <td>fov</td><td><input type="range" min="0" max="360" value="90" class="slider" name="fov" style="width:800px"><output name="fov_output">90</output></td>
+                </tr>
+                <tr>
+                    <td>radius</td><td><input type="range" min="0" max="1200" value="500" class="slider" name="outer_radius" style="width:800px"><output name="outer_radius_output">0.5</output></td>
+                </tr>
+                <tr>
+                    <td>lens aspect ratio</td><td><input type="range" min="500" max="2000" value="1000" class="slider" name="lens_aspect" style="width:800px"><output name="lens_aspect_output">1.0</output></td>
+                </tr>
+                <tr>
+                    <td>distortion</td><td><input type="range" min="0" max="10000" value="0" class="slider" name="distortion" style="width:800px"><output name="distortion_output">1.0</output></td>
+                </tr>
+                <tr>
+                    <td>scale Height</td><td><input type="range" min="0" max="1000" value="1000" class="slider" name="output_scale" style="width:800px"><output name="output_scale_output">1.0</output></td>
+                </tr>
+                <tr>
+                    <td>scale Width</td><td><input type="range" min="0" max="1000" value="1000" class="slider" name="output_scale_x" style="width:800px"><output name="output_scale_output_x">1.0</output></td>
+                </tr>
+                <tr>
+                    <td>offset Y</td><td><input type="range" min="0" max="1000" value="500" class="slider" name="offset_y" style="width:800px"><output name="offset_y_output">0.0</output></td>
+                </tr>
+                <tr>
+                    <td>offset X</td><td><input type="range" min="0" max="1000" value="500" class="slider" name="offset_x" style="width:800px"><output name="offset_x_output">0.0</output></td>
+                </tr>
+            </table>
+            <div style="width:50%; display:block">
+            <video name="videoElement" class="centeredVideo" loop controls autoplay hidden style="height:500px; position:relative; top:0; left:0">
+                Your browser is too old which doesn't support HTML5 video.
+            </video>
+            <canvas id="canvas1" width="500" height="500" style="position:relative; top:0, left:0"></canvas>
+            </div>
+        </div></div>
+        <div class="video-container" style="width:100%;">
             <div>
-                <video name="videoElement" class="centeredVideo" loop controls autoplay hidden width="60" height="40">
-                    Your browser is too old which doesn't support HTML5 video.
-                </video>
-                <div style="width: 1500px">
-                    <canvas id="canvas1" width="1500" height="1500"></canvas><br>
-                    <div id="canvas_container">
+                <p name="fps">60</p>
+                <div style="width: 100%;">
 
+                    <div id="canvas_container" style="width:100%">
                     </div>
-                    <p name="fps">60</p>
-                    <div>
-                        <table style="font-size:40px">
-                            <col style="width:20%">
-                            <col style="width:80%">
-                            <tr>
-                                <td>Pane:</td><td> <select id="pane_dropdown"></select></td>
-                            </tr>
-                            <tr>
-                                <td><button onclick="add_pane()">Add Pane</button></td>
-                            </tr>
-                            <tr>
-                                <td>Show Debug:</td><td><input type="checkbox" name="show_original" checked></td>
-                            </tr>
-                            <tr>
-                                <td>Scene Type:</td><td><select name="scene_type"> <option value="ceiling">ceiling</option> <option value="floor">floor</option> <option value="wall">wall</option></select></td>
-                            </tr>
 
-                            <tr>
-                                <td>azimuth</td><td><input type="range" min="0" max="360" value="0" class="slider" name="azimuth" style="width:800px"><output name="azimuth_output">0</output></td>
-                            </tr>
-                            <tr>
-                                <td>lens</td><td><input type="range" min="0" max="2000" value="110" class="slider" name="lens_factor" style="width:800px"><output name="lens_factor_output">1.1</output></td>
-                            </tr>
-                            <tr>
-                                <td>inner_radius</td><td><input type="range" min="0" max="2000" value="110" class="slider" name="inner_radius" style="width:800px"><output name="inner_radius_output">1.1</output></td>
-                            </tr>
-                            <tr>
-                                <td>distance</td><td><input type="range" min="0" max="1000" value="500" class="slider" name="front_clip" style="width:800px"><output name="front_clip_output">0.0</output></td>
-                            </tr>
-                            <tr>
-                                <td>fov</td><td><input type="range" min="0" max="360" value="90" class="slider" name="fov" style="width:800px"><output name="fov_output">90</output></td>
-                            </tr>
-                            <tr>
-                                <td>radius</td><td><input type="range" min="0" max="1200" value="500" class="slider" name="outer_radius" style="width:800px"><output name="outer_radius_output">0.5</output></td>
-                            </tr>
-                            <tr>
-                                <td>lens aspect ratio</td><td><input type="range" min="500" max="2000" value="1000" class="slider" name="lens_aspect" style="width:800px"><output name="lens_aspect_output">1.0</output></td>
-                            </tr>
-                            <tr>
-                                <td>distortion</td><td><input type="range" min="0" max="10000" value="0" class="slider" name="distortion" style="width:800px"><output name="distortion_output">1.0</output></td>
-                            </tr>
-                            <tr>
-                                <td>output scale Y</td><td><input type="range" min="0" max="1000" value="1000" class="slider" name="output_scale" style="width:800px"><output name="output_scale_output">1.0</output></td>
-                            </tr>
-                            <tr>
-                                <td>output scale X</td><td><input type="range" min="0" max="1000" value="1000" class="slider" name="output_scale_x" style="width:800px"><output name="output_scale_output_x">1.0</output></td>
-                            </tr>
-                            <tr>
-                                <td>offset Y</td><td><input type="range" min="0" max="1000" value="500" class="slider" name="offset_y" style="width:800px"><output name="offset_y_output">0.0</output></td>
-                            </tr>
-                            <tr>
-                                <td>offset X</td><td><input type="range" min="0" max="1000" value="500" class="slider" name="offset_x" style="width:800px"><output name="offset_x_output">0.0</output></td>
-                            </tr>
-                        </table>
-                    </div>
+
                 </div>
-                <textarea disabled rows="40" cols="80" id="pane_output" style="border:solid 1px orange;"/>
+
             </div>
         </div>
-        <div class="controls">
+        <div class="controls" style="visibility: hidden">
             <button onclick="flv_load()">Load</button>
             <button onclick="flv_start()">Start</button>
             <button onclick="flv_pause()">Pause</button>
@@ -116,7 +121,7 @@
             <input style="width:100px" type="text" name="seekpoint"/>
             <button onclick="flv_seekto()">SeekTo</button>
         </div>
-        <textarea name="logcatbox" class="logcatBox" rows="10" readonly></textarea>
+        <textarea name="logcatbox" class="logcatBox" rows="10" readonly style="visibility: hidden"></textarea>
     </div>
 
     <script src="../dist/EEN.MediaPlayer.js"></script>
@@ -128,7 +133,7 @@
 
         function loadPane(pane, container, dropdown) {
             pane.show_debug = true;
-            var canvas = $('<canvas width=' + pane.width + ' height=' + pane.height + ' name=canvas/>').appendTo(container);
+            var canvas = $('<canvas width=' + pane.width + ' height=' + pane.height + ' name=canvas style="padding: 1px"/>').appendTo(container);
             var line = document.createElement("option");
             line.text = pane.name;
             line.value = pane.name;
@@ -146,7 +151,7 @@
             pane.lens_factor = document.getElementsByName('lens_factor')[0].value / 1000.0;
 
             pane.lens_aspect = document.getElementsByName('lens_aspect')[0].value / 1000.0;
-            pane.inverse_lens_aspect = 1.0 / pane.lens_aspect;
+
             pane.front_clip = document.getElementsByName('front_clip')[0].value / 1000.0 - 0.5;
             pane.distortion = document.getElementsByName('distortion')[0].value / 1000.0 * -1;
             pane.fov = document.getElementsByName('fov')[0].value;
@@ -156,13 +161,18 @@
             pane.scale.x = document.getElementsByName('output_scale_x')[0].value / 1000.0;
             pane.offset.x = document.getElementsByName('offset_x')[0].value / 1000.0 - 0.5;
             pane.offset.y = document.getElementsByName('offset_y')[0].value / 1000.0 - 0.5;
+            //pane.lens_width = document.getElementsByName('inner_radius')[0].value/1000.0;
+
+            recalculatePaneVariables(pane);
+
+        }
+        function recalculatePaneVariables(pane) {
             pane.offset_vector = new Vec2(pane.offset.x, pane.offset.y);
-
             var azimuth = pane.azimuth * 0.0174533;
-
+            pane.inverse_lens_aspect = 1.0 / pane.lens_aspect;
             pane.dir = new Vec2(Math.sin(azimuth), Math.cos(azimuth)); // calculate a direction based on given azimuth
             pane.center_pos = new Vec2(0.5, 0.5); // calculate center of our frustum
-            pane.lens_width = document.getElementsByName('inner_radius')[0].value/1000.0;
+
             pane.inner_radius = (pane.lens_factor / 2.0) + ((pane.lens_factor * pane.lens_factor) / (4 * pane.lens_width * pane.lens_factor)); // calculate our inner circle radius based on lensing
 
             var fov = pane.fov * 0.0174533;
@@ -178,7 +188,6 @@
 
 
             pane.lpos = pane.center_pos.add(pane.dir.multiply(pane.front_clip - pane.inner_radius));
-
         }
         var processor = {
             timerCallback: function() {
@@ -249,7 +258,7 @@
                 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
 
-                var width = 1.7;
+                var width = 2.0;
                 var height = 2.0;
                 var halfw = width/2.0;
                 var halfh = height/2.0;
@@ -473,11 +482,11 @@
                     var container = document.getElementById('canvas_container');
                     var dropdown = document.getElementById('pane_dropdown');
                     dropdown.innerHTML = "";
-
                     self.panes.forEach(function(e) {
                         loadPane(e, container, dropdown);
-                        self.load_pane(e)
+
                     });
+                    self.load_pane(self.panes[0]);
 
 
 
@@ -488,11 +497,19 @@
             },
             load_pane: function(pane) {
 
-            self.ignore_changes = true;
+                this.panes.forEach(function (e) {
+                    if (e === pane) {
+                        e.output_color = [0.0, 1.0, 0.0, 1.0];
+                    } else {
+                        e.output_color = [1.0, 0.0, 0.0, 1.0];
+                    }
+                });
+
+                self.ignore_changes = true;
                 document.getElementsByName('azimuth')[0].value = pane.azimuth;
                 document.getElementsByName('lens_factor')[0].value = pane.lens_factor * 1000.0;
                 document.getElementsByName('lens_aspect')[0].value = pane.lens_aspect * 1000.0;
-                document.getElementsByName('inner_radius')[0].value = pane.inner_radius * 1000.0;
+                //document.getElementsByName('inner_radius')[0].value = pane.inner_radius * 1000.0;
                 document.getElementsByName('front_clip')[0].value = (pane.front_clip + 0.5) * 1000.0;
                 document.getElementsByName('distortion')[0].value = (pane.distortion) * 1000.0 * -1;
                 document.getElementsByName('fov')[0].value = pane.fov;
@@ -505,7 +522,7 @@
                 document.getElementsByName('azimuth_output')[0].value = pane.azimuth;
                 document.getElementsByName('lens_factor_output')[0].value = pane.lens_factor;
                 document.getElementsByName('lens_aspect_output')[0].value = pane.lens_aspect;
-                document.getElementsByName('inner_radius_output')[0].value = pane.inner_radius;
+                //document.getElementsByName('inner_radius_output')[0].value = pane.inner_radius;
                 document.getElementsByName('front_clip_output')[0].value = pane.front_clip;
                 document.getElementsByName('distortion_output')[0].value = pane.distortion;
                 document.getElementsByName('fov_output')[0].value = pane.fov;
@@ -620,13 +637,13 @@
 
                     self.refreshVariables(self.gl);
                 });
-                document.getElementsByName('inner_radius')[0].addEventListener('input', function(e) {
-                    document.getElementsByName('inner_radius_output')[0].value = e.target.value / 1000.0;
-                    if (self.ignore_changes)
-                        return;
-
-                    self.refreshVariables(self.gl);
-                });
+                // document.getElementsByName('inner_radius')[0].addEventListener('input', function(e) {
+                //     document.getElementsByName('inner_radius_output')[0].value = e.target.value / 1000.0;
+                //     if (self.ignore_changes)
+                //         return;
+                //
+                //     self.refreshVariables(self.gl);
+                // });
                 document.getElementsByName('front_clip')[0].addEventListener('input', function(e) {
                     document.getElementsByName('front_clip_output')[0].value = e.target.value / 1000.0;
                     if (self.ignore_changes)
@@ -687,8 +704,7 @@
 
                 document.getElementById('pane_dropdown').addEventListener('change', function(e) {
                     var pane = self.panes[e.target.selectedIndex];
-                    load_pane(pane);
-
+                    self.load_pane(pane);
                 });
 
                 self.mouse_down = false;
@@ -738,8 +754,9 @@
             setShader: function (gl, programInfo, pane) {
                 gl.useProgram(programInfo.program);
 
-                if (typeof pane.lStart === 'undefined')
-                    self.paneChanged(pane);
+                 if (typeof pane.lStart === 'undefined')
+                     self.recalculatePaneVariables(pane);
+                //     self.paneChanged(pane);
 
                 gl.uniform1f(programInfo.uniformLocations.azimuth, pane.azimuth * 0.0174533);
                 gl.uniform1f(programInfo.uniformLocations.lens_factor, pane.lens_factor);
@@ -764,7 +781,7 @@
                 gl.uniform2fv(programInfo.uniformLocations.offset, pane.offset_vector.toArray());
             },
             drawPane: function (gl, pane, programInfo, offset, scale, projectionMatrix) {
-                ///console.log('drawing pane: ' + pane);
+///                console.log('drawing pane: ' + JSON.stringify(pane));
                 const modelViewMatrix = mat4.create();
                 mat4.translate(modelViewMatrix,     // destination matrix
                     modelViewMatrix,     // matrix to translate
@@ -778,6 +795,26 @@
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.buffers.position);
 
+                if (pane["animation"]) {
+                    var animation = pane["animation"]
+                    if (!animation["start_time"]) {
+                        animation["start_time"] = Date.now();
+                        pane.azimuth = pane.azimuth - parseFloat(animation["azimuth"]) * 0.5;
+                        pane["original_azimuth"] = parseFloat(pane.azimuth);
+                    }
+
+                    var anim_azimuth = parseFloat(animation["azimuth"]);
+
+                    var elapsed = (Date.now() - animation["start_time"]) / 1000.0;
+                    var reversed = Math.floor(elapsed / animation["duration"]) % 2;
+                    var progress = (elapsed % animation["duration"]) / animation["duration"] * anim_azimuth;
+                    if (reversed) {
+                        pane.azimuth = pane.original_azimuth + anim_azimuth - progress;
+                    } else {
+                        pane.azimuth = pane.original_azimuth + progress;
+                    }
+                    self.recalculatePaneVariables(pane);
+                }
 
                 this.setShader(gl, programInfo, pane);
                 gl.vertexAttribPointer(programInfo.attribLocations.vertexPosition, 3, gl.FLOAT, false, 0, 0);
@@ -816,10 +853,10 @@
 
                 // Clear the canvas before we start drawing on it.
                 var elements = document.getElementsByName('canvas');
+                this.updateTexture(this.gl, this.texture, this.video);
                 if (elements.length > 0 ) {
                     for (var i = 0; i < this.panes.length && i < elements.length; i++) {
                         var pane = this.panes[i];
-                        this.updateTexture(this.gl, this.texture, this.video);
                         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                         this.drawPane(gl, this.panes[i], this.programInfo[this.panes[i].shader], [0, 0, -2.0], [1.0*pane.scale.x, 1.0*pane.scale.y, 1], this.projectionMatrix);
                         elements[i].getContext('2d').drawImage(self.c1, 0, 0, self.c1.width, self.c1.height, 0, 0, elements[i].width, elements[i].height);
@@ -895,6 +932,13 @@
                });
            player.attachMediaElement(element);
            player.load();
+           element.addEventListener('playing', function (e) {
+              element.className = "";
+           });
+
+           element.addEventListener('ended', function(e) {
+              element.className = "centered_video";
+           });
             //player = EEN.MediaPlayer.startLive('100f9f23', 'c013~d3955ca427b0a55d7f7d019245853228', element);
             processor.doLoad();
         }

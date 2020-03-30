@@ -32,6 +32,8 @@ import {InvalidArgumentException} from './utils/exception.js';
 Polyfill.install();
 
 
+
+
 function startPlayback(config, element) {
     let start = config.start;
     let end = config.end;
@@ -58,12 +60,15 @@ function startPlayback(config, element) {
         url += '&A=' + config.auth_key;
     }
 
+    let isLive = config.isLive();
+
     let options = {
         enableWorker: false,
         lazyLoadMaxDuration: 5 * 60,
         seekType: 'range',
         url: url,
-        isLive: config.isLive(),
+        isLive: isLive,
+        enableStashBuffer: !isLive,
         type: 'flv'
     };
 

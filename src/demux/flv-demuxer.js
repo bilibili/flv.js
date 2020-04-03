@@ -56,7 +56,7 @@ class FLVDemuxer {
         this._onScriptDataArrived = null;
         this._onTrackMetadata = null;
         this._onDataAvailable = null;
-        this._onFlushStashedSamples = null;
+        this._onSeek = null;
 
         this._dataOffset = probeData.dataOffset;
         this._firstParse = true;
@@ -129,7 +129,7 @@ class FLVDemuxer {
         this._onScriptDataArrived = null;
         this._onTrackMetadata = null;
         this._onDataAvailable = null;
-        this._onFlushStashedSamples = null;
+        this._onSeek = null;
     }
 
     static probe(buffer) {
@@ -215,12 +215,12 @@ class FLVDemuxer {
         this._onDataAvailable = callback;
     }
 
-    get onFlushStashedSamples() {
-        return this._onFlushStashedSamples;
+    get seek() {
+        return this._onSeek;
     }
 
-    set onFlushStashedSamples(callback) {
-        this._onFlushStashedSamples = callback;
+    set seek(callback) {
+        this._onSeek = callback;
     }
 
     // timestamp base for output samples, must be in milliseconds
@@ -541,7 +541,7 @@ class FLVDemuxer {
             if (aacData.packetType === 0) {  // AAC sequence header (AudioSpecificConfig)
                 if (meta.config) {
                     // flush stashed samples if AudioSpecificConfig is changed
-                    this._onFlushStashedSamples && this._onFlushStashedSamples();
+                    this.seek && this.seek();
                     Log.w(this.TAG, 'Found another AudioSpecificConfig!');
                 }
                 let misc = aacData.data;
@@ -907,7 +907,7 @@ class FLVDemuxer {
         } else {
             if (typeof meta.avcc !== 'undefined') {
                 // flush stashed samples if AVCDecoderConfigurationRecord is changed
-                this._onFlushStashedSamples && this._onFlushStashedSamples();
+                this.seek && this.seek();
                 Log.w(this.TAG, 'Found another AVCDecoderConfigurationRecord!');
             }
         }

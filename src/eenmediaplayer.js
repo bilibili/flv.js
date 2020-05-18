@@ -88,7 +88,7 @@ function startPlayback(config, element) {
     if (config.options)
         Object.assign(config.options, options);
 
-    let player = createPlayer(options);
+    let player = createPlayer(options, options);
     player.attachMediaElement(element);
     player.load();
     return player;
@@ -133,6 +133,7 @@ class MediaItem {
         this.auth_key = null;
         this.api_key = null;
         this.options = null;
+        this.url = null;
     }
 
     setStartTime(time) {
@@ -157,6 +158,10 @@ class MediaItem {
 
     setKeyframeData(data) {
         this.keyframeData = data;
+    }
+
+    setUrl(url) {
+        this.url = url;
     }
 
     isLive() {

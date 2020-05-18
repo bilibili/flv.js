@@ -87,9 +87,7 @@ class MozChunkedLoader extends BaseLoader {
         // cors is auto detected and enabled by xhr
 
         // withCredentials is disabled by default
-        if (dataSource.withCredentials) {
-            xhr.withCredentials = true;
-        }
+        xhr.withCredentials = true;
 
         if (typeof seekConfig.headers === 'object') {
             let headers = seekConfig.headers;

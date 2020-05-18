@@ -49,7 +49,7 @@ class FLVDemuxer {
     constructor(probeData, config, mediaElement) {
         this.TAG = 'FLVDemuxer';
 
-
+        this._keyframesOverride = config.keyframes;
         this._config = config;
         this._audio = new AudioPlayer(mediaElement);
         this._onError = null;
@@ -501,7 +501,10 @@ class FLVDemuxer {
                     this._mediaInfo.fps = fps;
                 }
             }
-            if (typeof onMetaData.keyframes === 'object') {  // keyframes
+            if (this._keyframesOverride != null) {
+                this._mediaInfo.hasKeyframesIndex = true;
+                this._mediaInfo.keyframesIndex = this._keyframesOverride;
+            } else if (typeof onMetaData.keyframes === 'object') {  // keyframes
                 this._mediaInfo.hasKeyframesIndex = true;
                 let keyframes = onMetaData.keyframes;
                 this._mediaInfo.keyframesIndex = this._parseKeyframesIndex(keyframes);

@@ -145,9 +145,7 @@ class RangeLoader extends BaseLoader {
         xhr.onload = this._onLoad.bind(this);
         xhr.onerror = this._onXhrError.bind(this);
 
-        if (dataSource.withCredentials) {
-            xhr.withCredentials = true;
-        }
+        xhr.withCredentials = true;
 
         if (typeof seekConfig.headers === 'object') {
             let headers = seekConfig.headers;

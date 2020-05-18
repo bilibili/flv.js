@@ -54,11 +54,29 @@ function startPlayback(config, element) {
         url = config.url;
     }
 
-    if (config.auth_key != null) {
-        url += '&A=' + config.auth_key;
+    let keyframeMeta = null;
+    if (config.keyframeData != null) {
+        let times = [];
+        let offsets = [];
+        let header = config.keyframeData['header'];
+        let headerSize = header['headersize'];
+        let gopOffset = header['gopoffset'];
+        let keyframes = config.keyframeData['keyframes'];
+        for (let i = 0; i < keyframes.length; i++) {
+            let keyframe = keyframes[i];
+            let ts = keyframe['virtual_ts'];
+            let offset = keyframe['virtual_offset'] + headerSize - gopOffset;
+            times.push(ts);
+            offsets.push(offset);
+        }
+        keyframeMeta = {times: times, filepositions: offsets};
+
+    } else {
+        url += '&index=true';
     }
 
     let options = {
+        keyframes: keyframeMeta,
         enableWorker: false,
         lazyLoadMaxDuration: 5 * 60,
         seekType: 'range',
@@ -108,6 +126,7 @@ function getFeatureList() {
 
 class MediaItem {
     constructor(esn) {
+        this.keyframeData = null;
         this.esn = esn;
         this.start = null;
         this.end = null;
@@ -134,6 +153,10 @@ class MediaItem {
 
     setOptions(options) {
         this.options = options;
+    }
+
+    setKeyframeData(data) {
+        this.keyframeData = data;
     }
 
     isLive() {

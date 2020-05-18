@@ -127,9 +127,8 @@ class MSStreamLoader extends BaseLoader {
         xhr.onreadystatechange = this._xhrOnReadyStateChange.bind(this);
         xhr.onerror = this._xhrOnError.bind(this);
 
-        if (dataSource.withCredentials) {
-            xhr.withCredentials = true;
-        }
+        xhr.withCredentials = true;
+
 
         if (typeof seekConfig.headers === 'object') {
             let headers = seekConfig.headers;

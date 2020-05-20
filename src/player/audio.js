@@ -61,6 +61,8 @@ export class AudioPlayer {
 
             let buf = this.buffers[ts_key]['buffer'];
             nextTime = timestamp + this.timeBase - this.seekTime;
+            if (nextTime < 0)
+                continue;
             this.bufSource = this.ctx.createBufferSource();
             this.bufSource.buffer = buf;
             this.bufSource.connect(this.gain);
@@ -220,6 +222,8 @@ export class AudioPlayer {
                 this.timeBase = this.ctx.currentTime;
 
             let nextTime = (timestamp / 1000.0) + this.timeBase - this.seekTime;
+            if (nextTime < 0)
+                return;
             this.bufSource = this.ctx.createBufferSource();
             this.bufSource.buffer = buf;
             this.bufSource.playbackRate.value = this.rate;

@@ -222,8 +222,11 @@ export class AudioPlayer {
                 this.timeBase = this.ctx.currentTime;
 
             let nextTime = (timestamp / 1000.0) + this.timeBase - this.seekTime;
-            if (nextTime < 0)
+            if (nextTime < 0) {
+                this.packets = [];
+                this.timestamps = [];
                 return;
+            }
             this.bufSource = this.ctx.createBufferSource();
             this.bufSource.buffer = buf;
             this.bufSource.playbackRate.value = this.rate;

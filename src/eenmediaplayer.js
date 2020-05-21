@@ -62,10 +62,26 @@ function startPlayback(config, element) {
         let headerSize = header['headersize'];
         let gopOffset = header['gopoffset'];
         let keyframes = config.keyframeData['keyframes'];
+        let last = 0;
+        let files = 0;
         for (let i = 0; i < keyframes.length; i++) {
             let keyframe = keyframes[i];
+            if (last == 0) {
+                last = keyframe.mediats;
+            }
+
+            if (last != keyframe.mediats) {
+                files++;
+                last = keyframe.mediats;
+            }
+
             let ts = keyframe['virtual_ts'];
-            let offset = keyframe['virtual_offset'] + headerSize - gopOffset;
+            let offset = 0;
+            if (files == 0) {
+                offset = keyframe['virtual_offset'] + headerSize - gopOffset;
+            } else {
+                offset = keyframe['virtual_offset'];
+            }
             times.push(ts);
             offsets.push(offset);
         }

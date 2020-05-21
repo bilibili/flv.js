@@ -84,11 +84,18 @@ class FlvPlayer {
 
         this._mediaInfo = null;
         this._statisticsInfo = null;
+        this.currentCatchupIdentifer = 0;
 
         let chromeNeedIDRFix = (Browser.chrome &&
                                (Browser.version.major < 50 ||
                                (Browser.version.major === 50 && Browser.version.build < 2661)));
         this._alwaysSeekKeyframe = (chromeNeedIDRFix || Browser.msedge || Browser.msie) ? true : false;
+
+
+        this.skip_threshold = 15;
+        this.fastforward_threshold = 2.5;
+        this.resume_threshold = 0.75;
+
 
         if (this._alwaysSeekKeyframe) {
             this._config.accurateSeek = false;
@@ -656,8 +663,36 @@ class FlvPlayer {
         this._transmuxer._controller._demuxer._audio.onSeek(e.target);
     }
 
+    mediaCatchup(video, identifier) {
+        if (identifier != this.currentCatchupIdentifer)
+            return;
+
+        if (!video.paused && !video.ended && video.buffered.length > 0) {
+            let delta = video.buffered.end(0) - video.currentTime;
+            if (delta > this.skip_threshold) {
+                video.currentTime += (delta - this.resume_threshold);
+            } else if (delta > this.fastforward_threshold - this.resume_threshold) {
+                video.playbackRate = Math.max(2.0, Math.min(16, delta));
+            } else if (delta < this.resume_threshold && video.playbackRate != 1.0) {
+                video.playbackRate = 1.0;
+                this.resume_threshold += 0.25;
+            }
+        }
+        setTimeout(() => {
+            this.mediaCatchup(video, identifier);
+        }, 100);
+    }
+
+    startCatchup(element) {
+        let identifier = ++this.currentCatchupIdentifer;
+        this.mediaCatchup(element, identifier);
+    }
+
     _onvCanPlay(e) {
         this._receivedCanPlay = true;
+        if (this._config.isLive) {
+            this.startCatchup(e.target);
+        }
         this._mediaElement.removeEventListener('canplay', this.e.onvCanPlay);
     }
 

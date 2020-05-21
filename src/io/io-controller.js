@@ -41,13 +41,14 @@ import {RuntimeException, IllegalStateException, InvalidArgumentException} from 
 // Manage IO Loaders
 class IOController {
 
-    constructor(dataSource, config, extraData) {
+    constructor(dataSource, config, extraData, mediaElement) {
         this.TAG = 'IOController';
 
+        this.element = mediaElement;
         this._config = config;
         this._extraData = extraData;
 
-        this._stashInitialSize = 1024 * 384;  // default initial size: 384KB
+        this._stashInitialSize = 1024 * 384 * this.element.playbackRate;  // default initial size: 384KB
         if (config.stashInitialSize != undefined && config.stashInitialSize > 0) {
             // apply from config
             this._stashInitialSize = config.stashInitialSize;
@@ -55,7 +56,7 @@ class IOController {
 
         this._stashUsed = 0;
         this._stashSize = this._stashInitialSize;
-        this._bufferSize = 1024 * 1024 * 3;  // initial size: 3MB
+        this._bufferSize = 1024 * 1024 * this.element.playbackRate;  // initial size: 3MB
         this._stashBuffer = new ArrayBuffer(this._bufferSize);
         this._stashByteStart = 0;
         this._enableStash = true;
@@ -414,16 +415,12 @@ class IOController {
             stashSizeKB = normalized;
         } else {
             if (normalized < 512) {
-                stashSizeKB = normalized;
+                stashSizeKB = normalized * 3.0 * this.element.playbackRate;
             } else if (normalized >= 512 && normalized <= 1024) {
-                stashSizeKB = Math.floor(normalized * 1.5);
+                stashSizeKB = Math.floor(normalized * 1.5) * 3.0 * this.element.playbackRate;
             } else {
-                stashSizeKB = normalized * 2;
+                stashSizeKB = normalized * 2 * this.element.playbackRate;
             }
-        }
-
-        if (stashSizeKB > 8192) {
-            stashSizeKB = 8192;
         }
 
         let bufferSize = stashSizeKB * 1024 + 1024 * 1024 * 1;  // stashSize + 1MB

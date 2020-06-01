@@ -669,9 +669,9 @@ class FlvPlayer {
 
         if (!video.paused && !video.ended && video.buffered.length > 0) {
             let delta = video.buffered.end(0) - video.currentTime;
-            if (delta > this.skip_threshold) {
+            if (delta > this.skip_threshold + this.resume_threshold) {
                 video.currentTime += (delta - this.resume_threshold);
-            } else if (delta > this.fastforward_threshold - this.resume_threshold) {
+            } else if (delta > this.fastforward_threshold + this.resume_threshold) {
                 video.playbackRate = Math.max(2.0, Math.min(16, delta));
             } else if (delta < this.resume_threshold && video.playbackRate != 1.0) {
                 video.playbackRate = 1.0;

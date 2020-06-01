@@ -68,18 +68,18 @@ function startPlayback(config, element) {
         let files = 0;
         for (let i = 0; i < keyframes.length; i++) {
             let keyframe = keyframes[i];
-            if (last == 0) {
+            if (last === 0) {
                 last = keyframe.mediats;
             }
 
-            if (last != keyframe.mediats) {
+            if (last !== keyframe.mediats) {
                 files++;
                 last = keyframe.mediats;
             }
 
             let ts = keyframe['virtual_ts'];
             let offset = 0;
-            if (files == 0) {
+            if (files === 0) {
                 offset = keyframe['virtual_offset'] + headerSize - gopOffset;
             } else {
                 offset = keyframe['virtual_offset'];
@@ -91,6 +91,10 @@ function startPlayback(config, element) {
 
     } else {
         url += '&index=true';
+    }
+
+    if (config.auth_key != null) {
+        url += '&A=' + config.auth_key;
     }
 
     let isLive = config.isLive();

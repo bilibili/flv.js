@@ -501,7 +501,7 @@ class FLVDemuxer {
                     this._mediaInfo.fps = fps;
                 }
             }
-            if (this._keyframesOverride != null) {
+            if (this._keyframesOverride) {
                 this._mediaInfo.hasKeyframesIndex = true;
                 this._mediaInfo.keyframesIndex = this._keyframesOverride;
             } else if (typeof onMetaData.keyframes === 'object') {  // keyframes
@@ -1169,6 +1169,11 @@ class FLVDemuxer {
 
             if (unitType === 5) {  // IDR
                 keyframe = true;
+            }
+
+            if (unitType === 6) {
+                offset += lengthSize + naluSize;
+                continue;
             }
 
             let data = new Uint8Array(arrayBuffer, dataOffset + offset, lengthSize + naluSize);

@@ -68,7 +68,7 @@ function startPlayback(config, element) {
         for (let i = 0; i < keyframes.length; i++) {
             // array of fileindex, virtualts, virtual_offset
             let keyframe = keyframes[i];
-            var ts = keyframe[2];
+            let ts = keyframe[2];
             let offset = 0;
             if (keyframe[0] === 0) {
                 offset = keyframe[1] + headerSize - gopOffset;

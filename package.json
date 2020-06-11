@@ -1,6 +1,6 @@
 {
   "name": "flv.js",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "HTML5 FLV Player",
   "main": "./dist/flv.js",
   "module": "./src/flv.js",
@@ -18,31 +18,32 @@
   ],
   "scripts": {
     "dev": "gulp watch",
-    "build": "gulp release"
+    "build": "gulp release",
+    "dtslint": "dtslint types"
   },
   "dependencies": {
-    "es6-promise": "^4.1.0",
-    "webworkify": "^1.4.0"
+    "es6-promise": "^4.2.5",
+    "webworkify": "^1.5.0"
   },
   "devDependencies": {
     "babel-preset-es2015": "^6.24.0",
     "babelify": "^7.3.0",
-    "browser-sync": "^2.18.13",
+    "browser-sync": "^2.26.3",
     "browserify": "^13.1.1",
-    "browserify-derequire": "^0.9.4",
+    "browserify-derequire": "^0.9.6",
     "browserify-versionify": "^1.0.6",
     "del": "^2.2.0",
-    "opn": "^5.1.0",
     "gulp": "^3.9.1",
-    "gulp-cli": "^1.2.2",
+    "gulp-cli": "^1.4.0",
     "gulp-eslint": "^3.0.1",
-    "gulp-header": "^1.8.8",
-    "gulp-rename": "^1.2.2",
-    "gulp-sourcemaps": "^2.4.1",
+    "gulp-header": "^1.8.12",
+    "gulp-rename": "^1.4.0",
+    "gulp-sourcemaps": "^2.6.4",
     "gulp-uglify": "^2.1.1",
-    "vinyl-buffer": "^1.0.0",
-    "vinyl-source-stream": "^1.1.0",
-    "watchify": "^3.9.0"
+    "opn": "^5.4.0",
+    "vinyl-buffer": "^1.0.1",
+    "vinyl-source-stream": "^1.1.2",
+    "watchify": "^3.11.0"
   },
   "author": "zheng qian <xqq@xqq.im>",
   "license": "Apache-2.0"

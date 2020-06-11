@@ -242,6 +242,12 @@ class FlvPlayer {
             this._mediaInfo = mediaInfo;
             this._emitter.emit(PlayerEvents.MEDIA_INFO, Object.assign({}, mediaInfo));
         });
+        this._transmuxer.on(TransmuxingEvents.METADATA_ARRIVED, (metadata) => {
+            this._emitter.emit(PlayerEvents.METADATA_ARRIVED, metadata);
+        });
+        this._transmuxer.on(TransmuxingEvents.SCRIPTDATA_ARRIVED, (data) => {
+            this._emitter.emit(PlayerEvents.SCRIPTDATA_ARRIVED, data);
+        });
         this._transmuxer.on(TransmuxingEvents.STATISTICS_INFO, (statInfo) => {
             this._statisticsInfo = this._fillStatisticsInfo(statInfo);
             this._emitter.emit(PlayerEvents.STATISTICS_INFO, Object.assign({}, this._statisticsInfo));

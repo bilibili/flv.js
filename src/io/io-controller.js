@@ -48,7 +48,7 @@ class IOController {
         this._config = config;
         this._extraData = extraData;
 
-        this._stashInitialSize = 1024 * 384 * this.element.playbackRate;  // default initial size: 384KB
+        this._stashInitialSize = 1024 * 768 * this.element.playbackRate;  // default initial size: 384KB
         if (config.stashInitialSize != undefined && config.stashInitialSize > 0) {
             // apply from config
             this._stashInitialSize = config.stashInitialSize;
@@ -56,7 +56,7 @@ class IOController {
 
         this._stashUsed = 0;
         this._stashSize = this._stashInitialSize;
-        this._bufferSize = 1024 * 1024 * this.element.playbackRate;  // initial size: 3MB
+        this._bufferSize = 1024 * 2048 * this.element.playbackRate;  // initial size: 3MB
         this._stashBuffer = new ArrayBuffer(this._bufferSize);
         this._stashByteStart = 0;
         this._enableStash = true;
@@ -78,7 +78,7 @@ class IOController {
 
         this._speedNormalized = 0;
         this._speedSampler = new SpeedSampler();
-        this._speedNormalizeList = [64, 128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096];
+        this._speedNormalizeList = [64, 128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 8192];
 
         this._isEarlyEofReconnecting = false;
 

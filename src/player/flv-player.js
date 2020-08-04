@@ -568,6 +568,11 @@ class FlvPlayer {
                     // .currentTime is consists with .buffered timestamp
                     // Chrome/Edge use DTS, while FireFox/Safari use PTS
                     this._msectl.seek(target);
+                    if (!this._transmuxer) {
+                        window.setTimeout(this._checkAndApplyUnbufferedSeekpoint.bind(this), 50);
+                        return;
+                    }
+                    
                     this._transmuxer.seek(Math.floor(target * 1000));
                     // set currentTime if accurateSeek, or wait for recommend_seekpoint callback
                     if (this._config.accurateSeek) {

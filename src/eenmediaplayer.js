@@ -64,25 +64,16 @@ function startPlayback(config, element) {
         let headerSize = header['headersize'];
         let gopOffset = header['gopoffset'];
         let keyframes = config.keyframeData['keyframes'];
-        let last = 0;
-        let files = 0;
+
         for (let i = 0; i < keyframes.length; i++) {
+            // array of fileindex, virtualts, virtual_offset
             let keyframe = keyframes[i];
-            if (last === 0) {
-                last = keyframe.mediats;
-            }
-
-            if (last !== keyframe.mediats) {
-                files++;
-                last = keyframe.mediats;
-            }
-
-            let ts = keyframe['virtual_ts'];
+            let ts = keyframe[2];
             let offset = 0;
-            if (files === 0) {
-                offset = keyframe['virtual_offset'] + headerSize - gopOffset;
+            if (keyframe[0] === 0) {
+                offset = keyframe[1] + headerSize - gopOffset;
             } else {
-                offset = keyframe['virtual_offset'];
+                offset = keyframe[1];
             }
             times.push(ts);
             offsets.push(offset);

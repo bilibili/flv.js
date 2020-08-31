@@ -46,7 +46,7 @@ function startPlayback(config, element) {
     let url = null;
     if (!config.url) {
         url =  [
-            window.location.protocol + '//' + window.location.host +
+            window.location.protocol + '//' + config.domain +
             '/asset/play/video.flv?' +
             'id=' + config.esn,
             'start_timestamp=' + start,
@@ -150,6 +150,7 @@ class MediaItem {
         this.api_key = null;
         this.options = null;
         this.url = null;
+        this.domain  = 'window.location.host'
     }
 
     setStartTime(time) {
@@ -176,6 +177,9 @@ class MediaItem {
         this.keyframeData = data;
     }
 
+    setDomain(domain) {
+        this.domain = domain
+    }
     setUrl(url) {
         this.url = url;
     }

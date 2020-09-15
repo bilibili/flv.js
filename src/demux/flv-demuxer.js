@@ -1203,7 +1203,7 @@ class FLVDemuxer {
                 track.length += length;
                 this.lastdts = dts + cts;
             } else {
-                Log.w(this.TAG, `DTS < current. Skipping frame (${dts+cts} < ${this.lastdts}`)
+                Log.w(this.TAG, `DTS < current. Skipping frame (${dts + cts} < ${this.lastdts}`);
             }
         }
     }

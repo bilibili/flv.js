@@ -25,8 +25,12 @@ class SPSParser {
         let src_length = src.byteLength;
         let dst = new Uint8Array(src_length);
         let dst_idx = 0;
+        let start_offset = 0;
+        if (src[3] === 0x01 && src[2] === 0x00 && src[1] === 0x0 && src[0] === 0x00) {
+            start_offset = 4;
+        }
 
-        for (let i = 0; i < src_length; i++) {
+        for (let i = start_offset; i < src_length; i++) {
             if (i >= 2) {
                 // Unescape: Skip 0x03 after 00 00
                 if (src[i] === 0x03 && src[i - 1] === 0x00 && src[i - 2] === 0x00) {

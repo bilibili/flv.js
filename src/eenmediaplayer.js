@@ -150,7 +150,7 @@ class MediaItem {
         this.api_key = null;
         this.options = null;
         this.url = null;
-        this.domain  = 'window.location.host'
+        this.domain  = 'window.location.host';
     }
 
     setStartTime(time) {
@@ -178,7 +178,7 @@ class MediaItem {
     }
 
     setDomain(domain) {
-        this.domain = domain
+        this.domain = domain;
     }
     setUrl(url) {
         this.url = url;

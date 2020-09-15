@@ -58,6 +58,7 @@ class FLVDemuxer {
         this._onScriptDataArrived = null;
         this._onTrackMetadata = null;
         this._onDataAvailable = null;
+        this.lastdts = 0;
 
         this._dataOffset = probeData.dataOffset;
         this._firstParse = true;
@@ -1004,10 +1005,10 @@ class FLVDemuxer {
         let profileCompatibility = v.getUint8(2);  // profile_compatibility
         let avcLevel = v.getUint8(3);  // AVCLevelIndication
 
-        if (version !== 1 || avcProfile === 0) {
-            this._onError(DemuxErrors.FORMAT_ERROR, 'Flv: Invalid AVCDecoderConfigurationRecord');
-            return;
-        }
+        // if (version !== 1 || avcProfile === 0) {
+        //     this._onError(DemuxErrors.FORMAT_ERROR, 'Flv: Invalid AVCDecoderConfigurationRecord');
+        //     return;
+        // }
 
         this._naluLengthSize = (v.getUint8(4) & 3) + 1;  // lengthSizeMinusOne
         if (this._naluLengthSize !== 3 && this._naluLengthSize !== 4) {  // holy shit!!!
@@ -1185,20 +1186,25 @@ class FLVDemuxer {
         }
 
         if (units.length) {
-            let track = this._videoTrack;
-            let avcSample = {
-                units: units,
-                length: length,
-                isKeyframe: keyframe,
-                dts: dts,
-                cts: cts,
-                pts: (dts + cts)
-            };
-            if (keyframe) {
-                avcSample.fileposition = tagPosition;
+            if ((dts + cts) > this.lastdts) {
+                let track = this._videoTrack;
+                let avcSample = {
+                    units: units,
+                    length: length,
+                    isKeyframe: keyframe,
+                    dts: dts,
+                    cts: cts,
+                    pts: (dts + cts)
+                };
+                if (keyframe) {
+                    avcSample.fileposition = tagPosition;
+                }
+                track.samples.push(avcSample);
+                track.length += length;
+                this.lastdts = dts + cts;
+            } else {
+                Log.w(this.TAG, `DTS < current. Skipping frame (${dts+cts} < ${this.lastdts}`)
             }
-            track.samples.push(avcSample);
-            track.length += length;
         }
     }
 

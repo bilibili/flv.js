@@ -306,6 +306,8 @@ declare namespace FlvJs {
         duration?: number;
         width?: number;
         height?: number;
+		fps?: number;
+        hasVideo?: boolean;
     }
 
     interface FlvPlayerMediaInfo extends NativePlayerMediaInfo {

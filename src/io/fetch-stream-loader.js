@@ -128,6 +128,7 @@ class FetchStreamLoader extends BaseLoader {
             if (this._requestAbort) {
                 this._requestAbort = false;
                 this._status = LoaderStatus.kIdle;
+                res.body.cancel();
                 return;
             }
             if (res.ok && (res.status >= 200 && res.status <= 299)) {

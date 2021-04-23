@@ -126,7 +126,6 @@ class FetchStreamLoader extends BaseLoader {
         this._status = LoaderStatus.kConnecting;
         self.fetch(seekConfig.url, params).then((res) => {
             if (this._requestAbort) {
-                this._requestAbort = false;
                 this._status = LoaderStatus.kIdle;
                 res.body.cancel();
                 return;
@@ -175,8 +174,13 @@ class FetchStreamLoader extends BaseLoader {
     abort() {
         this._requestAbort = true;
 
-        if (this._abortController) {
-            this._abortController.abort();
+        if (this._status !== LoaderStatus.kBuffering || !Browser.chrome) {
+            // Chrome may throw Exception-like things here, avoid using if is buffering
+            if (this._abortController) {
+                try {
+                    this._abortController.abort();
+                } catch (e) {}
+            }
         }
     }
 
@@ -202,8 +206,10 @@ class FetchStreamLoader extends BaseLoader {
                     }
                 }
             } else {
-                if (this._requestAbort === true) {
-                    this._requestAbort = false;
+                if (this._abortController && this._abortController.signal.aborted) {
+                    this._status = LoaderStatus.kComplete;
+                    return;
+                } else if (this._requestAbort === true) {
                     this._status = LoaderStatus.kComplete;
                     return reader.cancel();
                 }
@@ -221,6 +227,11 @@ class FetchStreamLoader extends BaseLoader {
                 this._pump(reader);
             }
         }).catch((e) => {
+            if (this._abortController && this._abortController.signal.aborted) {
+                this._status = LoaderStatus.kComplete;
+                return;
+            }
+
             if (e.code === 11 && Browser.msedge) {  // InvalidStateError on Microsoft Edge
                 // Workaround: Edge may throw InvalidStateError after ReadableStreamReader.cancel() call
                 // Ignore the unknown exception.

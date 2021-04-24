@@ -65,6 +65,8 @@ class MP4Remuxer {
         this._mp3UseMpegAudio = !Browser.firefox;
 
         this._fillAudioTimestampGap = this._config.fixAudioTimestampGap;
+
+        this._deltaAudioTimestapGap = 0;
     }
 
     destroy() {
@@ -371,13 +373,15 @@ class MP4Remuxer {
             let needFillSilentFrames = false;
             let silentFrames = null;
 
+            this._deltaAudioTimestapGap += sampleDuration - refSampleDuration;
             // Silent frame generation, if large timestamp gap detected && config.fixAudioTimestampGap
-            if (sampleDuration > refSampleDuration * 1.5 && this._audioMeta.codec !== 'mp3' && this._fillAudioTimestampGap && !Browser.safari) {
+            if (this._deltaAudioTimestapGap > refSampleDuration && this._audioMeta.codec !== 'mp3' && this._fillAudioTimestampGap && !Browser.safari) {
                 // We need to insert silent frames to fill timestamp gap
                 needFillSilentFrames = true;
                 let delta = Math.abs(sampleDuration - refSampleDuration);
-                let frameCount = Math.ceil(delta / refSampleDuration);
+                let frameCount = Math.floor(delta / refSampleDuration);
                 let currentDts = dts + refSampleDuration;  // Notice: in float
+                this._deltaAudioTimestapGap = this._deltaAudioTimestapGap % refSampleDuration;
 
                 Log.w(this.TAG, 'Large audio timestamp gap detected, may cause AV sync to drift. ' +
                                 'Silent frames will be generated to avoid unsync.\n' +

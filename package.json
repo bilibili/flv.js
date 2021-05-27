@@ -33,7 +33,6 @@
     "browserify-derequire": "^0.9.4",
     "browserify-versionify": "^1.0.6",
     "del": "^2.2.0",
-    "opn": "^5.1.0",
     "gulp": "^3.9.1",
     "gulp-cli": "^1.2.2",
     "gulp-eslint": "^3.0.1",
@@ -41,6 +40,7 @@
     "gulp-rename": "^1.2.2",
     "gulp-sourcemaps": "^2.4.1",
     "gulp-uglify": "^2.1.1",
+    "opn": "^5.1.0",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.9.0"

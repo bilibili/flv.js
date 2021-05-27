@@ -84,6 +84,10 @@ class FetchStreamLoader extends BaseLoader {
             }
         }
 
+        if (this._config.uberTraceID) {
+            headers.append('uber-trace-id', this._config.uberTraceID);
+        }
+
         let params = {
             method: 'GET',
             headers: headers,
@@ -114,6 +118,13 @@ class FetchStreamLoader extends BaseLoader {
         // referrerPolicy from config
         if (dataSource.referrerPolicy) {
             params.referrerPolicy = dataSource.referrerPolicy;
+        }
+
+        if (this._config.eventLogger) {
+            this._config.eventLogger('flv.js.sent_video_request', {
+                uberTraceID: this._config.uberTraceID,
+                url: sourceURL
+            });
         }
 
         this._status = LoaderStatus.kConnecting;

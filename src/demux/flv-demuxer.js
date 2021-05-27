@@ -67,6 +67,8 @@ class FLVDemuxer {
         this._hasAudio = probeData.hasAudioTrack;
         this._hasVideo = probeData.hasVideoTrack;
 
+        this._didParseVideoData = false;
+
         this._hasAudioFlagOverrided = false;
         this._hasVideoFlagOverrided = false;
 
@@ -1151,6 +1153,11 @@ class FLVDemuxer {
         let dts = this._timestampBase + tagTimestamp;
         let keyframe = (frameType === 1);  // from FLV Frame Type constants
 
+        if (!this._didParseVideoData) {
+            this._didParseVideoData = true;
+            this._config.eventLogger('flv.js.parsed_first_frame', {uberTraceID: this._config.uberTraceID});
+        }
+
         while (offset < dataSize) {
             if (offset + 4 >= dataSize) {
                 Log.w(this.TAG, `Malformed Nalu near timestamp ${dts}, offset = ${offset}, dataSize = ${dataSize}`);
@@ -1186,7 +1193,7 @@ class FLVDemuxer {
         }
 
         if (units.length) {
-            if ((dts + cts) > this.lastdts) {
+            if ((dts + cts) >= this.lastdts || keyframe) {
                 let track = this._videoTrack;
                 let avcSample = {
                     units: units,

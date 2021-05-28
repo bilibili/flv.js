@@ -99,6 +99,10 @@ class MozChunkedLoader extends BaseLoader {
             }
         }
 
+        if (this._config.uberTraceID) {
+            xhr.setRequestHeader('uber-trace-id', this._config.uberTraceID);
+        }
+
         // add additional headers
         if (typeof this._config.headers === 'object') {
             let headers = this._config.headers;

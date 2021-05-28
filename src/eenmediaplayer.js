@@ -32,7 +32,23 @@ import {InvalidArgumentException} from './utils/exception.js';
 Polyfill.install();
 
 
+/*
+ * Generate a random 128-bit number in base16 format
+ */
+function random128BitInHex() {
+    return `${random64BitInHex()}${random64BitInHex()}`;
+}
 
+/*
+ * Generate a random 64-bit number in base16 format
+ */
+function random64BitInHex() {
+    return `${_random16Hex()}${_random16Hex()}${_random16Hex()}${_random16Hex()}`;
+}
+
+function _random16Hex() {
+    return (0x10000 | Math.random() * 0x10000).toString(16).substr(1);
+}
 
 function startPlayback(config, element) {
     let start = config.start;
@@ -98,11 +114,17 @@ function startPlayback(config, element) {
         url: url,
         isLive: isLive,
         enableStashBuffer: !isLive,
-        type: 'flv'
+        type: 'flv',
+        eventLogger: config.event_logger,
+        uberTraceID: `${random128BitInHex()}:${random64BitInHex()}:0:1`
     };
 
     if (config.options)
         Object.assign(config.options, options);
+
+    if (config.event_logger) {
+        options['eventLogger'] = config.event_logger;
+    }
 
     let player = createPlayer(options, options);
     player.attachMediaElement(element);
@@ -150,7 +172,12 @@ class MediaItem {
         this.api_key = null;
         this.options = null;
         this.url = null;
-        this.domain  = 'window.location.host';
+        this.event_logger = null;
+        this.domain  = window.location.host;
+    }
+
+    setEventLogger(logger) {
+        this.event_logger = logger;
     }
 
     setStartTime(time) {

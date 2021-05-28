@@ -168,7 +168,18 @@ class RangeLoader extends BaseLoader {
             }
         }
 
+        if (this._config.uberTraceID) {
+            xhr.setRequestHeader('uber-trace-id', this._config.uberTraceID);
+        }
+
         xhr.send();
+
+        if (this._config.eventLogger) {
+            this._config.eventLogger('flv.js.sent_video_request', {
+                uberTraceID: this._config.uberTraceID,
+                url: sourceURL
+            });
+        }
     }
 
     abort() {

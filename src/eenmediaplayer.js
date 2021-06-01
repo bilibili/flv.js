@@ -116,7 +116,7 @@ function startPlayback(config, element) {
         enableStashBuffer: !isLive,
         type: 'flv',
         eventLogger: config.event_logger,
-        uberTraceID: `${random128BitInHex()}:${random64BitInHex()}:0:1`
+        uberTraceID: config.uberTraceID
     };
 
     if (config.options)

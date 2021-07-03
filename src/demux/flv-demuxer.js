@@ -79,6 +79,7 @@ class FLVDemuxer {
 
         this._naluLengthSize = 4;
         this._timestampBase = 0;  // int32, in milliseconds
+        this._lastTimestamp = 0;
         this._timescale = 1000;
         this._duration = 0;  // int32, in milliseconds
         this._durationOverrided = false;
@@ -121,6 +122,7 @@ class FLVDemuxer {
         this._videoMetadata = null;
         this._videoTrack = null;
         this._audioTrack = null;
+        this._lastTimestamp = 0;
 
         this._onError = null;
         this._onMediaInfo = null;
@@ -327,6 +329,14 @@ class FLVDemuxer {
             let ts3 = v.getUint8(7);
 
             let timestamp = ts0 | (ts1 << 8) | (ts2 << 16) | (ts3 << 24);
+
+            if (timestamp < this._lastTimestamp) {
+                Log.w(this.TAG, `Current tag's timestamp(${timestamp}) is smaller than last timestamp(${this._lastTimestamp}), skipped`);
+                // consume the whole tag (skip it)
+                offset += 11 + dataSize + 4;
+                continue;
+            }
+            this._lastTimestamp = timestamp;
 
             let streamId = v.getUint32(7, !le) & 0x00FFFFFF;
             if (streamId !== 0) {

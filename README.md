@@ -39,7 +39,7 @@ npm install --save flv.js
 
 ## Build
 ```bash
-npm install          # install dev-dependences
+npm install          # install dev-dependencies
 npm install -g gulp  # install build tool
 gulp release         # packaged & minimized js will be emitted in dist folder
 ```
@@ -84,7 +84,7 @@ See [api.md](docs/api.md)
 
 ## Debug
 ```bash
-npm install          # install dev-dependences
+npm install          # install dev-dependencies
 npm install -g gulp  # install build tool
 npm run dev          # with incremental compile and auto reload
 ```

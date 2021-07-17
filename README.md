@@ -13,13 +13,7 @@ This project relies on [Media Source Extensions][] to work.
 ## Overview
 flv.js works by transmuxing FLV file stream into ISO BMFF (Fragmented MP4) segments, followed by feeding mp4 segments into an HTML5 `<video>` element through [Media Source Extensions][] API.
 
-flv.js is written in [ECMAScript 6][], transpiled into ECMAScript 5 by [Babel Compiler][], and bundled with [Browserify][].
-
 [Media Source Extensions]: https://w3c.github.io/media-source/
-[hls.js]: https://github.com/dailymotion/hls.js
-[ECMAScript 6]: https://github.com/lukehoban/es6features
-[Babel Compiler]: https://babeljs.io/
-[Browserify]: http://browserify.org/
 
 ## Demo
 [http://bilibili.github.io/flv.js/demo/](http://bilibili.github.io/flv.js/demo/)
@@ -39,9 +33,9 @@ npm install --save flv.js
 
 ## Build
 ```bash
-npm install          # install dev-dependences
-npm install -g gulp  # install build tool
-gulp release         # packaged & minimized js will be emitted in dist folder
+npm ci                 # install dependencies / dev-dependences
+npm run build:debug    # debug version flv.js will be emitted to /dist
+npm run build          # minified release version flv.min.js will be emitted to /dist
 ```
 
 [cnpm](https://github.com/cnpm/cnpm) mirror is recommended if you are in Mainland China.

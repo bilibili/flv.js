@@ -33,8 +33,9 @@ npm install --save flv.js
 
 ## Build
 ```bash
-npm ci         # install dependencies / dev-dependences
-npm run dev    # watch file change and build debug version on the fly
+npm ci                 # install dependencies / dev-dependences
+npm run build:debug    # debug version flv.js will be emitted to /dist
+npm run build          # minimized release version flv.min.js will be emitted to /dist
 ```
 
 [cnpm](https://github.com/cnpm/cnpm) mirror is recommended if you are in Mainland China.
@@ -77,9 +78,8 @@ See [api.md](docs/api.md)
 
 ## Debug
 ```bash
-npm ci                 # install dependencies / dev-dependences
-npm run build:debug    # debug version flv.js will be emitted to /dist
-npm run build          # minimized release version flv.min.js will be emitted to /dist
+npm ci         # install dependencies / dev-dependences
+npm run dev    # watch file changes and build debug version on the fly
 ```
 
 ## Design

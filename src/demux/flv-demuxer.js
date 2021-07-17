@@ -77,6 +77,9 @@ class FLVDemuxer {
         this._audioMetadata = null;
         this._videoMetadata = null;
 
+        this._prevVideoTagTimestamp = 0;
+        this._prevAudioTagTimestamp = 0;
+
         this._naluLengthSize = 4;
         this._timestampBase = 0;  // int32, in milliseconds
         this._timescale = 1000;
@@ -121,6 +124,9 @@ class FLVDemuxer {
         this._videoMetadata = null;
         this._videoTrack = null;
         this._audioTrack = null;
+
+        this._prevVideoTagTimestamp = 0;
+        this._prevAudioTagTimestamp = 0;
 
         this._onError = null;
         this._onMediaInfo = null;
@@ -328,6 +334,15 @@ class FLVDemuxer {
 
             let timestamp = ts0 | (ts1 << 8) | (ts2 << 16) | (ts3 << 24);
 
+            if (tagType === 8 && timestamp < this._prevAudioTagTimestamp ||
+                tagType === 9 && timestamp < this._prevVideoTagTimestamp) {
+                let prevTimestamp = (tagType === 8) ? this._prevAudioTagTimestamp : this._prevVideoTagTimestamp;
+                Log.w(this.TAG, `Tag timestamp ${timestamp} is smaller than previous tag timestamp ${prevTimestamp}, skipped`);
+                // consume the whole tag (skip it)
+                offset += 11 + dataSize + 4;
+                continue;
+            }
+
             let streamId = v.getUint32(7, !le) & 0x00FFFFFF;
             if (streamId !== 0) {
                 Log.w(this.TAG, 'Meet tag which has StreamID != 0!');
@@ -337,9 +352,11 @@ class FLVDemuxer {
 
             switch (tagType) {
                 case 8:  // Audio
+                    this._prevAudioTagTimestamp = timestamp;
                     this._parseAudioData(chunk, dataOffset, dataSize, timestamp);
                     break;
                 case 9:  // Video
+                    this._prevVideoTagTimestamp = timestamp;
                     this._parseVideoData(chunk, dataOffset, dataSize, timestamp, byteStart + offset);
                     break;
                 case 18:  // ScriptDataObject

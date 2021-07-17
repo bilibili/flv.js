@@ -17,33 +17,28 @@
     "javascript"
   ],
   "scripts": {
-    "dev": "gulp watch",
-    "build": "gulp release",
+    "build": "webpack --mode=production --progress",
+    "build:debug": "webpack --mode=development --progress",
+    "dev": "webpack --mode=development --progress --watch",
     "dtslint": "dtslint types"
   },
   "dependencies": {
-    "es6-promise": "^4.2.5",
-    "webworkify": "^1.5.0"
+    "es6-promise": "^4.2.8",
+    "webworkify-webpack": "^2.1.5"
   },
   "devDependencies": {
-    "babel-preset-es2015": "^6.24.0",
-    "babelify": "^7.3.0",
-    "browser-sync": "^2.26.3",
-    "browserify": "^13.1.1",
-    "browserify-derequire": "^0.9.6",
-    "browserify-versionify": "^1.0.6",
-    "del": "^2.2.0",
-    "gulp": "^3.9.1",
-    "gulp-cli": "^1.4.0",
-    "gulp-eslint": "^3.0.1",
-    "gulp-header": "^1.8.12",
-    "gulp-rename": "^1.4.0",
-    "gulp-sourcemaps": "^2.6.4",
-    "gulp-uglify": "^2.1.1",
-    "opn": "^5.4.0",
-    "vinyl-buffer": "^1.0.1",
-    "vinyl-source-stream": "^1.1.2",
-    "watchify": "^3.11.0"
+    "@types/node": "^16.3.3",
+    "@typescript-eslint/eslint-plugin": "^4.28.3",
+    "@typescript-eslint/parser": "^4.28.3",
+    "browser-sync": "^2.27.4",
+    "eslint": "^7.30.0",
+    "exports-loader": "^3.0.0",
+    "source-map-loader": "^3.0.0",
+    "terser-webpack-plugin": "^5.1.4",
+    "ts-loader": "^9.2.3",
+    "typescript": "^4.3.5",
+    "webpack": "^5.45.1",
+    "webpack-cli": "^4.7.2"
   },
   "author": "zheng qian <xqq@xqq.im>",
   "license": "Apache-2.0"

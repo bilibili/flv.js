@@ -9,7 +9,16 @@ let config = {
         filename: 'flv.js',
         path: path.resolve(__dirname, 'dist'),
         library: 'flvjs',
-        libraryTarget: 'umd'
+        libraryTarget: 'umd',
+        environment: {
+            arrowFunction: false,
+            bigIntLiteral: false,
+            const: false,
+            destructuring: false,
+            dynamicImport: false,
+            forOf: false,
+            module: false
+        }
     },
 
     devtool: 'source-map',

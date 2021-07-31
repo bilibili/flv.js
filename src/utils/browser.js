@@ -115,11 +115,9 @@ function detect() {
     browser.name = matched.browser;
     browser.platform = matched.platform;
 
-    for (let key in Browser) {
-        if (Browser.hasOwnProperty(key)) {
-            delete Browser[key];
-        }
-    }
+    Object.keys(Browser).forEach(function (key) {
+        delete Browser[key];
+    });
     Object.assign(Browser, browser);
 }
 

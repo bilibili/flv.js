@@ -284,7 +284,7 @@ class MP4 {
         return MP4.box(MP4.types.hdlr, data);
     }
 
-    // Media infomation box
+    // Media information box
     static minf(meta) {
         let xmhd = null;
         if (meta.type === 'audio') {
@@ -295,7 +295,7 @@ class MP4 {
         return MP4.box(MP4.types.minf, xmhd, MP4.dinf(), MP4.stbl(meta));
     }
 
-    // Data infomation box
+    // Data information box
     static dinf() {
         let result = MP4.box(MP4.types.dinf,
             MP4.box(MP4.types.dref, MP4.constants.DREF)

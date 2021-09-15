@@ -34,6 +34,7 @@ class FlvPlayer {
         this.TAG = 'FlvPlayer';
         this._type = 'FlvPlayer';
         this._emitter = new EventEmitter();
+        this._updateTimeOnResume = false;
 
         this._config = createDefaultConfig();
         if (typeof config === 'object') {
@@ -212,8 +213,15 @@ class FlvPlayer {
             this._msectl.appendInitSegment(is);
         });
         this._transmuxer.on(TransmuxingEvents.MEDIA_SEGMENT, (type, ms) => {
+            if (this._mediaElement.paused) { //thanks chrome 63 (https://goo.gl/jS5oYq)
+                this._updateTimeOnResume = true;
+            }
             this._msectl.appendMediaSegment(ms);
 
+            if (this._updateTimeOnResume && !this._mediaElement.paused) {
+                this._updateTimeOnResume = false;
+                this._mediaElement.currentTime = ms.info.beginDts / 1000;
+            }
             // lazyLoad check
             if (this._config.lazyLoad && !this._config.isLive) {
                 let currentTime = this._mediaElement.currentTime;
@@ -223,6 +231,10 @@ class FlvPlayer {
                         this._suspendTransmuxer();
                     }
                 }
+            }
+            let dt = ms.info.beginDts - this._mediaElement.currentTime * 1000;
+            if (dt > 500) {
+                this._mediaElement.currentTime = ms.info.beginDts / 1000;
             }
         });
         this._transmuxer.on(TransmuxingEvents.LOADING_COMPLETE, () => {

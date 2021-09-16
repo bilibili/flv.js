@@ -107,11 +107,7 @@ class FLVDemuxer {
         this._videoTrack = {type: 'video', id: 1, sequenceNumber: 0, samples: [], length: 0};
         this._audioTrack = {type: 'audio', id: 2, sequenceNumber: 0, samples: [], length: 0};
 
-        this._littleEndian = (function () {
-            let buf = new ArrayBuffer(2);
-            (new DataView(buf)).setInt16(0, 256, true);  // little-endian write
-            return (new Int16Array(buf))[0] === 256;  // platform-spec read, if equal then LE
-        })();
+        this._littleEndian = false; // flv use big-endian
     }
 
     destroy() {
@@ -289,7 +285,7 @@ class FLVDemuxer {
             }
 
             let v = new DataView(chunk, offset);
-            let prevTagSize0 = v.getUint32(0, !le);
+            let prevTagSize0 = v.getUint32(0, le);
             if (prevTagSize0 !== 0) {
                 Log.w(this.TAG, 'PrevTagSize0 !== 0 !!!');
             }
@@ -307,7 +303,7 @@ class FLVDemuxer {
             }
 
             let tagType = v.getUint8(0);
-            let dataSize = v.getUint32(0, !le) & 0x00FFFFFF;
+            let dataSize = v.getUint32(0, le) & 0x00FFFFFF;
 
             if (offset + 11 + dataSize + 4 > chunk.byteLength) {
                 // data not enough for parsing actual data body
@@ -328,7 +324,7 @@ class FLVDemuxer {
 
             let timestamp = ts0 | (ts1 << 8) | (ts2 << 16) | (ts3 << 24);
 
-            let streamId = v.getUint32(7, !le) & 0x00FFFFFF;
+            let streamId = v.getUint32(7, le) & 0x00FFFFFF;
             if (streamId !== 0) {
                 Log.w(this.TAG, 'Meet tag which has StreamID != 0!');
             }
@@ -347,7 +343,7 @@ class FLVDemuxer {
                     break;
             }
 
-            let prevTagSize = v.getUint32(11 + dataSize, !le);
+            let prevTagSize = v.getUint32(11 + dataSize, le);
             if (prevTagSize !== 11 + dataSize) {
                 Log.w(this.TAG, `Invalid PrevTagSize ${prevTagSize}`);
             }
@@ -855,7 +851,7 @@ class FLVDemuxer {
         let v = new DataView(arrayBuffer, dataOffset, dataSize);
 
         let packetType = v.getUint8(0);
-        let cts_unsigned = v.getUint32(0, !le) & 0x00FFFFFF;
+        let cts_unsigned = v.getUint32(0, le) & 0x00FFFFFF;
         let cts = (cts_unsigned << 8) >> 8;  // convert to 24-bit signed int
 
         if (packetType === 0) {  // AVCDecoderConfigurationRecord
@@ -925,7 +921,7 @@ class FLVDemuxer {
         let offset = 6;
 
         for (let i = 0; i < spsCount; i++) {
-            let len = v.getUint16(offset, !le);  // sequenceParameterSetLength
+            let len = v.getUint16(offset, le);  // sequenceParameterSetLength
             offset += 2;
 
             if (len === 0) {
@@ -1010,7 +1006,7 @@ class FLVDemuxer {
         offset++;
 
         for (let i = 0; i < ppsCount; i++) {
-            let len = v.getUint16(offset, !le);  // pictureParameterSetLength
+            let len = v.getUint16(offset, le);  // pictureParameterSetLength
             offset += 2;
 
             if (len === 0) {
@@ -1055,7 +1051,7 @@ class FLVDemuxer {
                 break;  // data not enough for next Nalu
             }
             // Nalu with length-header (AVC1)
-            let naluSize = v.getUint32(offset, !le);  // Big-Endian read
+            let naluSize = v.getUint32(offset, le);  // Big-Endian read
             if (lengthSize === 3) {
                 naluSize >>>= 8;
             }

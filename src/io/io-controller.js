@@ -275,7 +275,14 @@ class IOController {
             this._fullRequestFlag = true;
         }
 
-        this._loader.open(this._dataSource, Object.assign({}, this._currentRange));
+        if (this._dataSource.url instanceof Promise) {
+            this._dataSource.url.then((url) => {
+                this._dataSource.url = url;
+                this._loader.open(this._dataSource, Object.assign({}, this._currentRange));
+            });
+        } else {
+            this._loader.open(this._dataSource, Object.assign({}, this._currentRange));
+        }
     }
 
     abort() {

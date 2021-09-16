@@ -253,7 +253,7 @@ class FLVDemuxer {
 
     _isInitialMetadataDispatched() {
         if (this._hasAudio && this._hasVideo) {  // both audio & video
-            return this._audioInitialMetadataDispatched && this._videoInitialMetadataDispatched;
+            return this._videoInitialMetadataDispatched;
         }
         if (this._hasAudio && !this._hasVideo) {  // audio only
             return this._audioInitialMetadataDispatched;

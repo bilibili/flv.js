@@ -241,7 +241,7 @@ class RangeLoader extends BaseLoader {
                 }
             }
 
-            // calculate currrent request range's contentLength
+            // calculate current request range's contentLength
             if (this._range.to === -1) {
                 this._contentLength = this._totalLength - this._range.from;
             } else {  // to !== -1

@@ -80,7 +80,7 @@ function detect() {
         browser.webkit = true;
     }
 
-    // MSIE. IE11 has 'rv' identifer
+    // MSIE. IE11 has 'rv' identifier
     if (browser.rv || browser.iemobile) {
         if (browser.rv) {
             delete browser.rv;

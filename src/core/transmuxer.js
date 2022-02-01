@@ -17,7 +17,6 @@
  */
 
 import EventEmitter from 'events';
-import work from 'webworkify-webpack';
 import Log from '../utils/logger.js';
 import LoggingControl from '../utils/logging-control.js';
 import TransmuxingController from './transmuxing-controller.js';
@@ -33,7 +32,7 @@ class Transmuxer {
 
         if (config.enableWorker && typeof (Worker) !== 'undefined') {
             try {
-                this._worker = work(require.resolve('./transmuxing-worker'));
+                this._worker = TransmuxingWorker();
                 this._workerDestroying = false;
                 this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
                 this._worker.postMessage({cmd: 'init', param: [mediaDataSource, config]});

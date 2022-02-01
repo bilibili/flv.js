@@ -35,8 +35,7 @@ import TransmuxingEvents from './transmuxing-events.js';
    }
  */
 
-let TransmuxingWorker = function (self) {
-
+(function TransmuxingWorker(self) {
     let TAG = 'TransmuxingWorker';
     let controller = null;
     let logcatListener = onLogcatCallback.bind(this);
@@ -64,7 +63,7 @@ let TransmuxingWorker = function (self) {
                     controller.destroy();
                     controller = null;
                 }
-                self.postMessage({msg: 'destroyed'});
+                self.postMessage({ msg: 'destroyed' });
                 break;
             case 'start':
                 controller.start();
@@ -103,7 +102,7 @@ let TransmuxingWorker = function (self) {
                 data: initSegment
             }
         };
-        self.postMessage(obj, [initSegment.data]);  // data: ArrayBuffer
+        self.postMessage(obj, [initSegment.data]); // data: ArrayBuffer
     }
 
     function onMediaSegment(type, mediaSegment) {
@@ -114,7 +113,7 @@ let TransmuxingWorker = function (self) {
                 data: mediaSegment
             }
         };
-        self.postMessage(obj, [mediaSegment.data]);  // data: ArrayBuffer
+        self.postMessage(obj, [mediaSegment.data]); // data: ArrayBuffer
     }
 
     function onLoadingComplete() {
@@ -199,7 +198,6 @@ let TransmuxingWorker = function (self) {
             }
         });
     }
+})(self);
 
-};
-
-export default TransmuxingWorker;
+export default null;

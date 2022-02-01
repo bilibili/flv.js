@@ -55,10 +55,17 @@ let config = {
             {
                 enforce: 'pre',
                 test: /\.js$/,
-                use: 'source-map-loader'
-            }
-        ]
-    }
+                use: 'source-map-loader',
+            },
+            {
+                test: /-worker\.js$/,
+                loader: 'worker-loader',
+                options: {
+                    inline: 'no-fallback',
+                },
+            },
+        ],
+    },
 };
 
 module.exports = (env, argv) => {

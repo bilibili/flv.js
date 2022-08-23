@@ -306,7 +306,8 @@ class FLVDemuxer {
                 break;
             }
 
-            let tagType = v.getUint8(0);
+            //v[0] = Reversed<<6|Filter<<5|TagType
+            let tagType = v.getUint8(0)& 0x1f;
             let dataSize = v.getUint32(0, !le) & 0x00FFFFFF;
 
             if (offset + 11 + dataSize + 4 > chunk.byteLength) {

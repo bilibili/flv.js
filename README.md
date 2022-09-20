@@ -47,7 +47,7 @@ See [cors.md](docs/cors.md) for more details.
 
 ## Getting Started
 ```html
-<script src="flv.min.js"></script>
+<script src="flv-h265.min.js"></script>
 <video id="videoElement"></video>
 <script>
     if (flvjs.isSupported()) {

@@ -1,5 +1,5 @@
 
-flv.js  [![npm](https://img.shields.io/npm/v/flv.js.svg?style=flat)](https://www.npmjs.com/package/flv.js)
+flv-h265.js  [![npm](https://img.shields.io/npm/v/flv-h265.js.svg?style=flat)](https://www.npmjs.com/package/flv-h265.js)
 ======
 An HTML5 Flash Video (FLV) Player written in pure JavaScript without Flash. LONG LIVE FLV!
 
@@ -28,14 +28,14 @@ flv.js works by transmuxing FLV file stream into ISO BMFF (Fragmented MP4) segme
 
 ## Installation
 ```bash
-npm install --save flv.js
+npm install --save flv-h265.js
 ```
 
 ## Build
 ```bash
 npm ci                 # install dependencies / dev-dependences
-npm run build:debug    # debug version flv.js will be emitted to /dist
-npm run build          # minimized release version flv.min.js will be emitted to /dist
+npm run build:debug    # debug version flv-h265.js will be emitted to /dist
+npm run build          # minimized release version flv-h265.min.js will be emitted to /dist
 ```
 
 [cnpm](https://github.com/cnpm/cnpm) mirror is recommended if you are in Mainland China.

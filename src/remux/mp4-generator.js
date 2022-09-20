@@ -22,6 +22,7 @@ class MP4 {
 
     static init() {
         MP4.types = {
+            hvc1: [], hvcC: [],
             avc1: [], avcC: [], btrt: [], dinf: [],
             dref: [], esds: [], ftyp: [], hdlr: [],
             mdat: [], mdhd: [], mdia: [], mfhd: [],
@@ -30,7 +31,7 @@ class MP4 {
             stco: [], stsc: [], stsd: [], stsz: [],
             stts: [], tfdt: [], tfhd: [], traf: [],
             trak: [], trun: [], trex: [], tkhd: [],
-            vmhd: [], smhd: [], '.mp3': []
+            vmhd: [], smhd: [], pasp: [], '.mp3': []
         };
 
         for (let name in MP4.types) {
@@ -429,7 +430,11 @@ class MP4 {
             0x00, 0x18,              // depth
             0xFF, 0xFF               // pre_defined = -1
         ]);
-        return MP4.box(MP4.types.avc1, data, MP4.box(MP4.types.avcC, avcc));
+        if (meta.codec.indexOf('avc1') >= 0) {
+            return MP4.box(MP4.types.avc1, data, MP4.box(MP4.types.avcC, avcc));
+        } else {
+            return MP4.box(MP4.types.hvc1, data, MP4.box(MP4.types.hvcC, avcc));
+        }
     }
 
     // Movie Extends box

@@ -46,7 +46,7 @@ class SPSParser {
 
         gb.readByte();
         let profile_idc = gb.readByte();  // profile_idc
-        gb.readByte();  // constraint_set_flags[5] + reserved_zero[3]
+        gb.readByte();  // constraint_set_flags[6] + reserved_zero[2]
         let level_idc = gb.readByte();  // level_idc
         gb.readUEG();  // seq_parameter_set_id
 

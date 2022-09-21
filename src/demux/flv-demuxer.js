@@ -1260,7 +1260,16 @@ class FLVDemuxer {
         let fps_num = meta.frameRate.fps_num;
         meta.refSampleDuration = meta.timescale * (fps_den / fps_num);
 
-        let codecString = 'hvc1.' + meta.profile_idc + '.1.L' + (meta.level_idc / 3) + '.B0';
+        /**
+         * https://tools.axinom.com/capabilities/media
+         * 视频Profile
+         *
+         * Main: `hvc1.1.6.L93.B0`
+         * Main 10: `hvc1.2.4.L93.B0`
+         * Main still-picture: `hvc1.3.E.L93.B0`
+         * Range extensions: `hvc1.4.10.L93.B0`
+         */
+        let codecString = 'hvc1.' + meta.profile_idc + '.' + '1' + '.L' + meta.level_idc + '.B0';
         meta.codec = codecString;
 
         let mi = this._mediaInfo;

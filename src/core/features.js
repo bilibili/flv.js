@@ -55,6 +55,7 @@ class Features {
             networkStreamIO: false,
             networkLoaderName: '',
             nativeMP4H264Playback: false,
+            nativeMP4H265Playback: false,
             nativeWebmVP8Playback: false,
             nativeWebmVP9Playback: false
         };
@@ -64,6 +65,7 @@ class Features {
         features.networkLoaderName = Features.getNetworkLoaderTypeName();
         features.mseLiveFlvPlayback = features.mseFlvPlayback && features.networkStreamIO;
         features.nativeMP4H264Playback = Features.supportNativeMediaPlayback('video/mp4; codecs="avc1.42001E, mp4a.40.2"');
+        features.nativeMP4H265Playback = Features.supportNativeMediaPlayback('video/mp4; codecs="hvc1.1.6.L93.B0"');
         features.nativeWebmVP8Playback = Features.supportNativeMediaPlayback('video/webm; codecs="vp8.0, vorbis"');
         features.nativeWebmVP9Playback = Features.supportNativeMediaPlayback('video/webm; codecs="vp9"');
 

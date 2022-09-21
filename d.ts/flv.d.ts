@@ -240,6 +240,7 @@ declare namespace FlvJs {
         networkStreamIO: boolean;
         networkLoaderName: string;
         nativeMP4H264Playback: boolean;
+        nativeMP4H265Playback: boolean;
         nativeWebmVP8Playback: boolean;
         nativeWebmVP9Playback: boolean;
     }

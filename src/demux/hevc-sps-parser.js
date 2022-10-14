@@ -226,7 +226,7 @@ class HevcSPSParser {
             }
         }
 
-        for (i = 0; i < max_sub_layers_minus1; i++) {
+        for (let i = 0; i < max_sub_layers_minus1; i++) {
             if (sub_layer_profile_present_flag[i]) {
                 /*
                  * sub_layer_profile_space[i]                     u(2)

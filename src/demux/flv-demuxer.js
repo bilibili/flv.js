@@ -485,10 +485,11 @@ class FLVDemuxer {
         let soundSpec = v.getUint8(0);
 
         let soundFormat = soundSpec >>> 4;
-        if (soundFormat !== 2 && soundFormat !== 10) {  // MP3 or AAC
-            this._onError(DemuxErrors.CODEC_UNSUPPORTED, 'Flv: Unsupported audio codec idx: ' + soundFormat);
-            return;
-        }
+        // if not support this kind of sound ,then discard it but not throw exception
+        // if (soundFormat !== 2 && soundFormat !== 10) {  // MP3 or AAC
+        //     this._onError(DemuxErrors.CODEC_UNSUPPORTED, 'Flv: Unsupported audio codec idx: ' + soundFormat);
+        //     return;
+        // }
 
         let soundRate = 0;
         let soundRateIndex = (soundSpec & 12) >>> 2;
@@ -620,6 +621,9 @@ class FLVDemuxer {
             let mp3Sample = {unit: data, length: data.byteLength, dts: dts, pts: dts};
             track.samples.push(mp3Sample);
             track.length += data.length;
+        } else {
+            // set _hasAudio && discard audio
+            this._hasAudio = false;
         }
     }
 

@@ -392,7 +392,7 @@ class TransmuxingController {
 
     _enableStatisticsReporter() {
         if (this._statisticsReporter == null) {
-            this._statisticsReporter = self.setInterval(
+            this._statisticsReporter = window.setInterval(
                 this._reportStatisticsInfo.bind(this),
             this._config.statisticsInfoReportInterval);
         }
@@ -400,7 +400,7 @@ class TransmuxingController {
 
     _disableStatisticsReporter() {
         if (this._statisticsReporter) {
-            self.clearInterval(this._statisticsReporter);
+            window.clearInterval(this._statisticsReporter);
             this._statisticsReporter = null;
         }
     }

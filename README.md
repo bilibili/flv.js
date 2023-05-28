@@ -15,11 +15,14 @@ flv.js works by transmuxing FLV file stream into ISO BMFF (Fragmented MP4) segme
 
 [Media Source Extensions]: https://w3c.github.io/media-source/
 
+## HEVC(H265) Chrome Support
+[enable-chromium-hevc-hardware-decoding](https://github.com/StaZhu/enable-chromium-hevc-hardware-decoding)
+
 ## Demo
 [http://bilibili.github.io/flv.js/demo/](http://bilibili.github.io/flv.js/demo/)
 
 ## Features
-- FLV container with H.264 (H.265) + AAC / MP3 codec playback
+- FLV container with H.264 / H.265 + AAC / MP3 codec playback
 - Multipart segmented video playback
 - HTTP FLV low latency live stream playback
 - FLV over WebSocket live stream playback

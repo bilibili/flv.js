@@ -26,6 +26,11 @@ class Features {
                window.MediaSource.isTypeSupported('video/mp4; codecs="avc1.42E01E,mp4a.40.2"');
     }
 
+    static supportMSEH265Playback() {
+        return window.MediaSource &&
+               window.MediaSource.isTypeSupported('video/mp4; codecs="hvc1.1.6.L93.B0"');
+    }
+
     static supportNetworkStreamIO() {
         let ioctl = new IOController({}, createDefaultConfig());
         let loaderType = ioctl.loaderType;

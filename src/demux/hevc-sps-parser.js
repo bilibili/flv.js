@@ -226,7 +226,7 @@ class HevcSPSParser {
             }
         }
 
-        for (i = 0; i < max_sub_layers_minus1; i++) {
+        for (let i = 0; i < max_sub_layers_minus1; i++) {
             if (sub_layer_profile_present_flag[i]) {
                 /*
                  * sub_layer_profile_space[i]                     u(2)
@@ -284,7 +284,7 @@ class HevcSPSParser {
                 gb.readBits(1);  // used_by_curr_pic_s0_flag[rps_idx]
             }
 
-            for (i = 0; i < num_positive_pics; i++) {
+            for (let i = 0; i < num_positive_pics; i++) {
                 gb.readUEG();    // delta_poc_s1_minus1[rps_idx]
                 gb.readBits(1);  // used_by_curr_pic_s1_flag[rps_idx]
             }

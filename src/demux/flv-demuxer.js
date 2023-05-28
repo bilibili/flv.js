@@ -135,6 +135,10 @@ class FLVDemuxer {
         let data = new Uint8Array(buffer);
         let mismatch = {match: false};
 
+        if (data.byteLength < 4) {
+            return mismatch;
+        }
+
         if (data[0] !== 0x46 || data[1] !== 0x4C || data[2] !== 0x56 || data[3] !== 0x01) {
             return mismatch;
         }
@@ -455,7 +459,7 @@ class FLVDemuxer {
         let times = [];
         let filepositions = [];
 
-        // ignore first keyframe which is actually AVC Sequence Header (AVCDecoderConfigurationRecord)
+        // ignore first keyframe which is actually AVC/HVC Sequence Header (AVCDecoderConfigurationRecord or HVCDecoderConfigurationRecord)
         for (let i = 1; i < keyframes.times.length; i++) {
             let time = this._timestampBase + Math.floor(keyframes.times[i] * 1000);
             times.push(time);
@@ -838,15 +842,13 @@ class FLVDemuxer {
         let frameType = (spec & 240) >>> 4;
         let codecId = spec & 15;
 
-        if (codecId !== 7 && codecId !== 12) {
-            this._onError(DemuxErrors.CODEC_UNSUPPORTED, `Flv: Unsupported codec in video frame: ${codecId}`);
-            return;
-        }
-
         if (codecId === 7) {
             this._parseAVCVideoPacket(arrayBuffer, dataOffset + 1, dataSize - 1, tagTimestamp, tagPosition, frameType);
         } else if (codecId === 12) {
             this._parseHVCVideoPacket(arrayBuffer, dataOffset + 1, dataSize - 1, tagTimestamp, tagPosition, frameType);
+        } else {
+            this._onError(DemuxErrors.CODEC_UNSUPPORTED, `Flv: Unsupported codec in video frame: ${codecId}`);
+            return;
         }
     }
 
@@ -1149,13 +1151,15 @@ class FLVDemuxer {
             meta.timescale = this._timescale;
             meta.duration = this._duration;
         } else {
-            if (typeof meta.avcc !== 'undefined') {
+            if (typeof meta.hvcc !== 'undefined') {
                 Log.w(this.TAG, 'Found another HVCDecoderConfigurationRecord!');
             }
         }
 
         let version = v.getUint8(0);  // configurationVersion
-        if (version !== 1) {
+        let hvcProfile = v.getUint8(1) & 0x1F;  // hvcProfileIndication
+
+        if (version !== 1 || hvcProfile === 0) {
             this._onError(DemuxErrors.FORMAT_ERROR, 'Flv: Invalid HVCDecoderConfigurationRecord');
             return;
         }
@@ -1295,8 +1299,8 @@ class FLVDemuxer {
             this._onMediaInfo(mi);
         }
 
-        meta.avcc = new Uint8Array(dataSize);
-        meta.avcc.set(new Uint8Array(arrayBuffer, dataOffset, dataSize), 0);
+        meta.hvcc = new Uint8Array(dataSize);
+        meta.hvcc.set(new Uint8Array(arrayBuffer, dataOffset, dataSize), 0);
         Log.v(this.TAG, 'Parsed HVCDecoderConfigurationRecord');
 
         if (this._isInitialMetadataDispatched()) {

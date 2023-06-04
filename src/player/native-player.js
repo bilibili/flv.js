@@ -176,6 +176,14 @@ class NativePlayer {
         this._mediaElement.muted = muted;
     }
 
+    get speed() {
+        return this._mediaElement.playbackRate;
+    }
+
+    set speed(speed) {
+        this._mediaElement.playbackRate = speed;
+    }
+
     get currentTime() {
         if (this._mediaElement) {
             return this._mediaElement.currentTime;

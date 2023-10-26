@@ -32,7 +32,8 @@ export const LoaderErrors = {
     HTTP_STATUS_CODE_INVALID: 'HttpStatusCodeInvalid',
     CONNECTING_TIMEOUT: 'ConnectingTimeout',
     EARLY_EOF: 'EarlyEof',
-    UNRECOVERABLE_EARLY_EOF: 'UnrecoverableEarlyEof'
+    UNRECOVERABLE_EARLY_EOF: 'UnrecoverableEarlyEof',
+    END_STREAM_NO_INFO: 'EndStreamNoInfo'
 };
 
 /* Loader has callbacks which have following prototypes:

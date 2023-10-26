@@ -628,6 +628,14 @@ class IOController {
                 }
                 break;
             }
+            case LoaderErrors.END_STREAM_NO_INFO: {
+                if (this._onComplete) {
+                    this._onComplete(this.extraData);
+                    return;
+                }
+                break;
+            }
+
             case LoaderErrors.UNRECOVERABLE_EARLY_EOF:
             case LoaderErrors.CONNECTING_TIMEOUT:
             case LoaderErrors.HTTP_STATUS_CODE_INVALID:

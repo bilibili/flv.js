@@ -639,8 +639,11 @@ class IOController {
             case LoaderErrors.UNRECOVERABLE_EARLY_EOF:
             case LoaderErrors.CONNECTING_TIMEOUT:
             case LoaderErrors.HTTP_STATUS_CODE_INVALID:
-            case LoaderErrors.EXCEPTION:
+            case LoaderErrors.EXCEPTION: {
+                const event = new Event('unexpectedError');
+                this.element.dispatchEvent(event);
                 break;
+            }
         }
 
         if (this._onError) {

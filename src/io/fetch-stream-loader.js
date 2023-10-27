@@ -235,7 +235,7 @@ class FetchStreamLoader extends BaseLoader {
             } else if (e.message === 'network error' &&
                 (this._contentLength !== null && this._receivedLength > this._contentLength)) {
                 type = LoaderErrors.END_STREAM_NO_INFO;
-                info = {code: -1, msg: 'Stream done without properly message'};
+                info = {code: -1, msg: 'Stream complete with length larger than content length'};
             } else {
                 type = LoaderErrors.EXCEPTION;
                 info = {code: e.code, msg: e.message};

@@ -611,6 +611,10 @@ class FlvPlayer {
 
     _onvProgress(e) {
         this._checkAndResumeStuckPlayback();
+
+        Promise.resolve().then(() => {
+            this._emitter.emit(PlayerEvents.PROGRESS, e);
+        });
     }
 
 }

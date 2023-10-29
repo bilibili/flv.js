@@ -1,6 +1,6 @@
 {
   "name": "flv-h265.js",
-  "version": "1.7.3",
+  "version": "1.7.4",
   "description": "HTML5 FLV Player",
   "main": "./dist/flv.js",
   "types": "./d.ts/flv.d.ts",

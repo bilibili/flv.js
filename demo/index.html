@@ -104,6 +104,15 @@
                 lazyLoadMaxDuration: 3 * 60,
                 seekType: 'range',
             });
+            player.on(flvjs.Events.METADATA_ARRIVED, function(data) {
+                console.log("METADATA_ARRIVED", data)
+            });
+            player.on(flvjs.Events.SCRIPTDATA_ARRIVED, function(data) {
+                console.log("SCRIPTDATA_ARRIVED", data) // OnCuePoint / OnTextData
+            });
+            player.on(flvjs.Events.STATISTICS_INFO, function(data) {
+                console.log("STATISTICS_INFO", data)
+            });
             player.attachMediaElement(element);
             player.load();
         }

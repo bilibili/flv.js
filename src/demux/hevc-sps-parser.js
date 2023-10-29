@@ -416,7 +416,7 @@ class HevcSPSParser {
         }
     }
 
-    static _skip_hrd_parameters(gb, cprms_present_flag, max_sub_layers_minus1) {
+    static _skip_hrd_parameters(gb, hvcc, cprms_present_flag, max_sub_layers_minus1) {
         let sub_pic_hrd_params_present_flag = 0;
         let nal_hrd_parameters_present_flag = 0;
         let vcl_hrd_parameters_present_flag = 0;

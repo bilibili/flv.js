@@ -414,7 +414,13 @@ class IOController {
             // live stream: always use single normalized speed for size of stashSizeKB
             stashSizeKB = normalized;
         } else {
-            stashSizeKB = normalized * 2.0;
+            if (normalized < 512) {
+                stashSizeKB = normalized * 4.0 * this.element.playbackRate;
+            } else if (normalized >= 512 && normalized <= 1024) {
+                stashSizeKB = Math.floor(normalized * 1.5) * 5.0 * this.element.playbackRate;
+            } else {
+                stashSizeKB = normalized * 4.0 * this.element.playbackRate;
+            }
         }
 
         let bufferSize = stashSizeKB * 1024 + 1024 * 1024 * 2.0;  // stashSize + 1MB

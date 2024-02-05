@@ -22,13 +22,17 @@ import {createDefaultConfig} from '../config.js';
 class Features {
 
     static supportMSEH264Playback() {
-        return window.MediaSource &&
-               window.MediaSource.isTypeSupported('video/mp4; codecs="avc1.42E01E,mp4a.40.2"');
+        const avc_aac_mime_type = 'video/mp4; codecs="avc1.42E01E,mp4a.40.2"';
+        const support_w3c_mse = self.MediaSource && self.MediaSource.isTypeSupported(avc_aac_mime_type);
+        const support_apple_mme = self.ManagedMediaSource && self.ManagedMediaSource.isTypeSupported(avc_aac_mime_type);
+        return support_w3c_mse || support_apple_mme;
     }
 
     static supportMSEH265Playback() {
-        return window.MediaSource &&
-               window.MediaSource.isTypeSupported('video/mp4; codecs="hvc1.1.6.L93.B0"');
+        const hevc_mime_type = 'video/mp4; codecs="hvc1.1.6.L93.B0"';
+        const support_w3c_mse = self.MediaSource && self.MediaSource.isTypeSupported(hevc_mime_type);
+        const support_apple_mme = self.ManagedMediaSource && self.ManagedMediaSource.isTypeSupported(hevc_mime_type);
+        return support_w3c_mse || support_apple_mme;
     }
 
     static supportNetworkStreamIO() {

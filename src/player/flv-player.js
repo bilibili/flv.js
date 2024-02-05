@@ -545,11 +545,11 @@ class FlvPlayer {
                 Log.w(this.TAG, `Playback seems stuck at ${media.currentTime}, seek to ${buffered.start(0)}`);
                 this._requestSetTime = true;
                 this._mediaElement.currentTime = buffered.start(0);
-                this._mediaElement.removeEventListener('progress', this.e.onvProgress);
+                //this._mediaElement.removeEventListener('progress', this.e.onvProgress);
             }
         } else {
             // Playback didn't stuck, remove progress event listener
-            this._mediaElement.removeEventListener('progress', this.e.onvProgress);
+            //this._mediaElement.removeEventListener('progress', this.e.onvProgress);
         }
     }
 

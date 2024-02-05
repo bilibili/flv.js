@@ -53,6 +53,7 @@ class NativePlayer {
     }
 
     destroy() {
+        this._emitter.emit(PlayerEvents.DESTROYING);
         if (this._mediaElement) {
             this.unload();
             this.detachMediaElement();
@@ -243,7 +244,7 @@ class NativePlayer {
             info.decodedFrames = decoded;
             info.droppedFrames = dropped;
         }
-        
+
         return info;
     }
 

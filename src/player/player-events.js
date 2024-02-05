@@ -24,6 +24,7 @@ const PlayerEvents = {
     METADATA_ARRIVED: 'metadata_arrived',
     SCRIPTDATA_ARRIVED: 'scriptdata_arrived',
     STATISTICS_INFO: 'statistics_info',
+    DESTROYING: 'destroying',
     PROGRESS: 'progress',
 };
 

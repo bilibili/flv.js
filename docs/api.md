@@ -194,6 +194,8 @@ A series of constants that can be used with `Player.on()` / `Player.off()`. They
 | METADATA_ARRIVED    | Provides metadata which FLV file(stream) can contain with an "onMetaData" marker.  |
 | SCRIPTDATA_ARRIVED  | Provides scriptdata (OnCuePoint / OnTextData) which FLV file(stream) can contain. |
 | STATISTICS_INFO     | Provides playback statistics information like dropped frames, current speed, etc. |
+| DESTROYING          | Fired when the player begins teardown |
+| PROGRESS            | Fired when the player has progress |
 
 ### flvjs.ErrorTypes
 

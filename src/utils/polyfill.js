@@ -45,6 +45,16 @@ class Polyfill {
             return output;
         };
 
+        // String.prototype.startsWith()
+        if (!String.prototype.startsWith) {
+            Object.defineProperty(String.prototype, 'startsWith', {
+                value: function (search, rawPos) {
+                    let pos = rawPos > 0 ? rawPos | 0 : 0;
+                    return this.substring(pos, pos + search.length) === search;
+                }
+            });
+        }
+
         // ES6 Promise (missing support in IE11)
         if (typeof self.Promise !== 'function') {
             require('es6-promise').polyfill();

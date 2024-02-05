@@ -41,13 +41,20 @@ class MSEController {
             onSourceOpen: this._onSourceOpen.bind(this),
             onSourceEnded: this._onSourceEnded.bind(this),
             onSourceClose: this._onSourceClose.bind(this),
+            onStartStreaming: this._onStartStreaming.bind(this),
+            onEndStreaming: this._onEndStreaming.bind(this),
+            onQualityChange: this._onQualityChange.bind(this),
             onSourceBufferError: this._onSourceBufferError.bind(this),
             onSourceBufferUpdateEnd: this._onSourceBufferUpdateEnd.bind(this)
         };
 
+        // Use ManagedMediaSource only if w3c MediaSource is not available (e.g. iOS Safari)
+        this._useManagedMediaSource = ('ManagedMediaSource' in self) && !('MediaSource' in self);
+
         this._mediaSource = null;
         this._mediaSourceObjectURL = null;
-        this._mediaElement = null;
+
+        this._mediaElementProxy = null;
 
         this._isBufferFull = false;
         this._hasPendingEos = false;
@@ -80,7 +87,7 @@ class MSEController {
     }
 
     destroy() {
-        if (this._mediaElement || this._mediaSource) {
+        if (this._mediaElementProxy || this._mediaSource) {
             this.detachMediaElement();
         }
         this.e = null;
@@ -96,16 +103,27 @@ class MSEController {
         this._emitter.removeListener(event, listener);
     }
 
-    attachMediaElement(mediaElement) {
+    attachMediaElement(mediaElementProxy) {
         if (this._mediaSource) {
             throw new IllegalStateException('MediaSource has been attached to an HTMLMediaElement!');
         }
-        let ms = this._mediaSource = new window.MediaSource();
+
+        if (this._useManagedMediaSource) {
+            Log.v(this.TAG, 'Using ManagedMediaSource');
+        }
+
+        let ms = this._mediaSource = this._useManagedMediaSource ? new self.ManagedMediaSource() : new self.MediaSource();
         ms.addEventListener('sourceopen', this.e.onSourceOpen);
         ms.addEventListener('sourceended', this.e.onSourceEnded);
         ms.addEventListener('sourceclose', this.e.onSourceClose);
 
-        this._mediaElement = mediaElement;
+        if (this._useManagedMediaSource) {
+            ms.addEventListener('startstreaming', this.e.onStartStreaming);
+            ms.addEventListener('endstreaming', this.e.onEndStreaming);
+            ms.addEventListener('qualitychange', this.e.onQualityChange);
+        }
+
+        this._mediaElementProxy = mediaElementProxy;
         this._mediaSourceObjectURL = window.URL.createObjectURL(this._mediaSource);
         mediaElement.src = this._mediaSourceObjectURL;
     }
@@ -148,16 +166,21 @@ class MSEController {
             ms.removeEventListener('sourceopen', this.e.onSourceOpen);
             ms.removeEventListener('sourceended', this.e.onSourceEnded);
             ms.removeEventListener('sourceclose', this.e.onSourceClose);
+            if (this._useManagedMediaSource) {
+                ms.removeEventListener('startstraming', this.e.onStartStreaming);
+                ms.removeEventListener('endstreaming', this.e.onEndStreaming);
+                ms.removeEventListener('qualitychange', this.e.onQualityChange);
+            }
             this._pendingSourceBufferInit = [];
             this._isBufferFull = false;
             this._idrList.clear();
             this._mediaSource = null;
         }
 
-        if (this._mediaElement) {
-            this._mediaElement.src = '';
-            this._mediaElement.removeAttribute('src');
-            this._mediaElement = null;
+        if (this._mediaElementProxy) {
+            this._mediaElementProxy.src = '';
+            this._mediaElementProxy.removeAttribute('src');
+            this._mediaElementProxy = null;
         }
         if (this._mediaSourceObjectURL) {
             window.URL.revokeObjectURL(this._mediaSourceObjectURL);
@@ -165,8 +188,44 @@ class MSEController {
         }
     }
 
-    appendInitSegment(initSegment, deferred) {
-        if (!this._mediaSource || this._mediaSource.readyState !== 'open') {
+    isManagedMediaSource() {
+        return this._useManagedMediaSource;
+    }
+
+    getObject() {
+        if (!this._mediaSource) {
+            throw new IllegalStateException('MediaSource has not been initialized yet!');
+        }
+        return this._mediaSource;
+    }
+
+    getHandle() {
+        if (!this._mediaSource) {
+            throw new IllegalStateException('MediaSource has not been initialized yet!');
+        }
+        return this._mediaSource.handle;
+    }
+
+    getObjectURL() {
+        if (!this._mediaSource) {
+            throw new IllegalStateException('MediaSource has not been initialized yet!');
+        }
+
+        if (this._mediaSourceObjectURL == null) {
+            this._mediaSourceObjectURL = URL.createObjectURL(this._mediaSource);
+        }
+        return this._mediaSourceObjectURL;
+    }
+
+    revokeObjectURL() {
+        if (this._mediaSourceObjectURL) {
+            URL.revokeObjectURL(this._mediaSourceObjectURL);
+            this._mediaSourceObjectURL = null;
+        }
+    }
+
+    appendInitSegment(initSegment, deferred = undefined) {
+        if (!this._mediaSource || this._mediaSource.readyState !== 'open' || this._mediaSource.streaming === false) {
             // sourcebuffer creation requires mediaSource.readyState === 'open'
             // so we defer the sourcebuffer creation, until sourceopen event triggered
             this._pendingSourceBufferInit.push(initSegment);
@@ -327,7 +386,7 @@ class MSEController {
             return false;
         }
 
-        let currentTime = this._mediaElement.currentTime;
+        let currentTime = this._mediaElementProxy.getCurrentTime();
 
         for (let type in this._sourceBuffers) {
             let sb = this._sourceBuffers[type];
@@ -345,7 +404,7 @@ class MSEController {
     }
 
     _doCleanupSourceBuffer() {
-        let currentTime = this._mediaElement.currentTime;
+        let currentTime = this._mediaElementProxy.getCurrentTime();
 
         for (let type in this._sourceBuffers) {
             let sb = this._sourceBuffers[type];
@@ -378,7 +437,7 @@ class MSEController {
 
     _updateMediaSourceDuration() {
         let sb = this._sourceBuffers;
-        if (this._mediaElement.readyState === 0 || this._mediaSource.readyState !== 'open') {
+        if (this._mediaElementProxy.getReadyState() === 0 || this._mediaSource.readyState !== 'open') {
             return;
         }
         if ((sb.video && sb.video.updating) || (sb.audio && sb.audio.updating)) {
@@ -415,7 +474,7 @@ class MSEController {
         let pendingSegments = this._pendingSegments;
 
         for (let type in pendingSegments) {
-            if (!this._sourceBuffers[type] || this._sourceBuffers[type].updating) {
+            if (!this._sourceBuffers[type] || this._sourceBuffers[type].updating || this._mediaSource.streaming === false) {
                 continue;
             }
 
@@ -491,6 +550,20 @@ class MSEController {
         this._emitter.emit(MSEEvents.SOURCE_OPEN);
     }
 
+    _onStartStreaming() {
+        Log.v(this.TAG, 'ManagedMediaSource onStartStreaming');
+        this._emitter.emit(MSEEvents.START_STREAMING);
+    }
+
+    _onEndStreaming() {
+        Log.v(this.TAG, 'ManagedMediaSource onEndStreaming');
+        this._emitter.emit(MSEEvents.END_STREAMING);
+    }
+
+    _onQualityChange() {
+        Log.v(this.TAG, 'ManagedMediaSource onQualityChange');
+    }
+
     _onSourceEnded() {
         // fired on endOfStream
         Log.v(this.TAG, 'MediaSource onSourceEnded');
@@ -503,6 +576,11 @@ class MSEController {
             this._mediaSource.removeEventListener('sourceopen', this.e.onSourceOpen);
             this._mediaSource.removeEventListener('sourceended', this.e.onSourceEnded);
             this._mediaSource.removeEventListener('sourceclose', this.e.onSourceClose);
+            if (this._useManagedMediaSource) {
+                this._mediaSource.removeEventListener('startstraming', this.e.onStartStreaming);
+                this._mediaSource.removeEventListener('endstreaming', this.e.onEndStreaming);
+                this._mediaSource.removeEventListener('qualitychange', this.e.onQualityChange);
+            }
         }
     }
 

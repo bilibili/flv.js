@@ -54,8 +54,8 @@ class MP4Remuxer {
         // Workaround for chrome < 50: Always force first sample as a Random Access Point in media segment
         // see https://bugs.chromium.org/p/chromium/issues/detail?id=229412
         this._forceFirstIDR = (Browser.chrome &&
-            (Browser.version.major < 50 ||
-                (Browser.version.major === 50 && Browser.version.build < 2661))) ? true : false;
+                              (Browser.version.major < 50 ||
+                              (Browser.version.major === 50 && Browser.version.build < 2661))) ? true : false;
 
         // Workaround for IE11/Edge: Fill silent aac frame after keyframe-seeking
         // Make audio beginDts equals with video beginDts, in order to fix seek freeze
@@ -136,8 +136,12 @@ class MP4Remuxer {
         if (!this._dtsBaseInited) {
             this._calculateDtsBase(audioTrack, videoTrack);
         }
-        this._remuxVideo(videoTrack);
-        this._remuxAudio(audioTrack);
+        if (videoTrack) {
+            this._remuxVideo(videoTrack);
+        }
+        if (audioTrack) {
+            this._remuxAudio(audioTrack);
+        }
     }
 
     _onTrackMetadataReceived(type, metadata) {
@@ -182,10 +186,10 @@ class MP4Remuxer {
             return;
         }
 
-        if (audioTrack.samples && audioTrack.samples.length) {
+        if (audioTrack && audioTrack.samples && audioTrack.samples.length) {
             this._audioDtsBase = audioTrack.samples[0].dts;
         }
-        if (videoTrack.samples && videoTrack.samples.length) {
+        if (videoTrack && videoTrack.samples && videoTrack.samples.length) {
             this._videoDtsBase = videoTrack.samples[0].dts;
         }
 
@@ -412,7 +416,7 @@ class MP4Remuxer {
                             }
                         };
                         silentFrames.push(frame);
-                        mdatBytes += frame.size;;
+                        mdatBytes += frame.size;
 
                     }
 
@@ -488,7 +492,7 @@ class MP4Remuxer {
             // size field
             mdatbox[0] = (mdatBytes >>> 24) & 0xFF;
             mdatbox[1] = (mdatBytes >>> 16) & 0xFF;
-            mdatbox[2] = (mdatBytes >>> 8) & 0xFF;
+            mdatbox[2] = (mdatBytes >>>  8) & 0xFF;
             mdatbox[3] = (mdatBytes) & 0xFF;
             // type field (fourCC)
             mdatbox.set(MP4.types.mdat, 4);
@@ -514,15 +518,15 @@ class MP4Remuxer {
         info.originalBeginDts = mp4Samples[0].originalDts;
         info.originalEndDts = latest.originalDts + latest.duration;
         info.firstSample = new SampleInfo(mp4Samples[0].dts,
-            mp4Samples[0].pts,
-            mp4Samples[0].duration,
-            mp4Samples[0].originalDts,
-            false);
+                                          mp4Samples[0].pts,
+                                          mp4Samples[0].duration,
+                                          mp4Samples[0].originalDts,
+                                          false);
         info.lastSample = new SampleInfo(latest.dts,
-            latest.pts,
-            latest.duration,
-            latest.originalDts,
-            false);
+                                         latest.pts,
+                                         latest.duration,
+                                         latest.originalDts,
+                                         false);
         if (!this._isLive) {
             this._audioSegmentInfoList.append(info);
         }
@@ -691,7 +695,7 @@ class MP4Remuxer {
         mdatbox = new Uint8Array(mdatBytes);
         mdatbox[0] = (mdatBytes >>> 24) & 0xFF;
         mdatbox[1] = (mdatBytes >>> 16) & 0xFF;
-        mdatbox[2] = (mdatBytes >>> 8) & 0xFF;
+        mdatbox[2] = (mdatBytes >>>  8) & 0xFF;
         mdatbox[3] = (mdatBytes) & 0xFF;
         mdatbox.set(MP4.types.mdat, 4);
 
@@ -719,15 +723,15 @@ class MP4Remuxer {
         info.originalBeginDts = mp4Samples[0].originalDts;
         info.originalEndDts = latest.originalDts + latest.duration;
         info.firstSample = new SampleInfo(mp4Samples[0].dts,
-            mp4Samples[0].pts,
-            mp4Samples[0].duration,
-            mp4Samples[0].originalDts,
-            mp4Samples[0].isKeyframe);
+                                          mp4Samples[0].pts,
+                                          mp4Samples[0].duration,
+                                          mp4Samples[0].originalDts,
+                                          mp4Samples[0].isKeyframe);
         info.lastSample = new SampleInfo(latest.dts,
-            latest.pts,
-            latest.duration,
-            latest.originalDts,
-            latest.isKeyframe);
+                                         latest.pts,
+                                         latest.duration,
+                                         latest.originalDts,
+                                         latest.isKeyframe);
         if (!this._isLive) {
             this._videoSegmentInfoList.append(info);
         }

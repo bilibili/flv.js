@@ -51,6 +51,7 @@ class FetchStreamLoader extends BaseLoader {
         this._needStash = true;
 
         this._requestAbort = false;
+        this._abortController = null;
         this._contentLength = null;
         this._receivedLength = 0;
     }
@@ -117,10 +118,9 @@ class FetchStreamLoader extends BaseLoader {
             params.referrerPolicy = dataSource.referrerPolicy;
         }
 
-        // add abort controller, by wmlgl 2019-5-10 12:21:27
         if (self.AbortController) {
             this._abortController = new self.AbortController();
-            params.signal = this._abortController.signal;     
+            params.signal = this._abortController.signal;
         }
 
         this._status = LoaderStatus.kConnecting;

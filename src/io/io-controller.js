@@ -410,8 +410,8 @@ class IOController {
         let stashSizeKB = 0;
 
         if (this._config.isLive) {
-            // live stream: always use single normalized speed for size of stashSizeKB
-            stashSizeKB = normalized;
+            // live stream: always use 1/8 normalized speed for size of stashSizeKB
+            stashSizeKB = normalized / 8;
         } else {
             if (normalized < 512) {
                 stashSizeKB = normalized;

@@ -75,7 +75,8 @@ class HevcSPSParser {
         let log2_max_pic_order_cnt_lsb_minus4 = gb.readUEG();
 
         /* sps_sub_layer_ordering_info_present_flag */
-        let i = gb.readBits(1) ? 0 : max_sub_layers_minus1;
+        let sub_layer_ordering_info_present_flag = gb.readBits(1);
+        let i = sub_layer_ordering_info_present_flag ? 0 : max_sub_layers_minus1;
         for (; i <= max_sub_layers_minus1; i++) {
             HevcSPSParser._skip_sub_layer_ordering_info(gb);
         }
@@ -108,11 +109,13 @@ class HevcSPSParser {
         for (i = 0; i < num_short_term_ref_pic_sets; i++) {
             let ret = HevcSPSParser._parse_rps(gb, i, num_short_term_ref_pic_sets, num_delta_pocs);
             if (ret < 0)
-                return ret;
+                return null;
         }
 
         if (gb.readBits(1)) {  // long_term_ref_pics_present_flag
             let num_long_term_ref_pics_sps = gb.readUEG();
+            if (num_long_term_ref_pics_sps > 31)
+                return null;
             for (i = 0; i < num_long_term_ref_pics_sps; i++) {  // num_long_term_ref_pics_sps
                 let len = Math.min(log2_max_pic_order_cnt_lsb_minus4 + 4, 16);
 
@@ -140,6 +143,17 @@ class HevcSPSParser {
             HevcSPSParser._hvcc_parse_vui(gb, hvcc, max_sub_layers_minus1);
         }
 
+        /**
+         * https://tools.axinom.com/capabilities/media
+         * video Profile
+         *
+         * Main: `hvc1.1.6.L93.B0`
+         * Main 10: `hvc1.2.4.L93.B0`
+         * Main still-picture: `hvc1.3.E.L93.B0`
+         * Range extensions: `hvc1.4.10.L93.B0`
+         */
+        let codec_mimetype = `hvc1.${hvcc.profile_idc}.1.L${hvcc.level_idc}.B0`;
+
         let profile_string = HevcSPSParser.getProfileString(hvcc.profile_idc);
         let level_string = HevcSPSParser.getLevelString(hvcc.level_idc);
 
@@ -162,13 +176,14 @@ class HevcSPSParser {
         gb = null;
 
         return {
-            profile_string: profile_string,  // main, main10, rext, ...
-            level_string: level_string,  // 3, 3.1, 4, 4.1, 5, 5.1, ...
+            codec_mimetype,
+            profile_string,  // main, main10, rext, ...
+            level_string,  // 3, 3.1, 4, 4.1, 5, 5.1, ...
             profile_idc: hvcc.profile_idc, // 1, 2, 3, 4 ...
             level_idc: hvcc.level_idc,
-            bit_depth: bit_depth,  // 8bit, 10bit, ...
-            ref_frames: ref_frames,
-            chroma_format: chroma_format,  // 4:2:0, 4:2:2, ...
+            bit_depth,  // 8bit, 10bit, ...
+            ref_frames,
+            chroma_format,  // 4:2:0, 4:2:2, ...
             chroma_format_string: HevcSPSParser.getChromaFormatString(chroma_format),
 
             frame_rate: {
@@ -274,8 +289,8 @@ class HevcSPSParser {
             let num_negative_pics = gb.readUEG();
             let num_positive_pics = gb.readUEG();
 
-            //if ((num_positive_pics + num_negative_pics) * 2 > gb.getBitsLeft())
-            //    return -1;
+            if ((num_positive_pics + num_negative_pics) * 2 > gb.getBitsLeft())
+               return -1;
 
             num_delta_pocs[rps_idx] = num_negative_pics + num_positive_pics;
 
@@ -294,6 +309,7 @@ class HevcSPSParser {
     }
 
     static _hvcc_parse_vui(gb, hvcc, max_sub_layers_minus1) {
+        let min_spatial_segmentation_idc;
         if (gb.readBits(1)) {  // aspect_ratio_info_present_flag
             if (gb.readByte() == 255) {  // aspect_ratio_idc
                 hvcc.sar_width  = gb.readBits(16);  // sar_width u(16)
@@ -353,7 +369,18 @@ class HevcSPSParser {
              */
             gb.readBits(3);
 
-            gb.readUEG();  // min_spatial_segmentation_idc
+            min_spatial_segmentation_idc = gb.readUEG();  // min_spatial_segmentation_idc
+
+            /*
+             * unsigned int(12) min_spatial_segmentation_idc;
+             *
+             * The min_spatial_segmentation_idc indication must indicate a level of
+             * spatial segmentation equal to or less than the lowest level of
+             * spatial segmentation indicated in all the parameter sets.
+             */
+            hvcc.min_spatial_segmentation_idc = Math.min(hvcc.min_spatial_segmentation_idc,
+                min_spatial_segmentation_idc);
+
             gb.readUEG();  // max_bytes_per_pic_denom
             gb.readUEG();  // max_bits_per_min_cu_denom
             gb.readUEG();  // log2_max_mv_length_horizontal

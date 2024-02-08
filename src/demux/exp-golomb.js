@@ -111,6 +111,9 @@ class ExpGolomb {
         }
     }
 
+    getBitsLeft() {
+        return this._total_bits - this._current_word_bits_left;
+    }
 }
 
 export default ExpGolomb;

@@ -125,7 +125,7 @@ class MSEController {
 
         this._mediaElementProxy = mediaElementProxy;
         this._mediaSourceObjectURL = window.URL.createObjectURL(this._mediaSource);
-        mediaElement.src = this._mediaSourceObjectURL;
+        mediaElementProxy.src = this._mediaSourceObjectURL;
     }
 
     detachMediaElement() {

@@ -41,12 +41,22 @@ class SPSParser {
     }
 
     static parseSPS(uint8array) {
+        let codec_array = uint8array.subarray(1, 4);
+        let codec_mimetype = 'avc1.';
+        for (let j = 0; j < 3; j++) {
+            let h = codec_array[j].toString(16);
+            if (h.length < 2) {
+                h = '0' + h;
+            }
+            codec_mimetype += h;
+        }
+
         let rbsp = SPSParser._ebsp2rbsp(uint8array);
         let gb = new ExpGolomb(rbsp);
 
         gb.readByte();
         let profile_idc = gb.readByte();  // profile_idc
-        gb.readByte();  // constraint_set_flags[6] + reserved_zero[2]
+        gb.readByte();  // constraint_set_flags[5] + reserved_zero[3]
         let level_idc = gb.readByte();  // level_idc
         gb.readUEG();  // seq_parameter_set_id
 
@@ -55,7 +65,8 @@ class SPSParser {
         let chroma_format_idc = 1;
         let chroma_format = 420;
         let chroma_format_table = [0, 420, 422, 444];
-        let bit_depth = 8;
+        let bit_depth_luma = 8;
+        let bit_depth_chroma = 8;
 
         if (profile_idc === 100 || profile_idc === 110 || profile_idc === 122 ||
             profile_idc === 244 || profile_idc === 44 || profile_idc === 83 ||
@@ -70,8 +81,8 @@ class SPSParser {
                 chroma_format = chroma_format_table[chroma_format_idc];
             }
 
-            bit_depth = gb.readUEG() + 8;  // bit_depth_luma_minus8
-            gb.readUEG();  // bit_depth_chroma_minus8
+            bit_depth_luma = gb.readUEG() + 8;  // bit_depth_luma_minus8
+            bit_depth_chroma = gb.readUEG() + 8;  // bit_depth_chroma_minus8
             gb.readBits(1);  // qpprime_y_zero_transform_bypass_flag
             if (gb.readBool()) {  // seq_scaling_matrix_present_flag
                 let scaling_list_count = (chroma_format_idc !== 3) ? 8 : 12;
@@ -195,11 +206,17 @@ class SPSParser {
         gb = null;
 
         return {
-            profile_string: profile_string,  // baseline, high, high10, ...
-            level_string: level_string,  // 3, 3.1, 4, 4.1, 5, 5.1, ...
-            bit_depth: bit_depth,  // 8bit, 10bit, ...
-            ref_frames: ref_frames,
-            chroma_format: chroma_format,  // 4:2:0, 4:2:2, ...
+            codec_mimetype,
+            profile_idc,
+            level_idc,
+            profile_string,  // baseline, high, high10, ...
+            level_string,  // 3, 3.1, 4, 4.1, 5, 5.1, ...
+            chroma_format_idc,
+            bit_depth: bit_depth_luma,  // 8bit, 10bit, ...
+            bit_depth_luma,
+            bit_depth_chroma,
+            ref_frames,
+            chroma_format,  // 4:2:0, 4:2:2, ...
             chroma_format_string: SPSParser.getChromaFormatString(chroma_format),
 
             frame_rate: {

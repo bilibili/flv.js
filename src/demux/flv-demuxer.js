@@ -918,7 +918,14 @@ class FLVDemuxer {
             meta.duration = this._duration;
         } else {
             if (typeof meta.avcc !== 'undefined') {
-                Log.w(this.TAG, 'Found another AVCDecoderConfigurationRecord!');
+                let new_avcc = new Uint8Array(arrayBuffer, dataOffset, dataSize);
+                if (buffersAreEqual(new_avcc, meta.avcc)) {
+                    // AVCDecoderConfigurationRecord is not changed, ignore it to avoid initialization segment re-generating
+                    Log.w(this.TAG, 'Found another AVCDecoderConfigurationRecord!');
+                    return;
+                } else {
+                    Log.w(this.TAG, 'AVCDecoderConfigurationRecord has been changed, re-generate initialization segment');
+                }
             }
         }
 
@@ -1190,7 +1197,14 @@ class FLVDemuxer {
             meta.duration = this._duration;
         } else {
             if (typeof meta.hvcc !== 'undefined') {
-                Log.w(this.TAG, 'Found another HVCDecoderConfigurationRecord!');
+                let new_hvcc = new Uint8Array(arrayBuffer, dataOffset, dataSize);
+                if (buffersAreEqual(new_hvcc, meta.hvcc)) {
+                    // HEVCDecoderConfigurationRecord not changed, ignore it to avoid initialization segment re-generating
+                    Log.w(this.TAG, 'Found another HEVCDecoderConfigurationRecord!');
+                    return;
+                } else {
+                    Log.w(this.TAG, 'HEVCDecoderConfigurationRecord has been changed, re-generate initialization segment');
+                }
             }
         }
 
@@ -1424,7 +1438,13 @@ class FLVDemuxer {
             meta.duration = this._duration;
         } else {
             if (typeof meta.av1c !== 'undefined') {
-                Log.w(this.TAG, 'Found another AV1CodecConfigurationRecord!');
+                if (buffersAreEqual(aacData.data.config, meta.config)) {
+                    // AV1CodecConfigurationRecord  is not changed, ignore it to avoid initialization segment re-generating
+                    Log.w(this.TAG, 'Found another AV1CodecConfigurationRecord!');
+                    return;
+                } else {
+                    Log.w(this.TAG, 'AV1CodecConfigurationRecord has been changed, re-generate initialization segment');
+                }
             }
         }
 

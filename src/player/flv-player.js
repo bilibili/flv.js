@@ -459,11 +459,6 @@ class FlvPlayer {
         return false;
     }
 
-    directSeek(seconds) {
-        this._requestSetTime = true;
-        this._mediaElement.currentTime = seconds;
-    }
-
     _internalSeek(seconds) {
         let directSeek = this._isTimepointBuffered(seconds);
 
@@ -487,10 +482,9 @@ class FlvPlayer {
             } else {
                 let idr = this._msectl.getNearestKeyframe(Math.floor(seconds * 1000));
                 if (idr != null) {
-                    this.directSeek(idr.dts / 1000);
-                } else {
-                    this.directSeek(seconds);
+                    seconds = idr.dts / 1000;
                 }
+                this.directSeek(seconds);
             }
             if (this._progressChecker != null) {
                 this._checkProgressAndResume();
@@ -508,6 +502,11 @@ class FlvPlayer {
                 this.directSeek(seconds);
             }
         }
+    }
+
+    directSeek(seconds) {
+        this._requestSetTime = true;
+        this._mediaElement.currentTime = seconds;
     }
 
     _checkAndApplyUnbufferedSeekpoint() {

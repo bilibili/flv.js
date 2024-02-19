@@ -112,7 +112,7 @@ class ExpGolomb {
     }
 
     getBitsLeft() {
-        return this._total_bits - this._current_word_bits_left;
+        return (this._total_bytes - this._buffer_index) * 8 + this._current_word_bits_left;
     }
 }
 

@@ -1,12 +1,12 @@
 {
-  "name": "flv.js",
-  "version": "1.6.2",
+  "name": "flv-h265.js",
+  "version": "1.7.6",
   "description": "HTML5 FLV Player",
   "main": "./dist/flv.js",
   "types": "./d.ts/flv.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Bilibili/flv.js"
+    "url": "https://github.com/nanguantong/flv-h265.js"
   },
   "keywords": [
     "html5",
@@ -36,8 +36,8 @@
     "ts-loader": "^9.2.3",
     "typescript": "^4.3.5",
     "webpack": "^5.45.1",
-    "webpack-cli": "^4.7.2"
+    "webpack-cli": "^4.10.0"
   },
-  "author": "zheng qian <xqq@xqq.im>",
+  "author": "nanuns <zww0602jsj@aliyun.com>",
   "license": "Apache-2.0"
 }

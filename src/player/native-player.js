@@ -53,6 +53,7 @@ class NativePlayer {
     }
 
     destroy() {
+        this._emitter.emit(PlayerEvents.DESTROYING);
         if (this._mediaElement) {
             this.unload();
             this.detachMediaElement();
@@ -176,6 +177,14 @@ class NativePlayer {
         this._mediaElement.muted = muted;
     }
 
+    get speed() {
+        return this._mediaElement.playbackRate;
+    }
+
+    set speed(speed) {
+        this._mediaElement.playbackRate = speed;
+    }
+
     get currentTime() {
         if (this._mediaElement) {
             return this._mediaElement.currentTime;
@@ -235,7 +244,7 @@ class NativePlayer {
             info.decodedFrames = decoded;
             info.droppedFrames = dropped;
         }
-        
+
         return info;
     }
 

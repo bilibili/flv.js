@@ -90,6 +90,7 @@ class FlvPlayer {
     }
 
     destroy() {
+        this._emitter.emit(PlayerEvents.DESTROYING);
         if (this._progressChecker != null) {
             window.clearInterval(this._progressChecker);
             this._progressChecker = null;
@@ -201,9 +202,8 @@ class FlvPlayer {
         }
 
         if (this._mediaElement.readyState > 0) {
-            this._requestSetTime = true;
             // IE11 may throw InvalidStateError if readyState === 0
-            this._mediaElement.currentTime = 0;
+            this.directSeek(0);
         }
 
         this._transmuxer = new Transmuxer(this._mediaDataSource, this._config);
@@ -254,8 +254,7 @@ class FlvPlayer {
         });
         this._transmuxer.on(TransmuxingEvents.RECOMMEND_SEEKPOINT, (milliseconds) => {
             if (this._mediaElement && !this._config.accurateSeek) {
-                this._requestSetTime = true;
-                this._mediaElement.currentTime = milliseconds / 1000;
+                this.directSeek(milliseconds / 1000);
             }
         });
 
@@ -310,6 +309,14 @@ class FlvPlayer {
 
     set muted(muted) {
         this._mediaElement.muted = muted;
+    }
+
+    get speed() {
+        return this._mediaElement.playbackRate;
+    }
+
+    set speed(speed) {
+        this._mediaElement.playbackRate = speed;
     }
 
     get currentTime() {
@@ -468,20 +475,16 @@ class FlvPlayer {
         }
 
         if (directSeekBegin) {  // seek to video begin, set currentTime directly if beginPTS buffered
-            this._requestSetTime = true;
-            this._mediaElement.currentTime = directSeekBeginTime;
+            this.directSeek(directSeekBeginTime);
         }  else if (directSeek) {  // buffered position
             if (!this._alwaysSeekKeyframe) {
-                this._requestSetTime = true;
-                this._mediaElement.currentTime = seconds;
+                this.directSeek(seconds);
             } else {
                 let idr = this._msectl.getNearestKeyframe(Math.floor(seconds * 1000));
-                this._requestSetTime = true;
                 if (idr != null) {
-                    this._mediaElement.currentTime = idr.dts / 1000;
-                } else {
-                    this._mediaElement.currentTime = seconds;
+                    seconds = idr.dts / 1000;
                 }
+                this.directSeek(seconds);
             }
             if (this._progressChecker != null) {
                 this._checkProgressAndResume();
@@ -496,10 +499,14 @@ class FlvPlayer {
             // no need to set mediaElement.currentTime if non-accurateSeek,
             // just wait for the recommend_seekpoint callback
             if (this._config.accurateSeek) {
-                this._requestSetTime = true;
-                this._mediaElement.currentTime = seconds;
+                this.directSeek(seconds);
             }
         }
+    }
+
+    directSeek(seconds) {
+        this._requestSetTime = true;
+        this._mediaElement.currentTime = seconds;
     }
 
     _checkAndApplyUnbufferedSeekpoint() {
@@ -516,10 +523,9 @@ class FlvPlayer {
                     // Chrome/Edge use DTS, while FireFox/Safari use PTS
                     this._msectl.seek(target);
                     this._transmuxer.seek(Math.floor(target * 1000));
-                    // set currentTime if accurateSeek, or wait for recommend_seekpoint callback
+                    // Update currentTime if using accurateSeek, or wait for recommend_seekpoint callback
                     if (this._config.accurateSeek) {
-                        this._requestSetTime = true;
-                        this._mediaElement.currentTime = target;
+                        this.directSeek(target);
                     }
                 }
             } else {
@@ -534,13 +540,12 @@ class FlvPlayer {
             let buffered = media.buffered;
             if (buffered.length > 0 && media.currentTime < buffered.start(0)) {
                 Log.w(this.TAG, `Playback seems stuck at ${media.currentTime}, seek to ${buffered.start(0)}`);
-                this._requestSetTime = true;
-                this._mediaElement.currentTime = buffered.start(0);
-                this._mediaElement.removeEventListener('progress', this.e.onvProgress);
+                this.directSeek(buffered.start(0));
+                //this._mediaElement.removeEventListener('progress', this.e.onvProgress);
             }
         } else {
             // Playback didn't stuck, remove progress event listener
-            this._mediaElement.removeEventListener('progress', this.e.onvProgress);
+            //this._mediaElement.removeEventListener('progress', this.e.onvProgress);
         }
     }
 
@@ -551,32 +556,35 @@ class FlvPlayer {
         }
     }
 
-    _onvSeeking(e) {  // handle seeking request from browser's progress bar
-        let target = this._mediaElement.currentTime;
-        let buffered = this._mediaElement.buffered;
-
+    // handle seeking request from browser's progress bar or HTMLMediaElement.currentTime setter
+    _onvSeeking(e) {
         if (this._requestSetTime) {
             this._requestSetTime = false;
             return;
         }
 
+        let target = this._mediaElement.currentTime;
+        let buffered = this._mediaElement.buffered;
+
+        // Handle seeking to video begin (near 0.0s)
         if (target < 1.0 && buffered.length > 0) {
             // seek to video begin, set currentTime directly if beginPTS buffered
             let videoBeginTime = buffered.start(0);
             if ((videoBeginTime < 1.0 && target < videoBeginTime) || Browser.safari) {
-                this._requestSetTime = true;
-                // also workaround for Safari: Seek to 0 may cause video stuck, use 0.1 to avoid
-                this._mediaElement.currentTime = Browser.safari ? 0.1 : videoBeginTime;
+                // Safari may get stuck if currentTime set to 0, use 0.1 to avoid
+                let target = Browser.safari ? 0.1 : videoBeginTime;
+                this.directSeek(target);
                 return;
             }
         }
 
+        // Handle in-buffer seeking (usually nothing to do)
         if (this._isTimepointBuffered(target)) {
             if (this._alwaysSeekKeyframe) {
                 let idr = this._msectl.getNearestKeyframe(Math.floor(target * 1000));
                 if (idr != null) {
-                    this._requestSetTime = true;
-                    this._mediaElement.currentTime = idr.dts / 1000;
+                    target = idr.dts / 1000;
+                    this.directSeek(target);
                 }
             }
             if (this._progressChecker != null) {
@@ -594,6 +602,7 @@ class FlvPlayer {
 
     _onvCanPlay(e) {
         this._receivedCanPlay = true;
+        // Remove canplay listener since it will be fired multiple times
         this._mediaElement.removeEventListener('canplay', this.e.onvCanPlay);
     }
 
@@ -603,6 +612,10 @@ class FlvPlayer {
 
     _onvProgress(e) {
         this._checkAndResumeStuckPlayback();
+
+        Promise.resolve().then(() => {
+            this._emitter.emit(PlayerEvents.PROGRESS, e);
+        });
     }
 
 }

@@ -23,12 +23,13 @@ NOTE: the lastest chrome version has been supported HEVC.
 [http://bilibili.github.io/flv.js/demo/](http://bilibili.github.io/flv.js/demo/)
 
 ## Features
-- FLV container with H.264 / H.265 + AAC / MP3 codec playback
+- FLV container with H.264 / H.265 / AV1 + AAC / MP3 codec playback
 - Multipart segmented video playback
 - HTTP FLV low latency live stream playback
 - FLV over WebSocket live stream playback
 - Compatible with Chrome, FireFox, Safari 10, IE11 and Edge
 - Extremely low overhead, and hardware accelerated by your browser!
+- [Enhanced RTMP](https://github.com/veovera/enhanced-rtmp) with H.265 support for FLV
 
 ## Installation
 ```bash

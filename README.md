@@ -1,13 +1,11 @@
 
-flv.js  [![npm](https://img.shields.io/npm/v/flv.js.svg?style=flat)](https://www.npmjs.com/package/flv.js)
+flv-h265.js  [![npm](https://img.shields.io/npm/v/flv-h265.js.svg?style=flat)](https://www.npmjs.com/package/flv-h265.js)
 ======
 An HTML5 Flash Video (FLV) Player written in pure JavaScript without Flash. LONG LIVE FLV!
 
 This project relies on [Media Source Extensions][] to work.
 
-**For FLV live stream playback, please consider [mpegts.js][] which is under active development.**
-
-**This project will become rarely maintained.**
+**For FLV live stream playback, please also consider [mpegts.js][] which is under active development.**
 
 [mpegts.js]: https://github.com/xqq/mpegts.js
 ## Overview
@@ -15,27 +13,34 @@ flv.js works by transmuxing FLV file stream into ISO BMFF (Fragmented MP4) segme
 
 [Media Source Extensions]: https://w3c.github.io/media-source/
 
+## HEVC(H265) Chrome Support
+[enable-chromium-hevc-hardware-decoding](https://github.com/StaZhu/enable-chromium-hevc-hardware-decoding)
+```
+NOTE: the lastest chrome version has been supported HEVC.
+```
+
 ## Demo
 [http://bilibili.github.io/flv.js/demo/](http://bilibili.github.io/flv.js/demo/)
 
 ## Features
-- FLV container with H.264 + AAC / MP3 codec playback
+- FLV container with H.264 / H.265 / AV1 + AAC / MP3 codec playback
 - Multipart segmented video playback
 - HTTP FLV low latency live stream playback
 - FLV over WebSocket live stream playback
 - Compatible with Chrome, FireFox, Safari 10, IE11 and Edge
 - Extremely low overhead, and hardware accelerated by your browser!
+- [Enhanced RTMP](https://github.com/veovera/enhanced-rtmp) with H.265 support for FLV
 
 ## Installation
 ```bash
-npm install --save flv.js
+npm install --save flv-h265.js
 ```
 
 ## Build
 ```bash
 npm ci                 # install dependencies / dev-dependences
-npm run build:debug    # debug version flv.js will be emitted to /dist
-npm run build          # minimized release version flv.min.js will be emitted to /dist
+npm run build:debug    # debug version flv-h265.js will be emitted to /dist
+npm run build          # minimized release version flv-h265.min.js will be emitted to /dist
 ```
 
 [cnpm](https://github.com/cnpm/cnpm) mirror is recommended if you are in Mainland China.
@@ -47,7 +52,7 @@ See [cors.md](docs/cors.md) for more details.
 
 ## Getting Started
 ```html
-<script src="flv.min.js"></script>
+<script src="flv-h265.min.js"></script>
 <video id="videoElement"></video>
 <script>
     if (flvjs.isSupported()) {

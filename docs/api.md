@@ -114,6 +114,7 @@ Return a `FeatureList` object which has following details:
 | `networkStreamIO`       | `boolean` | Indicates whether the network loader is streaming. |
 | `networkLoaderName`     | `string`  | Indicates the network loader type name.  |
 | `nativeMP4H264Playback` | `boolean` | Indicates whether your browser support H.264 MP4 video file natively. |
+| `nativeMP4H265Playback` | `boolean` | Indicates whether your browser support H.265 MP4 video file natively. |
 | `nativeWebmVP8Playback` | `boolean` | Indicates whether your browser support WebM VP8 video file natively. |
 | `nativeWebmVP9Playback` | `boolean` | Indicates whether your browser support WebM VP9 video file natively. |
 
@@ -193,6 +194,8 @@ A series of constants that can be used with `Player.on()` / `Player.off()`. They
 | METADATA_ARRIVED    | Provides metadata which FLV file(stream) can contain with an "onMetaData" marker.  |
 | SCRIPTDATA_ARRIVED  | Provides scriptdata (OnCuePoint / OnTextData) which FLV file(stream) can contain. |
 | STATISTICS_INFO     | Provides playback statistics information like dropped frames, current speed, etc. |
+| DESTROYING          | Fired when the player begins teardown |
+| PROGRESS            | Fired when the player has progress |
 
 ### flvjs.ErrorTypes
 

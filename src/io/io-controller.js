@@ -35,7 +35,7 @@ import {RuntimeException, IllegalStateException, InvalidArgumentException} from 
  *     cors: boolean,
  *     withCredentials: boolean
  * }
- * 
+ *
  */
 
 // Manage IO Loaders
@@ -47,7 +47,7 @@ class IOController {
         this._config = config;
         this._extraData = extraData;
 
-        this._stashInitialSize = 1024 * 384;  // default initial size: 384KB
+        this._stashInitialSize = 64 * 1024;  // default initial size: 64KB
         if (config.stashInitialSize != undefined && config.stashInitialSize > 0) {
             // apply from config
             this._stashInitialSize = config.stashInitialSize;
@@ -55,7 +55,7 @@ class IOController {
 
         this._stashUsed = 0;
         this._stashSize = this._stashInitialSize;
-        this._bufferSize = 1024 * 1024 * 3;  // initial size: 3MB
+        this._bufferSize = Math.max(this._stashSize, 1024 * 1024 * 3);  // initial size: 3MB at least
         this._stashBuffer = new ArrayBuffer(this._bufferSize);
         this._stashByteStart = 0;
         this._enableStash = true;
@@ -77,7 +77,7 @@ class IOController {
 
         this._speedNormalized = 0;
         this._speedSampler = new SpeedSampler();
-        this._speedNormalizeList = [64, 128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096];
+        this._speedNormalizeList = [32, 64, 96, 128, 192, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096];
 
         this._isEarlyEofReconnecting = false;
 
@@ -410,8 +410,8 @@ class IOController {
         let stashSizeKB = 0;
 
         if (this._config.isLive) {
-            // live stream: always use single normalized speed for size of stashSizeKB
-            stashSizeKB = normalized;
+            // live stream: always use 1/8 normalized speed for size of stashSizeKB
+            stashSizeKB = normalized / 8;
         } else {
             if (normalized < 512) {
                 stashSizeKB = normalized;

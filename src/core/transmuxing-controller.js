@@ -431,6 +431,13 @@ class TransmuxingController {
         info.currentSegmentIndex = this._currentSegmentIndex;
         info.totalSegmentCount = this._mediaDataSource.segments.length;
 
+        if (this._demuxer && this._demuxer._bpsInfo) {
+            info.bps_video = this._demuxer._bpsInfo.bps_video;
+            info.bps_audio = this._demuxer._bpsInfo.bps_audio;
+            info.bytes_video = this._demuxer._bpsInfo.bytes_received_video;
+            info.bytes_audio = this._demuxer._bpsInfo.bytes_received_audio;
+        }
+
         this._emitter.emit(TransmuxingEvents.STATISTICS_INFO, info);
     }
 

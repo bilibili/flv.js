@@ -48,6 +48,20 @@ class FLVDemuxer {
     constructor(probeData, config) {
         this.TAG = 'FLVDemuxer';
 
+        this._bpsCalculator = null;
+        this._bpsInfo = {
+            lastVideoBytes: 0,
+            lastAudioBytes: 0,
+            bps_video: 0,
+            bps_audio: 0,
+            bytes_received_video: 0,
+            bytes_received_audio: 0
+        };
+
+        if (!this._bpsCalculator) {
+            this._bpsCalculator = self.setInterval(this._calculateRealtimeBitrate.bind(this), 2000);
+        }
+
         this._config = config;
 
         this._onError = null;
@@ -114,6 +128,19 @@ class FLVDemuxer {
         })();
     }
 
+    _calculateRealtimeBitrate() {
+        if (!this._bpsInfo) {
+            return;
+        }
+
+        this._bpsInfo.bps_video = (8 * this._bpsInfo.lastVideoBytes / 1024) / 2;
+        this._bpsInfo.bps_audio = (8 * this._bpsInfo.lastAudioBytes / 1024) / 2;
+        this._bpsInfo.bytes_received_video = this._bpsInfo.lastVideoBytes;
+        this._bpsInfo.bytes_received_audio = this._bpsInfo.lastAudioBytes;
+        this._bpsInfo.lastVideoBytes = 0;
+        this._bpsInfo.lastAudioBytes = 0;
+    }
+
     destroy() {
         this._mediaInfo = null;
         this._metadata = null;
@@ -128,6 +155,12 @@ class FLVDemuxer {
         this._onScriptDataArrived = null;
         this._onTrackMetadata = null;
         this._onDataAvailable = null;
+
+        if (this._bpsCalculator) {
+            self.clearInterval(this._bpsCalculator);
+            this._bpsCalculator = null;
+            this._bpsInfo = null;
+        }
     }
 
     static probe(buffer) {
@@ -296,6 +329,9 @@ class FLVDemuxer {
             offset += 4;
         }
 
+        let audioBytes = 0
+        let videoBytes = 0
+
         while (offset < chunk.byteLength) {
             this._dispatch = true;
 
@@ -338,9 +374,15 @@ class FLVDemuxer {
             switch (tagType) {
                 case 8:  // Audio
                     this._parseAudioData(chunk, dataOffset, dataSize, timestamp);
+                    if (this._bpsInfo) {
+                        this._bpsInfo.lastAudioBytes += dataSize
+                    }
                     break;
                 case 9:  // Video
                     this._parseVideoData(chunk, dataOffset, dataSize, timestamp, byteStart + offset);
+                    if (this._bpsInfo) {
+                        this._bpsInfo.lastVideoBytes += dataSize
+                    }
                     break;
                 case 18:  // ScriptDataObject
                     this._parseScriptData(chunk, dataOffset, dataSize);

@@ -55,9 +55,9 @@ class FetchStreamLoader extends BaseLoader {
         this._receivedLength = 0;
     }
 
-    destroy() {
+    destroy(chromeAbort = false) {
         if (this.isWorking()) {
-            this.abort();
+            this.abort(chromeAbort);
         }
         super.destroy();
     }
@@ -171,11 +171,16 @@ class FetchStreamLoader extends BaseLoader {
         });
     }
 
-    abort() {
+    abort(chromeAbort = false) {
         this._requestAbort = true;
-
         if (this._status !== LoaderStatus.kBuffering || !Browser.chrome) {
             // Chrome may throw Exception-like things here, avoid using if is buffering
+            if (this._abortController) {
+                try {
+                    this._abortController.abort();
+                } catch (e) {}
+            }
+        } else if (Browser.chrome && chromeAbort) {
             if (this._abortController) {
                 try {
                     this._abortController.abort();

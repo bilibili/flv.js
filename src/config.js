@@ -32,7 +32,7 @@ export const defaultConfig = {
     autoCleanupMaxBackwardDuration: 3 * 60,
     autoCleanupMinBackwardDuration: 2 * 60,
 
-    statisticsInfoReportInterval: 600,
+    statisticsInfoReportInterval: 2000,
 
     fixAudioTimestampGap: true,
 

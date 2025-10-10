@@ -98,9 +98,9 @@ class IOController {
 
     destroy() {
         if (this._loader.isWorking()) {
-            this._loader.abort();
+            this._loader.abort(true);
         }
-        this._loader.destroy();
+        this._loader.destroy(true);
         this._loader = null;
         this._loaderClass = null;
         this._dataSource = null;
